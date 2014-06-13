@@ -1,0 +1,15 @@
+global:
+  vars:
+    course_name: "Phys 212"
+
+homework_set:
+  vars:
+    module_number: 1
+    description: Module 01 homework set
+  problems:
+    - vars:
+        mass: 3.5
+      statement : Imagine that you where able to remove all of the negative charges on a 1981 penny and move it to the other side of the Earth.
+                  What would the electrostatic force between the negative charge you remove and the positive charge left on the penny be?
+                  (Pennies back then where solid copper with a mass of \SI{3.1}{\gram}).
+
