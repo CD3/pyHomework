@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use YAML::Tiny;
 
 my %answer_readers = (
                      "MC" => \&read_MC_ans
@@ -10,11 +11,11 @@ my %answer_readers = (
                     ,"NUM" => \&read_NUM_ans
                     );
 
-my %Bb_writers = (
-                 "MC" => \&write_MC_Bb
-                 ,"MA" => \&write_MA_Bb
-                 ,"ORD" => \&write_ORD_Bb
-                 ,"NUM" => \&write_NUM_Bb
+my %YAML_writers = (
+                 "MC" => \&write_MC_YAML
+                 ,"MA" => \&write_MA_YAML
+                 ,"ORD" => \&write_ORD_YAML
+                 ,"NUM" => \&write_NUM_YAML
                  );
 
 
@@ -25,10 +26,10 @@ my %Bb_writers = (
 for my $infile (@ARGV)
 {
   # generate an output filename from the input filename
-  # we just strip off the file's extension and replace it with .Bb
+  # we just strip off the file's extension and replace it with .yaml
 	my $outfile = $infile;
-	$outfile =~ s/(\.\S+)$/.Bb/;
-	print "importing Clark formatted questions from $infile and writing Blackboard formatted questions to $outfile";
+	$outfile =~ s/(\.\S+)$/.yaml/;
+	print "importing Clark formatted questions from $infile and writing YAML formatted questions to $outfile";
 	print "WARNING: questions CANNOT have linebreaks. make sure you text editor did not linewrap any questions";
 
 
@@ -84,13 +85,19 @@ for my $infile (@ARGV)
 	}
 
 
-	open OUT, '>', $outfile or die "could not open $outfile for writing";
+  my $yaml_questions = ();
 	for my $question (@questions)
 	{
-		print OUT $Bb_writers{ $question->{type} }->($question);
-		print OUT "\n";
+		push @{$yaml_questions}, $YAML_writers{ $question->{type} }->($question);
 	}
 
+  my $doc = { "questions" => $yaml_questions };
+
+
+  my $yaml = YAML::Tiny->new( $doc );
+
+  $yaml->write( $outfile );
+
 }
 
 
@@ -98,67 +105,66 @@ for my $infile (@ARGV)
 
 
 
-sub write_MC_Bb( $ )
+sub write_MC_YAML( $ )
 {
-	return write_MA_Bb(@_);
+	return write_MA_YAML(@_);
 }
 
-sub write_MA_Bb( $ )
-{
-	my ($question) = @_;
-	my $text;
-
-	$text .= $question->{type};
-	$text .= "\t";
-	$text .= $question->{text};
-	
-	for my $ans (@{$question->{"answer"}})
-	{
-		$text .= "\t";
-		$text .= $ans->{value};
-		$text .= "\t";
-		$text .= $ans->{correct} ? "correct" : "incorrect";
-	}
-
-	return $text;
-}
-
-sub write_ORD_Bb( $ )
+sub write_MA_YAML( $ )
 {
 	my ($question) = @_;
-	my $text;
 
-	$text .= $question->{type};
-	$text .= "\t";
-	$text .= $question->{text};
-	
-	for my $ans (@{$question->{"answer"}})
+	my $text = $question->{text};
+  my $answers = {};
+  my @labels = ('a'
+               ,'b'
+               ,'c'
+               ,'d'
+               ,'e'
+               ,'e'
+               ,'f'
+               ,'g'
+               ,'h'
+               ,'i');
+  my ($ans, $lbl);
+  for( my $i = 0; $i < @{$question->{"answer"}}; $i++)
 	{
-		$text .= "\t";
-		$text .= $ans->{value};
+    $ans = $question->{"answer"}->[$i];
+    $lbl = $labels[$i];
+    $answers->{$lbl} = ($ans->{correct} ? "^":"").$ans->{value} ;
 	}
 
-	return $text;
+  my $result = { "text" => $text, "answer" => $answers };
+
+	return $result;
 }
 
-sub write_NUM_Bb( $ )
+sub write_ORD_YAML( $ )
 {
 	my ($question) = @_;
-	my $text;
 
-	$text .= $question->{type};
-	$text .= "\t";
-	$text .= $question->{text};
-	
+	my $text = $question->{text};
+  my $answers = ();
+
 	for my $ans (@{$question->{"answer"}})
 	{
-		$text .= "\t";
-		$text .= $ans->{value};
-		$text .= "\t";
-		$text .= $ans->{uncertainty};
+    push @{$answers}, $ans->{value};
 	}
 
-	return $text;
+  my $result = { "text" => $text, "answer" => $answers };
+
+	return $result;
+}
+
+sub write_NUM_YAML( $ )
+{
+	my ($question) = @_;
+	my $text  = $question->{text};
+  my $answer = {"value"      => $question->{answer}->[0]->{value}
+               ,"uncertainty"=> $question->{answer}->[0]->{uncertainty} };
+
+  my $result = { "text" => $text, "answer" => $answer };
+	return $result;
 }
 
 

@@ -1,0 +1,92 @@
+Type: NUM
+In problem #1, you needed to calculate the net charge of a penny with all of its negative charge removed. What is the net charge of the penny after all the negative charge has been removed? Give your answer in Coulombs.
+	a. 1.36E5 0.01E5
+
+Type: NUM
+In problem #1, what was the force you calculated? Give your answer in Newtons.
+	a. 1.03E6 0.01E6
+
+Type: MC
+In problem #2, are electrons transferred to the carpet, or to the child?
+	a. to the child
+	*b. to the carpet
+	c. neither
+
+Type: NUM
+In problem #3, what is the total charge you calculated? Give your answer in Coulombs.
+	a. -1.60e-13 0.01e-13
+
+Type: NUM
+In problem #4, assume that the electron and proton are separated by 0.50 m. What is the magnitude of the electrostatic force between the proton and electron? Give your answer in Newtons.
+	a. 9.23e-28 0.01e-28
+
+Type: MC 
+In problem #4, is it possible to place the electron and proton some distance appart such that the force of gravity is stronger than the electrostatic force? 
+	*a. No, the ratio of the magnitude of the two forces does not depend on their separation distance. 
+	b. Yes, if the proton and electron are brought very close together, the force of gravity will be larger. 
+	c. Yes, if the proton and electron are separated by a very large distance, the force of gravity will be larger. 
+	d. Yes, for short and long distances the electrostaitc force is greater, for for medium ranges, the force of gravity will be larger. 
+
+Type: NUM
+In problem #5, how much charge was placed on the first sphere during the induction process? Give your answer in Coulombs.
+	a. 4.72e-8 0.01e-8
+
+Type: NUM
+In problem #5, how much charge does each sphere have after they are brought into contact? Give your answer in Coulombs.
+	a. 2.36e-8 0.01e-8
+
+Type: MC 
+In problem #5, are the charges on the conducting spheres positive or negative?
+	a. both are positive
+	b. both are negative
+	c. one is positive, the other is negative
+	*d. they could be positive or negative, but they must both be the same
+	e. they could be positive or negative, but they must be opposite of each other
+
+Type: MC 
+In problem #6, is the x-component of the force you calculated positive or negative?
+	a. positive
+	*b. negative
+	c. it's actually zero
+
+Type: MC 
+In problem #6, is the y-component of the force you calculated positive or negative?
+	*a. positive
+	b. negative
+	c. it's actually zero
+
+Type: NUM
+In problem #7a, what is the magnitude of the force you calculated? Give your answer in N.
+	a. 12.8 0.1
+
+Type: MC 
+In problem #8, how many forces should your free body diagram for one pithball include? 
+	a. 0 
+	b. 1 
+	c. 2 
+	*d. 3 
+	e. 4 
+	f. 5 
+	g. 6 
+
+Type: MC 
+In problem #8, how does the expression for charge depend on the pith ball mass? 
+	a. it doesn't 
+	b. it is proportional to the mass 
+	*c. it is proportional to the square root of the mass 
+	d. it is porportional to one over the mass 
+	e. it is proportional to one over the square root of mass 
+	f. it is proportional to the mass squared 
+	g. it is proportional to one over the mass squared 
+
+Type: MC 
+In problem #8, are the pith balls positivly charged or negativly charged? 
+	a. positive 
+	b. negative 
+	*c. it is not possible to tell without more information 
+
+Type: ORD
+In problem #9, what order did you determine. 
+	a.  small sphere 
+	b.  medium sphere 
+	c.  large sphere 

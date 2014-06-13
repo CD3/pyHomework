@@ -1,15 +1,100 @@
-global:
-  vars:
-    course_name: "Phys 212"
-
-homework_set:
-  vars:
-    module_number: 1
-    description: Module 01 homework set
-  problems:
-    - vars:
-        mass: 3.5
-      statement : Imagine that you where able to remove all of the negative charges on a 1981 penny and move it to the other side of the Earth.
-                  What would the electrostatic force between the negative charge you remove and the positive charge left on the penny be?
-                  (Pennies back then where solid copper with a mass of \SI{3.1}{\gram}).
-
+---
+questions:
+  -
+    answer:
+      uncertainty: 0.01E5
+      value: 1.36E5
+    text: 'In problem #1, you needed to calculate the net charge of a penny with all of its negative charge removed. What is the net charge of the penny after all the negative charge has been removed? Give your answer in Coulombs.'
+  -
+    answer:
+      uncertainty: 0.01E6
+      value: 1.03E6
+    text: 'In problem #1, what was the force you calculated? Give your answer in Newtons.'
+  -
+    answer:
+      a: 'to the child'
+      b: '^to the carpet'
+      c: neither
+    text: 'In problem #2, are electrons transferred to the carpet, or to the child?'
+  -
+    answer:
+      uncertainty: 0.01e-13
+      value: '-1.60e-13'
+    text: 'In problem #3, what is the total charge you calculated? Give your answer in Coulombs.'
+  -
+    answer:
+      uncertainty: 0.01e-28
+      value: 9.23e-28
+    text: 'In problem #4, assume that the electron and proton are separated by 0.50 m. What is the magnitude of the electrostatic force between the proton and electron? Give your answer in Newtons.'
+  -
+    answer:
+      a: '^No, the ratio of the magnitude of the two forces does not depend on their separation distance.'
+      b: 'Yes, if the proton and electron are brought very close together, the force of gravity will be larger.'
+      c: 'Yes, if the proton and electron are separated by a very large distance, the force of gravity will be larger.'
+      d: 'Yes, for short and long distances the electrostaitc force is greater, for for medium ranges, the force of gravity will be larger.'
+    text: 'In problem #4, is it possible to place the electron and proton some distance appart such that the force of gravity is stronger than the electrostatic force?'
+  -
+    answer:
+      uncertainty: 0.01e-8
+      value: 4.72e-8
+    text: 'In problem #5, how much charge was placed on the first sphere during the induction process? Give your answer in Coulombs.'
+  -
+    answer:
+      uncertainty: 0.01e-8
+      value: 2.36e-8
+    text: 'In problem #5, how much charge does each sphere have after they are brought into contact? Give your answer in Coulombs.'
+  -
+    answer:
+      a: 'both are positive'
+      b: 'both are negative'
+      c: 'one is positive, the other is negative'
+      d: '^they could be positive or negative, but they must both be the same'
+      e: 'they could be positive or negative, but they must be opposite of each other'
+    text: 'In problem #5, are the charges on the conducting spheres positive or negative?'
+  -
+    answer:
+      a: positive
+      b: '^negative'
+      c: "it's actually zero"
+    text: 'In problem #6, is the x-component of the force you calculated positive or negative?'
+  -
+    answer:
+      a: '^positive'
+      b: negative
+      c: "it's actually zero"
+    text: 'In problem #6, is the y-component of the force you calculated positive or negative?'
+  -
+    answer:
+      uncertainty: 0.1
+      value: 12.8
+    text: 'In problem #7a, what is the magnitude of the force you calculated? Give your answer in N.'
+  -
+    answer:
+      a: 0
+      b: 1
+      c: 2
+      d: '^3'
+      e: 5
+      f: 6
+    text: 'In problem #8, how many forces should your free body diagram for one pithball include?'
+  -
+    answer:
+      a: "it doesn't"
+      b: 'it is proportional to the mass'
+      c: '^it is proportional to the square root of the mass'
+      d: 'it is porportional to one over the mass'
+      e: 'it is proportional to the mass squared'
+      f: 'it is proportional to one over the mass squared'
+    text: 'In problem #8, how does the expression for charge depend on the pith ball mass?'
+  -
+    answer:
+      a: positive
+      b: negative
+      c: '^it is not possible to tell without more information'
+    text: 'In problem #8, are the pith balls positivly charged or negativly charged?'
+  -
+    answer:
+      - 'small sphere'
+      - 'medium sphere'
+      - 'large sphere'
+    text: 'In problem #9, what order did you determine.'
