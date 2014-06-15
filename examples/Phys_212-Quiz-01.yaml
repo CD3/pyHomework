@@ -4,7 +4,7 @@ questions:
   - text: "In problem #${i}, you needed to calculate the net charge of a penny
               with all of its negative charge removed. What is the net charge of the penny
               after all the negative charge has been removed? Give your answer in Coulombs.
-              (The answer to the next queston is ${global_vars['local_vars'][i+1]['ans']})"
+              (here is an example of getting data from somewhere else ${global_vars['local_vars'][i+1]['ans']})"
     answer:
       value:  ${ans}
       uncertainty: 1%

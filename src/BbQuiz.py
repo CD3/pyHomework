@@ -6,17 +6,24 @@ import math
 import yaml, wheezy.template, asteval
 import collections
 
+testing = 1
 
-class InterpTemplate(Template):
+class EvalTemplate(Template):
     idpattern = "[^{}]+"
-    #pattern = r"""
-       #%(delim)s(?:
-         #(?P<escaped>%(delim)s) |   # Escape sequence of two delimiters
-         #(?P<named>%(id)s)      |   # delimiter and a Python identifier
-         #{(?P<braced>%(id)s)}   |   # delimiter and a braced identifier
-         #(?P<invalid>^$)            # never matches (the regex is not multilined)
-       #)
-       #""" % dict(delim=re.escape(Template.delimiter), id=idpattern)
+
+    def substitute(self,mapping,**kws):
+        original_template = self.template
+        last_template = self.template
+        self.template = super(EvalTemplate,self).substitute(mapping,**kws)
+        while self.template != last_template:
+            last_template = self.template
+            self.template = super(EvalTemplate,self).substitute(mapping,**kws)
+
+        ret = self.template
+        self.teplate = original_template
+        
+        return ret
+
 
 class InterpEvalError(KeyError):
     pass
@@ -114,14 +121,14 @@ class BbQuiz:
             question = self.quiz_data["questions"][i]
             subs = EvalTemplateDict( self.namespace )
             subs.update( self.namespace['global_vars']['local_vars'][i] )
-            question["text"] = InterpTemplate(question["text"]).substitute(subs)
+            question["text"] = EvalTemplate(question["text"]).substitute(subs)
 
             if isinstance( question.get("answer", None), dict):
                 for lbl in question.get("answer", {} ):
-                    question["answer"][lbl] = InterpTemplate(str(question["answer"][lbl])).substitute(subs)
+                    question["answer"][lbl] = EvalTemplate(str(question["answer"][lbl])).substitute(subs)
             if isinstance( question.get("answer", None), list ):
                 for i in range(len(question.get("answer", [] ) ) ):
-                    question["answer"][i] = InterpTemplate(str(question["answer"][i])).substitute(subs)
+                    question["answer"][i] = EvalTemplate(str(question["answer"][i])).substitute(subs)
 
 
 
@@ -203,6 +210,10 @@ if __name__ == "__main__":
         quiz.load( arg )
         quiz.write_questions(os.path.splitext(arg)[0]+".Bb")
 
+
+if testing:
+    print EvalTemplate("this is interpolated once ${x}").substitute( EvalTemplateDict({'x' : 10, 'y' : "${x}"}))
+    print EvalTemplate("this is interpolated once ${y}").substitute( EvalTemplateDict({'x' : 10, 'y' : "${x}"}))
 
 
 
