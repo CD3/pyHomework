@@ -3,30 +3,63 @@
 import sys, os, re, random
 from string import Template
 import math
-import yaml, wheezy.template
-import __builtin__
+import yaml, wheezy.template, asteval
+import collections
+
+
+class InterpTemplate(Template):
+    idpattern = "[^{}]+"
+    #pattern = r"""
+       #%(delim)s(?:
+         #(?P<escaped>%(delim)s) |   # Escape sequence of two delimiters
+         #(?P<named>%(id)s)      |   # delimiter and a Python identifier
+         #{(?P<braced>%(id)s)}   |   # delimiter and a braced identifier
+         #(?P<invalid>^$)            # never matches (the regex is not multilined)
+       #)
+       #""" % dict(delim=re.escape(Template.delimiter), id=idpattern)
 
 class InterpEvalError(KeyError):
     pass
 
-class InterpDict(dict):
-    def __getattr__(self,attr):
-        return self.get(attr)
-    __setattr__=dict.__setitem__
-    __delattr__=dict.__delitem__
+class EvalTemplateDict(dict):
+    """A dictionary that be used to add support for evaluating
+       expresions with the string.Transform class"""
 
-    def __getitem__(self,key):
+    def __init__(self, *args, **kwargs):
+        self.store = dict()
+        self.update(dict(*args, **kwargs))
+
+    def __getitem__(self, key):
         try:
             return dict.__getitem__(self,key)
         except KeyError:
             try:
-                return eval(key,self)
+                return eval(self.__keytransform__(key),self)
             except Exception, e:
                 raise InterpEvalError(key,e)
+
+        return self.store[self.__keytransform__(key)]
+
+    def __setitem__(self, key, value):
+        self.store[self.__keytransform__(key)] = value
+
+    def __delitem__(self, key):
+        del self.store[self.__keytransform__(key)]
+
+    def __iter__(self):
+        return iter(self.store)
+
+    def __len__(self):
+        return len(self.store)
+
+    def __keytransform__(self, key):
+        
+        return key
 
 class BbQuiz:
     def __init__(self):
         self.quiz_data = None
+        self.quiz_namespace = None
         self.correct_answer_chars = "*^!@"
         self.randomize_answers = True
 
@@ -42,6 +75,11 @@ class BbQuiz:
 
         if isinstance( obj, dict ):
             self.quiz_data = obj
+
+        self.namespace = { 'global_vars' : self.quiz_data.get('vars',{} ) }
+        self.namespace['global_vars']['local_vars'] = []
+        for i in range(len(self.quiz_data['questions'])):
+            self.namespace['global_vars']['local_vars'].append( self.quiz_data['questions'][i].get('vars',{}) )
 
         self.interpolate()
         self.detect_question_types()
@@ -72,20 +110,18 @@ class BbQuiz:
                 question["type"] = "TF"
 
     def interpolate(self):
-        global_vars = self.quiz_data.get("vars", {})
-        for question in self.quiz_data["questions"]:
-            local_vars = question.get("vars",{})
-            subs = InterpDict( local_vars )
-            subs.update( { 'global' : global_vars}  )
-            subs.update( math.__dict__ )
-            question["text"] = Template(question["text"]).substitute(subs)
+        for i in range(len(self.quiz_data["questions"])):
+            question = self.quiz_data["questions"][i]
+            subs = EvalTemplateDict( self.namespace )
+            subs.update( self.namespace['global_vars']['local_vars'][i] )
+            question["text"] = InterpTemplate(question["text"]).substitute(subs)
 
             if isinstance( question.get("answer", None), dict):
                 for lbl in question.get("answer", {} ):
-                    question["answer"][lbl] = Template(str(question["answer"][lbl])).substitute(subs)
+                    question["answer"][lbl] = InterpTemplate(str(question["answer"][lbl])).substitute(subs)
             if isinstance( question.get("answer", None), list ):
                 for i in range(len(question.get("answer", [] ) ) ):
-                    question["answer"][i] = Template(str(question["answer"][i])).substitute(subs)
+                    question["answer"][i] = InterpTemplate(str(question["answer"][i])).substitute(subs)
 
 
 
@@ -152,7 +188,7 @@ class BbQuiz:
     def write_questions(self, filename=None):
         if not filename:
             filename = "/dev/stdout"
-        with open(filename, 'a') as f:
+        with open(filename, 'w') as f:
             for question in self.quiz_data["questions"]:
                 builder = getattr(self, "build_"+question["type"]+"_tokens")
                 q = builder(question)
@@ -167,15 +203,6 @@ if __name__ == "__main__":
         quiz.load( arg )
         quiz.write_questions(os.path.splitext(arg)[0]+".Bb")
 
-
-print "this is a(n) %(foo)s expression" % {'foo':"static", 'bar':"foober"}
-print "this is a(n) %(foo)s expression" % InterpDict( {'foo':"static", 'bar':"foober"} )
-print "this is a(n) %(1+2)s expression" % InterpDict( {'foo':"static", 'bar':"foober"} )
-print "this is a(n) %(foo+bar)s expression" % InterpDict( {'foo':"static", 'bar':"foober"} )
-print "this is a(n) %(nested['foo'])s expression" % InterpDict( {'foo':"static", 'bar':"foober", 'nested' :{ 'foo' : 'nested_static' } } )
-subs = InterpDict( {'x':10, 'foo':'static', 'bar':'foober', 'nested' :{ 'foo' : 'nested_static' }} )
-subs.update( math.__dict__ )
-print "this is a(n) calculated %(sin(x))s expression" % subs
 
 
 

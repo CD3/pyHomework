@@ -1,0 +1,30 @@
+vars:
+  module : 1
+  title : Module 01 Baseline Quiz
+questions:
+  - text: Estimate the number of free electrons in a \SI{3.1}{\gram} piece of copper.
+    answer:
+      value: 3.12e23
+      uncertainty: 5%
+    vars:
+      x : 10
+      y :
+        min : 10
+        max : 20
+
+  - text: What does the phrase ``path of lease resistance'' refer to?
+    answer:
+      a: the tendency for current to flow through resistors
+      b: ^current through parallel resistors is greater in the smaller resistor
+      c: current does as little work as possible along a path between any gwo points
+      d: high voltage will always cause high current
+    vars:
+      y : 20
+
+  - text: If you speed is $v$, and you travel for some time $t$, how far have you traveled?
+    answer:
+      formula: $x = vt$
+
+  - text: If a neutral conductor is brought close to a positivly charged insulating wall, what will happen? Explain.
+    answer:
+      idea: The conductor will be attracted to the wall because charge inside the conductor will be separated.
