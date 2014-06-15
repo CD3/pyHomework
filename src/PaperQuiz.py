@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
+from Utils import *
 import sys, os, re, random
-from string import Template
 import math
 import yaml
 import wheezy.template as wt
@@ -32,24 +32,6 @@ latex_template= r'''
 \end{document}
 '''
 
-
-class InterpEvalError(KeyError):
-    pass
-
-class InterpDict(dict):
-    def __getattr__(self,attr):
-        return self.get(attr)
-    __setattr__=dict.__setitem__
-    __delattr__=dict.__delitem__
-
-    def __getitem__(self,key):
-        try:
-            return dict.__getitem__(self,key)
-        except KeyError:
-            try:
-                return eval(key,self)
-            except Exception, e:
-                raise InterpEvalError(key,e)
 
 class PaperQuiz:
     def __init__(self):
