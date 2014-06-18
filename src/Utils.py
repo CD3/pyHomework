@@ -3,6 +3,7 @@
 from string import Template
 
 class EvalTemplate(Template):
+    delimiter = '~'
     idpattern = "[^{}]+"
 
     def substitute(self,mapping,**kws):
