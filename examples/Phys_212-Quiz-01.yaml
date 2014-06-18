@@ -1,18 +1,18 @@
 vars:
   module : 1
 questions:
-  - text: "In problem #${i}, you needed to calculate the net charge of a penny
+  - text: "In problem #~{i}, you needed to calculate the net charge of a penny
               with all of its negative charge removed. What is the net charge of the penny
               after all the negative charge has been removed? Give your answer in Coulombs.
-              (here is an example of getting data from somewhere else ${global_vars['local_vars'][i+1]['ans']})"
+              (here is an example of getting data from somewhere else ~{global_vars['local_vars'][i+1]})"
     answer:
-      value:  ${ans}
+      value:  ~{ans}
       uncertainty: 1%
     vars:
       i : 1
       ans : 1.36e5
 
-  - text: "In problem #${i}, what was the force you calculated? Give your answer in Newtons."
+  - text: "In problem #~{i}, what was the force you calculated? Give your answer in Newtons."
     answer:
       value: 4.3556
       uncertainty: 1%
@@ -20,7 +20,7 @@ questions:
       i : 1
       ans : 1.03e6
 
-  - text: "In problem #${i}, are electrons transferred to the carpet, or to the child?"
+  - text: "In problem #~{i}, are electrons transferred to the carpet, or to the child?"
     answer:
       a: to the child
       b: ^to the carpet
@@ -28,14 +28,14 @@ questions:
     vars:
       i : 1
 
-  - text: "In problem #${i}, what is the total charge you calculated? Give your answer in Coulombs."
+  - text: "In problem #~{i}, what is the total charge you calculated? Give your answer in Coulombs."
     answer:
       value:      -1.60e-13
       uncertainty: 0.01e-13
     vars:
       i : 3
 
-  - text: "In problem #${i}, assume that the electron and proton are separated by 0.50 m.
+  - text: "In problem #~{i}, assume that the electron and proton are separated by 0.50 m.
            What is the magnitude of the electrostatic force between the proton and electron?
            Give your answer in Newtons."
     answer:
@@ -44,7 +44,7 @@ questions:
     vars:
       i: 10
 
-  - text: "In problem #${i}, is it possible to place the electron and proton
+  - text: "In problem #~{i}, is it possible to place the electron and proton
           some distance appart such that the force of gravity is stronger than
           the electrostatic force?"
     answer:
@@ -55,7 +55,7 @@ questions:
     vars:
       i: 10
 
-  - text: "In problem #${i}, how much charge was placed on the first sphere during the induction process?
+  - text: "In problem #~{i}, how much charge was placed on the first sphere during the induction process?
            Give your answer in Coulombs."
     answer: 
       value: 4.72e-8
@@ -76,7 +76,7 @@ questions:
       - two
       - three
       - four
-      - ${misdirect}
+      - ~{misdirect}
     vars:
       misdirect : five
 

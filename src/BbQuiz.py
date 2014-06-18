@@ -62,19 +62,56 @@ class BbQuiz:
             if isinstance( question.get("answer", None), bool ):
                 question["type"] = "TF"
 
-    def interpolate(self):
-        for i in range(len(self.quiz_data["questions"])):
-            question = self.quiz_data["questions"][i]
-            subs = EvalTemplateDict( self.namespace )
-            subs.update( self.namespace['global_vars']['local_vars'][i] )
-            question["text"] = EvalTemplate(question["text"]).substitute(subs)
+    def interpolate(self, tree = None, subs = None):
+        '''Interpolate variable references in entire document.
+           We interpolate all strings in the document, but only interpolate
+           from variables defined under var nodes.'''
 
-            if isinstance( question.get("answer", None), dict):
-                for lbl in question.get("answer", {} ):
-                    question["answer"][lbl] = EvalTemplate(str(question["answer"][lbl])).substitute(subs)
-            if isinstance( question.get("answer", None), list ):
-                for i in range(len(question.get("answer", [] ) ) ):
-                    question["answer"][i] = EvalTemplate(str(question["answer"][i])).substitute(subs)
+        if tree == None:
+            tree = self.quiz_data
+            subs = EvalTemplateDict( self.namespace )
+            subs.update( self.namespace['global_vars'] )
+            for k in tree:
+                if isinstance( tree[k], str ):
+                    tree[k] = EvalTemplate(tree[k]).substitute(subs)
+
+                if k != "questions":
+                    self.interpolate( tree[k], subs )
+
+            for i in range(len(self.quiz_data["questions"])):
+                question = self.quiz_data["questions"][i]
+                subs = EvalTemplateDict( self.namespace )
+                subs.update( self.namespace['global_vars']['local_vars'][i] )
+
+                self.interpolate( question, subs )
+        else:
+            if isinstance(tree, dict):
+                for k in tree:
+                    if isinstance( tree[k], str ):
+                        tree[k] = EvalTemplate(tree[k]).substitute(subs)
+                    else:
+                        self.interpolate(tree[k],subs)
+
+            elif isinstance(tree, list):
+                for i in range(len(tree)):
+                    if isinstance( tree[i], str ):
+                        tree[i] = EvalTemplate(tree[i]).substitute(subs)
+                    else:
+                        self.interpolate(tree[i],subs)
+
+    #def interpolate(self):
+        #for i in range(len(self.quiz_data["questions"])):
+            #question = self.quiz_data["questions"][i]
+            #subs = EvalTemplateDict( self.namespace )
+            #subs.update( self.namespace['global_vars']['local_vars'][i] )
+            #question["text"] = EvalTemplate(question["text"]).substitute(subs)
+
+            #if isinstance( question.get("answer", None), dict):
+                #for lbl in question.get("answer", {} ):
+                    #question["answer"][lbl] = EvalTemplate(str(question["answer"][lbl])).substitute(subs)
+            #if isinstance( question.get("answer", None), list ):
+                #for i in range(len(question.get("answer", [] ) ) ):
+                    #question["answer"][i] = EvalTemplate(str(question["answer"][i])).substitute(subs)
 
 
 
