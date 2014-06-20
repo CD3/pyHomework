@@ -8,7 +8,7 @@ questions:
 
   - text: Estimate the number of free electrons in a \SI{3.1}{\gram} piece of copper ( x = ~{x}).
     answer:
-      value: "@{x}"
+      value: ~{x}
       uncertainty: 5%
     vars:
       x : 10
@@ -25,10 +25,11 @@ questions:
     vars:
       y : 20
 
+  - text: If a neutral conductor is brought close to a positivly charged insulating wall, what will happen? Explain.
+    answer:
+      idea: The conductor will be attracted to the wall because charge inside the conductor will be separated.
+
   - text: If you speed is $v$, and you travel for some time $t$, how far have you traveled?
     answer:
       formula: $x = vt$
 
-  - text: If a neutral conductor is brought close to a positivly charged insulating wall, what will happen? Explain.
-    answer:
-      idea: The conductor will be attracted to the wall because charge inside the conductor will be separated.

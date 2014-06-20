@@ -14,7 +14,7 @@ from wheezy.template.loader import DictLoader
 latex_template= r'''
 @require(title,questions)
 \documentclass[letterpaper,10pt]{article}
-\uepackage{amsmath}
+\usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{graphicx}
@@ -28,13 +28,27 @@ latex_template= r'''
 
 \begin{enumerate}
 @for question in questions:
-    \item @question['text']
+    \item @question['tex']
     @if question['type'] == "SA":
-    \vspace{2in}
+    \vspace{1in}
+    @question['answer']['tex']!saa
+    \vspace{1in}
+    @end
+    @if question['type'] == "FORMULA":
+    \vspace{1in}
+    @question['answer']['tex']!fa
+    \vspace{1in}
+    @end
+    @if question['type'] == "NUM":
+    \vspace{1in}
+    @question['answer']['tex']!na
+    \vspace{1in}
     @end
     @if question['type'] == "MC":
     \begin{enumerate}
-        \item answer
+        @for lbl,answer in question['answer'].iteritems():
+        \item @answer!mca
+        @end
     \end{enumerate}
     @end
 @end
@@ -50,10 +64,15 @@ class PaperQuiz:
         self.quiz_namespace = None
         self.correct_answer_chars = "*^!@"
         self.randomize_answers = True
+        self.show_answers      = True
         self.questions_answers = True
         self.template_engine = Engine( loader=DictLoader( {'doc': latex_template} )
                                      , extensions=[CoreExtension()] )
 
+        self.template_engine.global_vars.update({'mca' : self.filter_multiple_choice_answer})
+        self.template_engine.global_vars.update({'saa' : self.filter_short_answer__answer})
+        self.template_engine.global_vars.update({ 'fa' : self.filter_formula_answer})
+        self.template_engine.global_vars.update({ 'na' : self.filter_numerical_answer})
         
 
     def load(self, obj):
@@ -77,9 +96,9 @@ class PaperQuiz:
             
         self.interpolate()
         self.detect_question_types()
+        self.format_answers()
 
     def detect_question_types(self):
-
         for question in self.quiz_data["questions"]:
             if isinstance( question.get("answer", None), dict):
                 if "value" in question.get("answer", {}):
@@ -89,10 +108,27 @@ class PaperQuiz:
                         question["type"] = "MC"
 
                 if "formula" in question.get("answer", {}):
-                        question["type"] = "FORM"
+                        question["type"] = "FORMULA"
 
                 if "idea" in question.get("answer", {}):
                         question["type"] = "SA"
+
+    def format_answers(self):
+        for question in self.quiz_data["questions"]:
+            if isinstance( question.get("answer", None), dict):
+                if question["type"] == "NUM":
+                    if "value" in question["answer"]:
+                        question["answer"]["tex"] = question["answer"]["value"]
+                        if "uncertainty" in question["answer"]:
+                            question["answer"]["tex"] += " \pm "
+                            question["answer"]["tex"] += question["answer"]["uncertainty"]
+
+                if question["type"] == "FORMULA":
+                    if "formula" in question["answer"]:
+                        question["answer"]["tex"] = question["answer"]["formula"]
+                if question["type"] == "SA":
+                    if "idea" in question["answer"]:
+                        question["answer"]["tex"] = question["answer"]["idea"]
 
     def interpolate(self, tree = None, subs = None):
         '''Interpolate variable references in entire document.
@@ -131,8 +167,36 @@ class PaperQuiz:
                     else:
                         self.interpolate(tree[i],subs)
                     
-                    
 
+                    
+    # filters
+    def filter_multiple_choice_answer( self, obj ):
+        if isinstance( obj, str ):
+            if( self.correct_answer_chars.find( obj[0] ) >= 0 ):
+                if self.show_answers:
+                    obj = "*"+obj[1:]
+                else:
+                    obj = obj[1:]
+
+        return obj
+
+    def filter_numerical_answer( self, obj ):
+        if isinstance( obj, str ):
+            if not self.show_answers:
+                obj = ""
+        return obj
+
+    def filter_formula_answer( self, obj ):
+        if isinstance( obj, str ):
+            if not self.show_answers:
+                obj = ""
+        return obj
+
+    def filter_short_answer__answer( self, obj ):
+        if isinstance( obj, str ):
+            if not self.show_answers:
+                obj = ""
+        return obj
 
 
     def write_questions(self, filename=None):
