@@ -3,10 +3,10 @@
 from Utils import *
 import sys, os, re, random
 import math
-import yaml, wheezy.template, asteval
+import yaml #, wheezy.template, asteval
 import collections
 
-testing = 1
+testing = 0
 
 
 class BbQuiz:
@@ -38,8 +38,9 @@ class BbQuiz:
         self.detect_question_types()
 
     def detect_question_types(self):
+        qnum = 0
         for question in self.quiz_data["questions"]:
-
+            qnum += 1
             if isinstance( question.get("answer", None), dict):
                 if "value" in question.get("answer", {}):
                     question["type"] = "NUM"
@@ -50,7 +51,8 @@ class BbQuiz:
                         if( self.correct_answer_chars.find( question["answer"][lbl][0] ) >= 0 ):
                             num += 1
                     if( num == 0 ):
-                        pass
+                        print "WARNING: question "+str(qnum)+" appears to be a multiple-choice question, but correct answer was selected."
+                        question["type"] = "MC"
                     elif( num == 1 ):
                         question["type"] = "MC"
                     else:
@@ -153,11 +155,17 @@ class BbQuiz:
         entry.append( "NUM" )
         entry.append( q["text"] ) 
         entry.append( '{:.2E}'.format(float(q["answer"]["value"])) ) 
-        tol = q["answer"]["uncertainty"]
+
+        if "uncertainty" in q["answer"]:
+            tol = q["answer"]["uncertainty"]
+        else:
+            tol = "1%"
+
         if isinstance(tol, str) and tol.find("%") >= 0:
             tol = float(tol.replace("%",""))/100.
             tol = tol*float(q["answer"]["value"])
 
+        tol = abs(tol)
         entry.append( '{:.2E}'.format(float(tol) ) )
 
         return entry

@@ -70,12 +70,12 @@ questions:
     text: 'In problem #7a, what is the magnitude of the force you calculated? Give your answer in N.'
   -
     answer:
-      a: 0
-      b: 1
-      c: 2
+      a: '0'
+      b: '1'
+      c: '2'
       d: '^3'
-      e: 5
-      f: 6
+      e: '5'
+      f: '6'
     text: 'In problem #8, how many forces should your free body diagram for one pithball include?'
   -
     answer:
