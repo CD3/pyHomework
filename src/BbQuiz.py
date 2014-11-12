@@ -11,83 +11,7 @@ sys.path.append("../externals/pyoptiontree")
 import pyoptiontree
 
 
-yaml.Resolver.add_path_resolver( u'tag:yaml.org,20002:float', re.compile(""))
-
-testing = 1
-
-class Flattener:
-    def __init__( self, ns = "", delim=".", allow_empty_ns=False, allow_leading_delim=False ):
-        self.ns = ns
-        self.delim = delim
-        self.allow_empty_ns = allow_empty_ns
-        self.allow_leading_delim = allow_leading_delim
-
-    def __call__( self, obj ):
-        return Flattener.flatten( obj, ns=self.ns, delim=self.delim, allow_empty_ns=self.allow_empty_ns, allow_leading_delim=self.allow_leading_delim )
-
-    def clean_key( self, key ):
-        if not self.allow_leading_delim:
-            key = key.lstrip(self.delim)
-
-        if not self.allow_empty_ns:
-            clean_key = key.replace( self.delim+self.delim, self.delim )
-            while clean_key != key:
-                key = clean_key
-                clean_key = key.replace( self.delim+self.delim, self.delim )
-        return key
-
-    def get_absolute_key( self, key ):
-        keys = list()
-        for key in key.split(self.delim):
-            if key == '..':
-                keys.pop()
-                continue
-
-            if key != '.':
-                keys.append( key )
-
-        return self.construct_key( keys )
-
-
-    def get_parent_key( self, key ):
-        return self.construct_key( key.split(self.delim)[:-1] )
-
-
-    def construct_key( self, keys ):
-        if type(keys) == list:
-            return self.delim.join(keys)
-
-        return keys
-
-    @staticmethod
-    def flatten( obj, ns="", delim=".", allow_empty_ns=False, allow_leading_delim=False ):
-        '''
-        Flattens a nested object into a single dictionary. Keys for the resultant dictionary are created
-        by concatenating all keys required to access the element5 from the top.
-
-        dict and list ojbects are flattened. all other objects are left as is.
-        '''
-
-        ret  = dict()
-        if type(obj) == dict:
-            for k in obj.keys():
-                nns = ns + delim + k
-                ret.update( Flattener.flatten( obj[k], ns=nns, delim=delim, allow_empty_ns=allow_empty_ns, allow_leading_delim=allow_leading_delim ) )
-            return ret
-            
-        if type(obj) == list:
-            for i in range(len(obj)):
-                nns = ns + delim + str(i)
-                ret.update( Flattener.flatten( obj[i], ns=nns, delim=delim, allow_empty_ns=allow_empty_ns, allow_leading_delim=allow_leading_delim ) )
-            return ret
-
-        f = Flattener( ns, delim, allow_empty_ns, allow_leading_delim )
-        ns = f.clean_key( ns )
-
-        ret[ns] = obj
-        
-        return ret
-
+testing = 0
 
 class BbQuiz:
     def __init__(self):
@@ -95,6 +19,7 @@ class BbQuiz:
         self.quiz_namespace = None
         self.correct_answer_chars = "*^!@"
         self.randomize_answers = True
+        self.latex_labels = LatexLabels()
 
         
 
@@ -104,25 +29,26 @@ class BbQuiz:
                 with open(obj) as f:
                     self.quiz_data = yaml.load( f )
 
-                    print self.quiz_data
                     tmp = ""
                     for (key,val) in Flattener.flatten(self.quiz_data, "", "/").items():
-                        if isinstance(val,str):
-                            print float(val)
-                            val = "'"+val+"'"
-                        tmp += str(key)+"="+str(val)+"\n"
+                        tmp += str(key)+"='"+str(val)+"'\n"
                     self.quiz_tree = pyoptiontree.PyOptionTree()
                     self.quiz_tree.addString( tmp )
-
-                    print self.quiz_tree
             else:
                 raise IOError( "argument %s does not seem to be a file" % arg )
-
 
         if isinstance( obj, dict ):
             self.quiz_data = obj
 
+        print self.quiz_tree
+
+        if 'latex' in self.quiz_data:
+            if 'aux' in self.quiz_data['latex']:
+                aux_file =  os.path.join( os.path.dirname(obj), self.quiz_data['latex']['aux']  )
+                self.latex_labels.parse( aux_file )
+
         self.namespace = { 'global_vars' : self.quiz_data.get('vars',{} ) }
+        self.namespace['global_vars'].update( self.latex_labels )
         self.namespace['global_vars']['local_vars'] = []
         for i in range(len(self.quiz_data['questions'])):
             self.namespace['global_vars']['local_vars'].append( self.quiz_data['questions'][i].get('vars',{}) )
