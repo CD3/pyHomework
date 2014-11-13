@@ -13,6 +13,35 @@ import pyoptiontree
 
 testing = 0
 
+def FindPairs( s, beg_str, end_str):
+    curr = 0
+
+    pairs = list()
+    run = True
+    while run:
+        opair = None
+        curr = s.find( beg_str, curr )
+        beg = curr
+        curr = s.find( end_str, curr )
+        end = curr
+        if beg > 0 and end > 0:
+            opair = [beg,end]
+
+        if opair:
+            ipair = [
+            opair[0] + len(beg_str)
+           ,opair[1] - len(end_str)
+            ]
+
+            pairs.append( [opair,ipair] )
+
+        else:
+            run = False
+
+    return pairs
+
+
+
 class BbQuiz:
     def __init__(self):
         self.quiz_data = None
@@ -40,7 +69,8 @@ class BbQuiz:
         if isinstance( obj, dict ):
             self.quiz_data = obj
 
-        print self.quiz_tree
+        self.interp(self.quiz_tree)
+        sys.exit(0)
 
         if 'latex' in self.quiz_data:
             if 'aux' in self.quiz_data['latex']:
@@ -53,6 +83,7 @@ class BbQuiz:
         for i in range(len(self.quiz_data['questions'])):
             self.namespace['global_vars']['local_vars'].append( self.quiz_data['questions'][i].get('vars',{}) )
 
+        self.interpolate(self.quiz_tree)
         self.interpolate()
         self.detect_question_types()
 
@@ -82,6 +113,27 @@ class BbQuiz:
 
             if isinstance( question.get("answer", None), bool ):
                 question["type"] = "TF"
+
+    def interp(self, tree):
+        for (name,branch) in tree.items():
+            if isinstance( branch, str ):
+                pairs = FindPairs(branch, '${','}')
+                for i in range(len(pairs)):
+                    pair = pairs[i]
+                    link = branch[ pair[1][0]:pair[1][1]+1 ]
+                    repl = tree( link )
+                    branch = branch[:pair[0][0]] + repl + branch[pair[0][1]+1:]
+
+                    shift = (pair[0][1]+1 - pair[0][0]) - len(repl)
+                    for j in range(i+1,len(pairs)):
+                        pairs[j][0][0] -= shift
+                        pairs[j][0][1] -= shift
+                        pairs[j][1][0] -= shift
+                        pairs[j][1][1] -= shift
+
+
+            elif isinstance( branch, pyoptiontree.PyOptionTree):
+                self.interp(branch)
 
     def interpolate(self, tree = None, subs = None):
         '''Interpolate variable references in entire document.
@@ -119,20 +171,6 @@ class BbQuiz:
                         tree[i] = EvalTemplate(tree[i]).substitute(subs)
                     else:
                         self.interpolate(tree[i],subs)
-
-    #def interpolate(self):
-        #for i in range(len(self.quiz_data["questions"])):
-            #question = self.quiz_data["questions"][i]
-            #subs = EvalTemplateDict( self.namespace )
-            #subs.update( self.namespace['global_vars']['local_vars'][i] )
-            #question["text"] = EvalTemplate(question["text"]).substitute(subs)
-
-            #if isinstance( question.get("answer", None), dict):
-                #for lbl in question.get("answer", {} ):
-                    #question["answer"][lbl] = EvalTemplate(str(question["answer"][lbl])).substitute(subs)
-            #if isinstance( question.get("answer", None), list ):
-                #for i in range(len(question.get("answer", [] ) ) ):
-                    #question["answer"][i] = EvalTemplate(str(question["answer"][i])).substitute(subs)
 
 
 
