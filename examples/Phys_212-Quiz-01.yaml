@@ -1,84 +1,34 @@
 vars:
   module : 1
+latex:
+  aux: main.aux
 questions:
-  - text: "In problem #~{i}, you needed to calculate the net charge of a penny
-              with all of its negative charge removed. What is the net charge of the penny
-              after all the negative charge has been removed? Give your answer in Coulombs.
-              (here is an example of getting data from somewhere else ~{global_vars['local_vars'][i+1]})"
+  - text: "In problem #${vars/i}, you needed to calculate the net charge of a penny"
     answer:
-      value:  ~{ans}
+      value:  ${../vars/ans}
       uncertainty: 1%
     vars:
-      i : 1
+      j : 10
+      i : 2
       ans : 1.36e5
 
-  - text: "In problem #~{i}, what was the force you calculated? Give your answer in Newtons."
+  - text: "MA question"
     answer:
-      value: 4.3556
-      uncertainty: 1%
-    vars:
-      i : 1
-      ans : 1.03e6
+      a : "^one"
+      b : "two"
+      c : "^three"
 
-  - text: "In problem #~{i}, are electrons transferred to the carpet, or to the child?"
+  - text: "MC question"
     answer:
-      a: to the child
-      b: ^to the carpet
-      c: neither
-    vars:
-      i : 1
+      a : "^one"
+      b : "two"
+      c : "three"
 
-  - text: "In problem #~{i}, what is the total charge you calculated? Give your answer in Coulombs."
+  - text: "ORD question"
     answer:
-      value:      -1.60e-13
-      uncertainty: 0.01e-13
-    vars:
-      i : 3
+      -  "first"
+      -  "second"
+      -  "third"
 
-  - text: "In problem #~{i}, assume that the electron and proton are separated by 0.50 m.
-           What is the magnitude of the electrostatic force between the proton and electron?
-           Give your answer in Newtons."
-    answer:
-      value: 9.23e-28
-      uncertainty: 0.01e-28
-    vars:
-      i: 10
-
-  - text: "In problem #~{i}, is it possible to place the electron and proton
-          some distance appart such that the force of gravity is stronger than
-          the electrostatic force?"
-    answer:
-      a: ^No, the ratio of the magnitude of the two forces does not depend on their separation distance. 
-      b: Yes, if the proton and electron are brought very close together, the force of gravity will be larger. 
-      c: Yes, if the proton and electron are separated by a very large distance, the force of gravity will be larger. 
-      d: Yes, for short and long distances the electrostaitc force is greater, for for medium ranges, the force of gravity will be larger. 
-    vars:
-      i: 10
-
-  - text: "In problem #~{i}, how much charge was placed on the first sphere during the induction process?
-           Give your answer in Coulombs."
-    answer: 
-      value: 4.72e-8
-      uncertainty: 0.01e-8
-    vars:
-      i: 10
-
-  - text: This is a multi-answer question.
-    answer:
-      a: ^correct
-      b: incorrect
-      c: ^correct
-      d: incorrect
-
-  - text: This is a ordering question.
-    answer:
-      - one
-      - two
-      - three
-      - four
-      - ~{misdirect}
-    vars:
-      misdirect : five
-
-  - text: Is this question true/false?
+  - text: "TF question"
     answer: false
