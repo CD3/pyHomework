@@ -147,5 +147,6 @@ class LatexLabels(dict):
 
             tag = tag.strip()
 
-            self[label] = tag
+            
+            self[label.replace(":","_")] = tag
 

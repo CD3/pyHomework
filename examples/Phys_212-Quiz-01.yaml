@@ -3,7 +3,7 @@ vars:
 latex:
   aux: main.aux
 questions:
-  - text: "In problem #${vars/i}, you needed to calculate the net charge of a penny"
+  - text: "In problem #${/vars/prob_loop_near_wire}, you needed to calculate the net charge of a penny"
     answer:
       value:  ${../vars/ans}
       uncertainty: 1%

@@ -41,8 +41,8 @@ def interpolate(self, fromtree = None):
 
                 if branch != orig:
                   pass
-                # recursive interpolation is going to be tricky here
-                    #self.interpolate( fromtree(link + "/.." ) )
+                  # recursive interpolation is going to be tricky here. not ready yet.
+                  #self.interpolate( fromtree(link + "/.." ) )
 
         elif isinstance( branch, pyoptiontree.PyOptionTree):
             branch.interpolate()
@@ -102,6 +102,11 @@ class BbQuiz:
                 aux_file =  os.path.join( os.path.dirname(obj), self.quiz_tree['latex']['aux']  )
                 self.latex_labels.parse( aux_file )
 
+        for key in self.latex_labels:
+          pass
+
+        self.quiz_tree['vars'].update( self.latex_labels )
+
         
         tmp = ""
         for (key,val) in Flattener.flatten(self.quiz_tree, "", "/").items():
@@ -111,6 +116,8 @@ class BbQuiz:
         self.quiz_tree.interpolate()
 
         self.detect_question_types()
+
+        print self.quiz_tree
 
     def detect_question_types(self):
         def isBool(v):
@@ -150,7 +157,6 @@ class BbQuiz:
             # the answer is a bool, so the question is True/False
             if isBool( question.get("answer", None) ):
                 question.set("type", "TF")
-
 
 
 
