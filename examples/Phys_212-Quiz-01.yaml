@@ -1,5 +1,3 @@
-vars:
-  module : 1
 latex:
   aux: main.aux
 questions:

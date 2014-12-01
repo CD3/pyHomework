@@ -105,6 +105,8 @@ class BbQuiz:
         for key in self.latex_labels:
           pass
 
+        if not 'vars' in self.quiz_tree:
+          self.quiz_tree['vars'] = dict()
         self.quiz_tree['vars'].update( self.latex_labels )
 
         
@@ -116,8 +118,6 @@ class BbQuiz:
         self.quiz_tree.interpolate()
 
         self.detect_question_types()
-
-        print self.quiz_tree
 
     def detect_question_types(self):
         def isBool(v):

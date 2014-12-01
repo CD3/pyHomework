@@ -1,5 +1,5 @@
-MA	MA question	three	correct	one	correct	two	incorrect
+MA	MA question	one	correct	two	incorrect	three	correct
 NUM	In problem #11, you needed to calculate the net charge of a penny	1.36E+05	1.36E+03
 ORD	ORD question	first	second	third
-MC	MC question	three	incorrect	two	incorrect	one	correct
+MC	MC question	one	correct	three	incorrect	two	incorrect
 TF	TF question	true
