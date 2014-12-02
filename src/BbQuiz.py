@@ -132,11 +132,10 @@ class BbQuiz:
                 if question.get("answer").get("value", None):
                     question.set("type", "NUM")
 
-                # if the answer has an element named "a", then the question is multiple choice
-                if question.get("answer").get("a", None):
-
+                # if the answer has an element named "choices", then the question is multiple choice
+                if question.get("answer").get("choices", None):
                     num_correct_answers = 0
-                    for (lbl,ans) in question.get("answer").items():
+                    for (lbl,ans) in question.get("answer").get("choices").items():
                         if( self.correct_answer_chars.find( ans[0] ) >= 0 ):
                             num_correct_answers += 1
 
@@ -149,8 +148,8 @@ class BbQuiz:
                         question.set("type","MA")
 
 
-                # if the answer has an element named "0", then the question is an ordering question
-                if question.get("answer").get("0", None):
+                # if the answer has an element named "ordered", then the question is an ordering question
+                if question.get("answer").get("ordered", None):
                   question.set("type", "ORD")
 
 
@@ -164,11 +163,11 @@ class BbQuiz:
         entry = []
         entry.append( "MC" )
         entry.append( q.get("text") ) 
-        lbls = sorted( q.get("answer").leafList() )
+        lbls = sorted( q.get("answer").get("choices").leafList() )
         if self.randomize_answers:
             random.shuffle(lbls)
         for lbl in lbls:
-            answer = q.get("answer").get(lbl)
+            answer = q.get("answer").get("choices").get(lbl)
             if( self.correct_answer_chars.find( answer[0] ) >= 0 ):
                 entry.append( answer[1:] )
                 entry.append( "correct" )
@@ -190,9 +189,9 @@ class BbQuiz:
         entry.append( q.get("text") ) 
         # lists are stored in the tree keyed on the array index, which is a string.
         # so, we need to make sure and sort them to get the correct order
-        lbls = sorted( q.get("answer").leafList() )
+        lbls = sorted( q.get("answer").get("ordered").leafList() )
         for lbl in lbls:
-            entry.append( q.get("answer").get(lbl) )
+            entry.append( q.get("answer").get("ordered").get(lbl) )
 
         return entry
 

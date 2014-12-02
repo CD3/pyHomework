@@ -12,21 +12,24 @@ questions:
 
   - text: "MA question"
     answer:
-      a : "^one"
-      b : "two"
-      c : "^three"
+      choices:
+        - "^one"
+        - "two"
+        - "^three"
 
   - text: "MC question"
     answer:
-      a : "^one"
-      b : "two"
-      c : "three"
+      choices:
+       - "^one"
+       - "two"
+       - "three"
 
   - text: "ORD question"
     answer:
-      -  "first"
-      -  "second"
-      -  "third"
+      ordered:
+        -  "first"
+        -  "second"
+        -  "third"
 
   - text: "TF question"
     answer: false
