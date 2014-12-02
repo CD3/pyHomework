@@ -148,5 +148,10 @@ class LatexLabels(dict):
             tag = tag.strip()
 
             
-            self[label.replace(":","_")] = tag
+            # the pyoptiontree is sensitive to non-alpha numeric characters in the keys
+            # so we will just replace all special characters with an underscore
+            key = label
+            key = key.replace(":","_")
+            key = key.replace("@","_")
+            self[key] = tag
 

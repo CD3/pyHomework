@@ -49,6 +49,21 @@ def interpolate(self, fromtree = None):
 
 pyoptiontree.PyOptionTree.__dict__['interpolate'] = interpolate
 
+def toBool( v ):
+    if isinstance(v,str):
+      isTrue  = str(v).lower() in ('true', 'yes','1')
+      isFalse = str(v).lower() in ('false','no','0')
+
+      if isTrue:
+          return True
+      if isFalse:
+          return False
+
+    if isinstance(v,int):
+        return not v == 0
+
+    return False
+
 
 def FindPairs( s, beg_str, end_str):
     curr = 0
@@ -124,6 +139,7 @@ class BbQuiz:
           return str(v).lower() in ('true', 'yes','false','no','0','1')
 
         for (qnum,question) in self.quiz_tree("questions").items():
+            qnum = int(qnum) + 1
 
             # if the question has an answer that is a subtree, we need to figure out what kind of question it is
             if isinstance( question.get("answer", None), pyoptiontree.PyOptionTree):
@@ -233,7 +249,15 @@ class BbQuiz:
         if not filename:
             filename = "/dev/stdout"
         with open(filename, 'w') as f:
-            for (qnum,question) in self.quiz_tree("questions").items():
+            branches = self.quiz_tree("questions").branchList()
+            branches.sort(key=float)
+            for i in branches:
+                if self.quiz_tree("questions").get(i).get("enabled", None):
+                    if not toBool( self.quiz_tree("questions").get(i).get("enabled") ):
+                        continue
+
+                qnum = int(i) + 1
+                question = self.quiz_tree("questions").get(i)
                 builder = getattr(self, "build_"+question.get("type")+"_tokens")
                 q = builder(question)
                 f.write("\t".join(q)+"\n")
