@@ -1,7 +1,7 @@
 latex:
   aux: main.aux
 questions:
-  - text: "1 - In problem #${/vars/prob_loop_near_wire}, you needed to calculate the net charge of a penny"
+  - text: "1 - In problem #${/vars/prob_avg_emf}, you needed to calculate the net charge of a penny"
     answer:
       value:  ${../vars/ans}
       uncertainty: 1%
@@ -10,7 +10,7 @@ questions:
       i : 2
       ans : 1.36e5
 
-  - text: "2 - MA question"
+  - text: "2 - MA question, #${/vars/prob_avg_emf_a} - ${/vars/prob_avg_emf_b}"
     answer:
       choices:
         - "^one"

@@ -1,7 +1,11 @@
 #! /usr/bin/env python
 
 from string import Template
-import re
+import re, os, yaml
+import collections
+import sys
+sys.path.append("../externals/pyoptiontree")
+import pyoptiontree
 
 class EvalTemplate(Template):
     delimiter = '~'
@@ -138,7 +142,7 @@ class LatexLabels(dict):
             data = file.read()
         
         r  = re.compile("\\\\newlabel\{([^\}]+)\}\{\{([^\}]+)\}\{([^\}]+)\}\}")
-        rr = re.compile("\\\\bgroup\s*([0-9]+)\s*\\\\egroup")
+        rr = re.compile("\\\\bgroup\s*([0-9a-zA-Z]+)\s*\\\\egroup")
         for match in r.findall( data ):
             (label,tag,page) = match
             match = rr.search(tag)
@@ -154,4 +158,128 @@ class LatexLabels(dict):
             key = key.replace(":","_")
             key = key.replace("@","_")
             self[key] = tag
+
+def toBool( v ):
+    if isinstance(v,str):
+      isTrue  = str(v).lower() in ('true', 'yes','1')
+      isFalse = str(v).lower() in ('false','no','0')
+
+      if isTrue:
+          return True
+      if isFalse:
+          return False
+
+    if isinstance(v,int):
+        return not v == 0
+
+    return False
+
+def isBool(v):
+  return str(v).lower() in ('true', 'yes','false','no','0','1')
+
+def FindPairs( s, beg_str, end_str):
+    curr = 0
+
+    pairs = list()
+    run = True
+    while run:
+        opair = None
+        curr = s.find( beg_str, curr )
+        beg = curr
+        curr = s.find( end_str, curr )
+        end = curr
+        if beg >= 0 and end > 0:
+            opair = [beg,end]
+
+        if opair:
+            ipair = [
+            opair[0] + len(beg_str)
+           ,opair[1] - len(end_str)
+            ]
+
+            pairs.append( [opair,ipair] )
+
+        else:
+            run = False
+
+    return pairs
+
+class Quiz:
+    def __init__(self):
+        self.quiz_tree = None
+        self.quiz_namespace = None
+        self.correct_answer_chars = "*^!@"
+        self.randomize_answers = True
+        self.latex_labels = LatexLabels()
+
+    def load(self, obj):
+        if isinstance( obj, str ):
+            if os.path.isfile( obj ):
+                with open(obj) as f:
+                    self.quiz_tree = yaml.load( f )
+            else:
+                raise IOError( "argument %s does not seem to be a file" % arg )
+
+        if isinstance( obj, dict ):
+            self.quiz_tree = obj
+
+
+        if 'latex' in self.quiz_tree:
+            if 'aux' in self.quiz_tree['latex']:
+                aux_file =  os.path.join( os.path.dirname(obj), self.quiz_tree['latex']['aux']  )
+                self.latex_labels.parse( aux_file )
+
+        for key in self.latex_labels:
+          pass
+
+        if not 'vars' in self.quiz_tree:
+          self.quiz_tree['vars'] = dict()
+        self.quiz_tree['vars'].update( self.latex_labels )
+
+        
+        tmp = ""
+        for (key,val) in Flattener.flatten(self.quiz_tree, "", "/").items():
+            tmp += str(key)+"='"+str(val)+"'\n"
+        self.quiz_tree = pyoptiontree.PyOptionTree()
+        self.quiz_tree.addString( tmp )
+        self.quiz_tree.interpolate()
+
+        self.detect_question_types()
+
+    def detect_question_types(self):
+        for (qnum,question) in self.quiz_tree("questions").items():
+            qnum = int(qnum) + 1
+
+            # if the question has an answer that is a subtree, we need to figure out what kind of question it is
+            if isinstance( question.get("answer", None), pyoptiontree.PyOptionTree):
+
+                # if the answer has an element named "value", then the question is numerical
+                if question.get("answer").get("value", None):
+                    question.set("type", "NUM")
+
+                # if the answer has an element named "choices", then the question is multiple choice
+                if question.get("answer").get("choices", None):
+                    num_correct_answers = 0
+                    for (lbl,ans) in question.get("answer").get("choices").items():
+                        if( self.correct_answer_chars.find( ans[0] ) >= 0 ):
+                            num_correct_answers += 1
+
+                    if( num_correct_answers == 0 ):
+                        print "WARNING: question "+str(qnum)+" appears to be a multiple-choice question, but correct answer was selected."
+                        question.set("type", "MC")
+                    elif( num_correct_answers == 1 ):
+                        question.set("type","MC")
+                    else:
+                        question.set("type","MA")
+
+
+                # if the answer has an element named "ordered", then the question is an ordering question
+                if question.get("answer").get("ordered", None):
+                  question.set("type", "ORD")
+
+
+            # the answer is a bool, so the question is True/False
+            if isBool( question.get("answer", None) ):
+                question.set("type", "TF")
+
 
