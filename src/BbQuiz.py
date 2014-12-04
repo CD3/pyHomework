@@ -7,6 +7,7 @@ import yaml #, wheezy.template, asteval
 import collections
 from dpath import util
 import pprint
+import urlparse
 
 import sys
 sys.path.append("../externals/pyoptiontree")
@@ -137,6 +138,26 @@ class BbQuiz(Quiz):
                 builder = getattr(self, "build_"+question.get("type")+"_tokens")
                 q = builder(question)
                 f.write("\t".join(q)+"\n")
+                if question.get("graphic",None):
+                    self.push_graphic( question.get("graphic") )
+
+    def push_graphic(self, element):
+
+        data = dict()
+
+        data['file'] = element.get("file", None)
+        link = urlparse.urlparse( element.get("link", "") )
+
+        data['user'] = 'cdclark'
+        data['host'] = link.netloc
+        data['path'] = link.path.replace('/~cclark','./public_html')
+
+        cmd = 'scp "%(file)s" "%(user)s@%(host)s:%(path)s" > /dev/null' % data
+
+        print "found file/link pair. copying file to server with '%s'." % cmd
+        os.system( cmd )
+        
+
 
 
 
