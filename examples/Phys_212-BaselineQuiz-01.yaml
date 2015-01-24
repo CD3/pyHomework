@@ -1,35 +1,16 @@
-title : ~{global_vars['title']}
-
-vars:
-  module : 2
-  title: Module ~{module} Quiz
+title : "Phys 677 - Reading Quiz 1"
 
 questions:
-
-  - text: Estimate the number of free electrons in a \SI{3.1}{\gram} piece of copper ( x = ~{x}).
+  - text: "3 - MC question"
     answer:
-      value: ~{x}
-      uncertainty: 5%
-    vars:
-      x : 10
-      y :
-        min : 10
-        max : 20
-
-  - text: What does the phrase ``path of lease resistance'' refer to?
+      choices:
+       - "^one"
+       - "two"
+       - "three"
+  - text: "3 - MC question"
     answer:
-      a: the tendency for current to flow through resistors
-      b: ^current through parallel resistors is greater in the smaller resistor
-      c: current does as little work as possible along a path between any gwo points
-      d: high voltage will always cause high current
-    vars:
-      y : 20
-
-  - text: If a neutral conductor is brought close to a positivly charged insulating wall, what will happen? Explain.
-    answer:
-      idea: The conductor will be attracted to the wall because charge inside the conductor will be separated.
-
-  - text: If you speed is $v$, and you travel for some time $t$, how far have you traveled?
-    answer:
-      formula: $x = vt$
+      choices:
+       - "^one"
+       - "two"
+       - "three"
 

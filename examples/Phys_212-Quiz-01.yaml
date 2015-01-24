@@ -41,7 +41,7 @@ questions:
   - text: "3 - MC question with link (${graphic/link})"
     graphic :
       file : "./picture.png"
-      link : "http://scatcat.fhsu.edu/~cclark/Phys212/picture1.png"
+      link : "http://scatcat.fhsu.edu/~cdclark/Phys212/picture1.png"
 
     answer:
       choices:

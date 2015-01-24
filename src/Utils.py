@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 from string import Template
+import StringIO, json
 import re, os, yaml
 import collections
 import sys
@@ -204,7 +205,50 @@ def FindPairs( s, beg_str, end_str):
 
     return pairs
 
-class Quiz:
+def interpolate(self, fromtree = None):
+    if fromtree == None:
+        fromtree = self
+
+    for (name, branch) in self.items():
+        if isinstance( branch, str ):
+            pairs = FindPairs(branch, '${','}')
+            orig = branch
+            for i in range(len(pairs)):
+                pair = pairs[i]
+                link = branch[ pair[1][0]:pair[1][1]+1 ]
+                repl = fromtree( link )
+                branch = branch[:pair[0][0]] + repl + branch[pair[0][1]+1:]
+
+                shift = (pair[0][1]+1 - pair[0][0]) - len(repl)
+                for j in range(i+1,len(pairs)):
+                    pairs[j][0][0] -= shift
+                    pairs[j][0][1] -= shift
+                    pairs[j][1][0] -= shift
+                    pairs[j][1][1] -= shift
+
+                self.set(name,branch)
+
+                if branch != orig:
+                  pass
+                  # recursive interpolation is going to be tricky here. not ready yet.
+                  #self.interpolate( fromtree(link + "/.." ) )
+
+        elif isinstance( branch, pyoptiontree.PyOptionTree):
+            branch.interpolate()
+pyoptiontree.PyOptionTree.__dict__['interpolate'] = interpolate
+
+def extractDict( tree ):
+  d = dict()
+  for (name, branch) in tree.items():
+    if isinstance( branch, str ):
+      d[name] = branch
+    elif isinstance( branch, pyoptiontree.PyOptionTree):
+      d[name] = extractDict( branch )
+
+  return d
+
+
+class Quiz(object):
     def __init__(self):
         self.quiz_tree = None
         self.quiz_namespace = None
@@ -213,35 +257,37 @@ class Quiz:
         self.latex_labels = LatexLabels()
 
     def load(self, obj):
+        self.filename = "unknown"
+        quiz_dict = dict()
         if isinstance( obj, str ):
+            self.filename = obj
             if os.path.isfile( obj ):
                 with open(obj) as f:
-                    self.quiz_tree = yaml.load( f )
+                    quiz_dict = yaml.load( f )
             else:
-                raise IOError( "argument %s does not seem to be a file" % arg )
+                raise IOError( "argument %s does not seem to be a file" % self.filename )
 
         if isinstance( obj, dict ):
-            self.quiz_tree = obj
+            quiz_dict = obj
 
 
-        if 'latex' in self.quiz_tree:
-            if 'aux' in self.quiz_tree['latex']:
-                aux_file =  os.path.join( os.path.dirname(obj), self.quiz_tree['latex']['aux']  )
+        if 'latex' in quiz_dict:
+            if 'aux' in quiz_dict['latex']:
+                aux_file =  os.path.join( os.path.dirname(obj), quiz_dict['latex']['aux']  )
                 self.latex_labels.parse( aux_file )
 
         for key in self.latex_labels:
           pass
 
-        if not 'vars' in self.quiz_tree:
-          self.quiz_tree['vars'] = dict()
-        self.quiz_tree['vars'].update( self.latex_labels )
+        if not 'vars' in quiz_dict:
+          quiz_dict['vars'] = dict()
+        quiz_dict['vars'].update( self.latex_labels )
 
         
-        tmp = ""
-        for (key,val) in Flattener.flatten(self.quiz_tree, "", "/").items():
-            tmp += str(key)+"='"+str(val)+"'\n"
         self.quiz_tree = pyoptiontree.PyOptionTree()
-        self.quiz_tree.addString( tmp )
+        for (key,val) in Flattener.flatten(quiz_dict, "", "/").items():
+          self.quiz_tree.set(key, val)
+
         self.quiz_tree.interpolate()
 
         self.detect_question_types()
@@ -265,7 +311,7 @@ class Quiz:
                             num_correct_answers += 1
 
                     if( num_correct_answers == 0 ):
-                        print "WARNING: question "+str(qnum)+" appears to be a multiple-choice question, but correct answer was selected."
+                        print "WARNING: question %d in file '%s' appears to be a multiple-choice question, but no correct answer was selected." % (qnum,self.filename)
                         question.set("type", "MC")
                     elif( num_correct_answers == 1 ):
                         question.set("type","MC")

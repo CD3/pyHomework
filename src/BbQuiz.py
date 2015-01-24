@@ -17,38 +17,6 @@ import pyoptiontree
 testing = 0
 
 
-def interpolate(self, fromtree = None):
-    if fromtree == None:
-        fromtree = self
-
-    for (name, branch) in self.items():
-        if isinstance( branch, str ):
-            pairs = FindPairs(branch, '${','}')
-            orig = branch
-            for i in range(len(pairs)):
-                pair = pairs[i]
-                link = branch[ pair[1][0]:pair[1][1]+1 ]
-                repl = fromtree( link )
-                branch = branch[:pair[0][0]] + repl + branch[pair[0][1]+1:]
-
-                shift = (pair[0][1]+1 - pair[0][0]) - len(repl)
-                for j in range(i+1,len(pairs)):
-                    pairs[j][0][0] -= shift
-                    pairs[j][0][1] -= shift
-                    pairs[j][1][0] -= shift
-                    pairs[j][1][1] -= shift
-
-                self.set(name,branch)
-
-                if branch != orig:
-                  pass
-                  # recursive interpolation is going to be tricky here. not ready yet.
-                  #self.interpolate( fromtree(link + "/.." ) )
-
-        elif isinstance( branch, pyoptiontree.PyOptionTree):
-            branch.interpolate()
-pyoptiontree.PyOptionTree.__dict__['interpolate'] = interpolate
-
 
 class BbQuiz(Quiz):
 
