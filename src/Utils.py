@@ -240,10 +240,10 @@ pyoptiontree.PyOptionTree.__dict__['interpolate'] = interpolate
 def extractDict( tree ):
   d = dict()
   for (name, branch) in tree.items():
-    if isinstance( branch, str ):
-      d[name] = branch
-    elif isinstance( branch, pyoptiontree.PyOptionTree):
+    if isinstance( branch, pyoptiontree.PyOptionTree):
       d[name] = extractDict( branch )
+    else:
+      d[name] = branch
 
   return d
 
@@ -254,6 +254,7 @@ class Quiz(object):
         self.quiz_namespace = None
         self.correct_answer_chars = "*^!@"
         self.randomize_answers = True
+        self.interpolate = True
         self.latex_labels = LatexLabels()
 
     def load(self, obj):
@@ -288,7 +289,8 @@ class Quiz(object):
         for (key,val) in Flattener.flatten(quiz_dict, "", "/").items():
           self.quiz_tree.set(key, val)
 
-        self.quiz_tree.interpolate()
+        if self.interpolate:
+          self.quiz_tree.interpolate()
 
         self.detect_question_types()
 
