@@ -4,6 +4,7 @@ from Utils import *
 import sys, os, re, random
 import math
 import yaml
+import dpath.util
 import subprocess, tempfile, shutil, shlex
 from wheezy.template.engine import Engine
 from wheezy.template.ext.core import CoreExtension
@@ -19,25 +20,30 @@ latex_template= r'''
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{siunitx}
-\usepackage[left=1in,right=1in,top=1in,bottom=1in]{geometry}
+\usepackage{paralist}
+\usepackage[left=0.5in,right=0.5in,top=0.5in,bottom=0.5in]{geometry}
 
-\title{@title}
 
 \begin{document}
-\maketitle
+\center{\Large @title}
 
-\begin{enumerate}
-@for question in questions.values():
+\begin{compactenum}
+@for question in questions:
+    \begin{minipage}{\linewidth}
     \item @question['text']
     @if question['type'] == "MC":
-    \begin{enumerate}
-        @for lbl,answer in question['answer']['choices'].iteritems():
-        \item @answer!mca
+    \begin{compactenum}
+        @for choice in question['answer']['choices']:
+        \item @choice
         @end
-    \end{enumerate}
+    \end{compactenum}
+    \end{minipage}
+
+    \vspace{10pt}
+
     @end
 @end
-\end{enumerate}
+\end{compactenum}
 
 \end{document}
 '''
@@ -46,14 +52,17 @@ latex_template= r'''
 class PaperQuiz(Quiz):
     def __init__(self):
         super( PaperQuiz, self).__init__()
-        self.show_answers      = False
+        self.interpolate   = True
+        self.show_answers  = False
         self.template_engine = Engine( loader=DictLoader( {'doc': latex_template} )
                                      , extensions=[CoreExtension()] )
 
-        self.template_engine.global_vars.update({'mca' : self.filter_multiple_choice_answer})
-        self.template_engine.global_vars.update({'saa' : self.filter_short_answer__answer})
-        self.template_engine.global_vars.update({ 'fa' : self.filter_formula_answer})
-        self.template_engine.global_vars.update({ 'na' : self.filter_numerical_answer})
+
+        self.template_engine.global_vars.update({  'mca' : self.filter_multiple_choice_answer})
+        self.template_engine.global_vars.update({  'saa' : self.filter_short_answer__answer})
+        self.template_engine.global_vars.update({   'fa' : self.filter_formula_answer})
+        self.template_engine.global_vars.update({   'na' : self.filter_numerical_answer})
+        self.template_engine.global_vars.update({ 'rand' : random}                      )
 
     def filter_multiple_choice_answer( self, obj ):
         if isinstance( obj, str ):
@@ -86,7 +95,29 @@ class PaperQuiz(Quiz):
 
     def write_questions(self, filename=None):
         quiz_data = extractDict(self.quiz_tree)
-        print quiz_data
+
+        # replace the questions dict with questions list so we can sort and shuffle
+        questions = [None]*len( quiz_data['questions'] )
+        for k in quiz_data['questions']:
+          # we can't just append here because we won't get the index numbers in order
+          questions[int(k)] = quiz_data['questions'][k] # this assumes no questoin numbers are skipped. should be safe.
+        quiz_data['questions'] = questions
+
+        # now do the same thing for the answers in all questions (ONLY WORKS FOR MULTIPLE CHOICE CURRENTLY)
+        for question in quiz_data['questions']:
+          choices = [None]*len(question['answer']['choices'])
+          for k in question['answer']['choices']:
+            choices[int(k)] = question['answer']['choices'][k]
+          question['answer']['choices'] = choices
+
+        if quiz_data.get('options',{}).get('randomize',{}).get('questions',False):
+          random.shuffle( quiz_data['questions'] )
+
+        if quiz_data.get('options',{}).get('randomize',{}).get('answers',False):
+          for question in quiz_data['questions']:
+            random.shuffle(question['answer']['choices'])
+
+
         if not filename:
             filename = "/dev/stdout"
         with open(filename, 'w') as f:
@@ -106,7 +137,7 @@ class PaperQuiz(Quiz):
         #ret = subprocess.call(shlex.split( 'pdflatex --interaction=batchmode '+basename) )
         #ret = subprocess.call(shlex.split( 'bibtex '+basename) )
         #ret = subprocess.call(shlex.split( 'pdflatex --interaction=batchmode '+basename) )
-        ret = subprocess.call(shlex.split( 'latexmk '+basename) )
+        ret = subprocess.call(shlex.split( 'latexmk -pdf '+basename) )
 
         shutil.copy( pdf, cwd)
         os.chdir( cwd)
