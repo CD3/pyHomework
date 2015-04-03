@@ -1,16 +1,18 @@
 title : "Phys 677 - Reading Quiz 1"
+options:
+  show_answers: true
 
 questions:
   - text: "3 - MC question"
     answer:
       choices:
-       - "^one"
+       - "*one"
        - "two"
        - "three"
   - text: "3 - MC question"
     answer:
       choices:
-       - "^one"
+       - "one"
        - "two"
-       - "three"
+       - "*three"
 
