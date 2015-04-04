@@ -1,6 +1,7 @@
 title : "Phys 677 - Reading Quiz 1"
 options:
-  show_answers: true
+  show_answers: false
+  make_key:     true
 
 vars:
   velocity_of_electron : "1.44545 m/s"

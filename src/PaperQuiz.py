@@ -62,11 +62,13 @@ Special Instructions:
 @end
 \end{compactenum}
 
+@if config['options']['make_key']:
 \clearpage
 Answers:
-
 @for answer in config['answers']:
+
   @answer
+@end
 
 @end
 
@@ -133,8 +135,17 @@ class PaperQuiz(Quiz):
     def write_questions(self, filename=None):
         config = extractDict(self.quiz_tree)
 
-        # add an empty options entry if non exists
+        # setup options tree, take care of defaults
         config['options'] = config.get('options',{})
+        config['options']['make_key'] = config['options'].get('make_key', False)
+
+        self.show_answers = config['options'].get('show_answers',False)
+
+
+
+
+
+
 
         # add an empty instructions entry if non exists
         config['instructions'] = config.get('instructions',{})
@@ -148,7 +159,6 @@ class PaperQuiz(Quiz):
         for question in config['questions']:
           if question.get('answer',{}).get('choices',{}):
             question['answer']['choices'] = dict2list( question['answer']['choices'] )
-
 
         # randomize questions and answers
         if config.get('options',{}).get('randomize',{}).get('questions',False):
