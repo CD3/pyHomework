@@ -240,13 +240,24 @@ pyoptiontree.PyOptionTree.__dict__['interpolate'] = interpolate
 def extractDict( tree ):
   d = dict()
   for (name, branch) in tree.items():
+    try:
+      key = int(name)
+    except:
+      key = name
+
     if isinstance( branch, pyoptiontree.PyOptionTree):
-      d[name] = extractDict( branch )
+      d[key] = extractDict( branch )
     else:
-      d[name] = branch
+      d[key] = branch
 
   return d
 
+def dict2list( d ):
+    l = [None]*len( d )
+    for k in d:
+      # we can't just append here because we won't get the index numbers in order
+      l[int(k)] = d[k]
+    return l
 
 class Quiz(object):
     def __init__(self):

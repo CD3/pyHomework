@@ -13,7 +13,7 @@ from wheezy.template.loader import DictLoader
 
 
 latex_template= r'''
-@require(title,questions,answers,instructions)
+@require(config)
 \documentclass[letterpaper,10pt]{article}
 \usepackage{amsmath}
 \usepackage{amsfonts}
@@ -26,13 +26,13 @@ latex_template= r'''
 
 \begin{document}
 \begin{center}
-{\Large @title}
+{\Large @config['title']}
 \end{center}
 
-@if len(instructions) > 0:
+@if len(config['instructions']) > 0:
 Special Instructions:
 \begin{itemize}
-  @for instruction in instructions:
+  @for instruction in config['instructions']:
     \item @instruction
   @end
 \end{itemize}
@@ -40,28 +40,33 @@ Special Instructions:
 @end
 
 \begin{compactenum}
-@for question in questions:
+@for question in config['questions']:
     \begin{minipage}{\linewidth}
     \item @question['text']
-    @if question['type'] == "MC":
+    @if question['type'] == "MC" or question['type'] == "MA":
     \begin{compactenum}
         @for choice in question['answer']['choices']:
         \item @choice!mca
         @end
     \end{compactenum}
+    @end
+    @if question['type'] == "NUM":
+
+    @question['answer']['value']!na
+    @end
+
     \end{minipage}
 
     \vspace{10pt}
 
-    @end
 @end
 \end{compactenum}
 
 \clearpage
 Answers:
 
-@for answer in answers:
-  \ref{@answer}
+@for answer in config['answers']:
+  @answer
 
 @end
 
@@ -77,7 +82,6 @@ class PaperQuiz(Quiz):
         self.template_engine = Engine( loader=DictLoader( {'doc': latex_template} )
                                      , extensions=[CoreExtension()] )
 
-
         self.template_engine.global_vars.update({  'mca' : self.filter_multiple_choice_answer})
         self.template_engine.global_vars.update({  'saa' : self.filter_short_answer__answer})
         self.template_engine.global_vars.update({   'fa' : self.filter_formula_answer})
@@ -88,21 +92,29 @@ class PaperQuiz(Quiz):
 
     def filter_multiple_choice_answer( self, obj ):
         if isinstance( obj, str ):
-            if( self.correct_answer_chars.find( obj[0] ) >= 0 ):
-                if self.show_answers:
-                    obj = "*"+obj[1:]
-                else:
-                    obj = obj[1:]
-                
-                label = "ans:"+str( random.randint(1,1000) )
-                self.answers.append(label)
-                obj = "\label{"+label+"}"+obj
-        return obj
+          if( self.correct_answer_chars.find( obj[0] ) >= 0 ):
+            if self.show_answers:
+              obj = "*"+obj[1:]
+            else:
+              obj = obj[1:]
+
+            # we want to generate an answer key
+            # we'll do this with a pair of \label/\ref commands
+            # first, create the label, then put it in the answer, then add it the answers list
+            lbl = ":".join(['ans','mc',str(random.randint(0,1000))])
+            obj = "".join( ['\label{',lbl,'}',obj] )
+            self.answers.append( "".join([ "MC/MCA \\ref{",lbl,"}"]) )
+
+          return obj
 
     def filter_numerical_answer( self, obj ):
         if isinstance( obj, str ):
-            if not self.show_answers:
-                obj = ""
+          ans = obj
+          if not self.show_answers:
+              obj = ""
+          lbl = ":".join(['ans','num',str(random.randint(0,1000))])
+          obj = "".join( ['\label{',lbl,'}',obj] )
+          self.answers.append( "".join([ "NUM \\ref{",lbl,"}"," : ",ans]) )
         return obj
 
     def filter_formula_answer( self, obj ):
@@ -119,54 +131,42 @@ class PaperQuiz(Quiz):
 
 
     def write_questions(self, filename=None):
-        quiz_data = extractDict(self.quiz_tree)
-
+        config = extractDict(self.quiz_tree)
 
         # add an empty options entry if non exists
-        quiz_data['options'] = quiz_data.get('options',{})
+        config['options'] = config.get('options',{})
 
         # add an empty instructions entry if non exists
-        quiz_data['instructions'] = quiz_data.get('instructions',{})
+        config['instructions'] = config.get('instructions',{})
 
 
-        # replace the questions dict with questions list so we can sort and shuffle
-        questions = [None]*len( quiz_data['questions'] )
-        for k in quiz_data['questions']:
-          # we can't just append here because we won't get the index numbers in order
-          questions[int(k)] = quiz_data['questions'][k] # this assumes no questoin numbers are skipped. should be safe.
-        quiz_data['questions'] = questions
+        # replace questions, 
+        config['questions']    = dict2list( config['questions'] )
+        config['instructions'] = dict2list( config['instructions'] )
 
-        # now do the same thing for the answers in all questions (ONLY WORKS FOR MULTIPLE CHOICE CURRENTLY)
-        for question in quiz_data['questions']:
-          choices = [None]*len(question['answer']['choices'])
-          for k in question['answer']['choices']:
-            choices[int(k)] = question['answer']['choices'][k]
-          question['answer']['choices'] = choices
+        # now do the same thing for the answers to MC questions
+        for question in config['questions']:
+          if question.get('answer',{}).get('choices',{}):
+            question['answer']['choices'] = dict2list( question['answer']['choices'] )
 
 
         # randomize questions and answers
+        if config.get('options',{}).get('randomize',{}).get('questions',False):
+          random.shuffle( config['questions'] )
 
-        if quiz_data.get('options',{}).get('randomize',{}).get('questions',False):
-          random.shuffle( quiz_data['questions'] )
-
-        if quiz_data.get('options',{}).get('randomize',{}).get('answers',False):
-          for question in quiz_data['questions']:
+        if config.get('options',{}).get('randomize',{}).get('answers',False):
+          for question in config['questions']:
             random.shuffle(question['answer']['choices'])
 
+        config['answers'] = self.answers
 
-        # replace the instructions dict with instructions list so we can use a simple for loop in template
-        instructions = [None]*len( quiz_data['instructions'] )
-        for k in quiz_data['instructions']:
-          # we can't just append here because we won't get the index numbers in order
-          instructions[int(k)] = quiz_data['instructions'][k]
-        quiz_data['instructions'] = instructions
-
-        quiz_data['answers'] = self.answers
+        #import pprint
+        #pprint.pprint(config['questions'])
 
         if not filename:
             filename = "/dev/stdout"
         with open(filename, 'w') as f:
-            f.write( self.template_engine.get_template("doc").render( quiz_data ) )
+          f.write( self.template_engine.get_template("doc").render( {'config': config} ) )
 
     def compile_latex(self, filename):
         basename = os.path.splitext(arg)[0]
