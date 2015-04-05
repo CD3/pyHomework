@@ -2,6 +2,7 @@
 
 from Utils import *
 import sys, os, re, random
+import getopt
 import math
 import yaml
 import dpath.util
@@ -62,7 +63,7 @@ Special Instructions:
 @end
 \end{compactenum}
 
-@if config['options']['make_key']:
+@if config['options'].get('make_key',False):
 \clearpage
 Answers:
 @for answer in config['answers']:
@@ -137,7 +138,6 @@ class PaperQuiz(Quiz):
 
         # setup options tree, take care of defaults
         config['options'] = config.get('options',{})
-        config['options']['make_key'] = config['options'].get('make_key', False)
 
         self.show_answers = config['options'].get('show_answers',False)
 
@@ -184,7 +184,6 @@ class PaperQuiz(Quiz):
         cwd = os.getcwd()
         temp = tempfile.mkdtemp()
 
-        FNULL = open(os.devnull,'w')
         
         shutil.copy( filename, temp )
         os.chdir( temp )
@@ -193,18 +192,37 @@ class PaperQuiz(Quiz):
         #ret = subprocess.call(shlex.split( 'pdflatex --interaction=batchmode '+basename) )
         #ret = subprocess.call(shlex.split( 'bibtex '+basename) )
         #ret = subprocess.call(shlex.split( 'pdflatex --interaction=batchmode '+basename) )
-        ret = subprocess.call(shlex.split( 'latexmk -pdf '+basename), stdout=FNULL, stderr=subprocess.STDOUT)
+        with open(os.devnull,'w') as FNULL:
+          ret = subprocess.call(shlex.split( 'latexmk -pdf '+basename), stdout=FNULL, stderr=subprocess.STDOUT)
 
 
         shutil.copy( pdf, cwd)
         os.chdir( cwd)
 
+    def preview_pdf(self, filename):
+      with open(os.devnull,'w') as FNULL:
+        viewer = opts.get('-P', 'evince')
+        ret = subprocess.call([viewer,filename], stdout=FNULL, stderr=subprocess.STDOUT)
+
 
 if __name__ == "__main__":
-    for arg in sys.argv[1:]:
-        quiz = PaperQuiz()
-        quiz.load( arg )
-        quiz.write_questions( os.path.splitext(arg)[0]+".tex" )
-        quiz.compile_latex( os.path.splitext(arg)[0]+".tex" )
+    try:
+      optlist,args = getopt.getopt(sys.argv[1:], "pP:" )
+      opts = dict()
+      for o,a in optlist:
+        opts[o] = a if  a else True
+
+    except getopt.GetoptError as err:
+      print str(err)
+      sys.exit(1)
+
+    for arg in args:
+      basename = os.path.splitext(arg)[0]
+      quiz = PaperQuiz()
+      quiz.load( arg )
+      quiz.write_questions( basename+".tex" )
+      quiz.compile_latex(   basename+".tex" )
+      if opts.get('-p', False) or opts.get('-P', False):
+        quiz.preview_pdf(     basename+".pdf" )
 
 
