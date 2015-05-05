@@ -90,9 +90,7 @@ class BbQuiz(Quiz):
 
 
 
-    def write_questions(self, filename=None):
-        if not filename:
-            filename = "/dev/stdout"
+    def write_questions(self, filename="/dev/stdout"):
         with open(filename, 'w') as f:
             branches = self.quiz_tree("questions").branchList()
             branches.sort(key=float)
@@ -134,7 +132,7 @@ if __name__ == "__main__":
     for arg in sys.argv[1:]:
         quiz = BbQuiz()
         quiz.load( arg )
-        quiz.write_questions(os.path.splitext(arg)[0]+".Bb")
+        quiz.write_questions(os.path.splitext(arg)[0]+".txt")
 
 
 if testing:
