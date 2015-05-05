@@ -2,8 +2,10 @@
 
 import sys, os, subprocess, shlex
 
+import time
 import yaml
 import sympy as sy
+import sympy.assumptions as ass
 import numpy as np
 import pint  as pn
 
@@ -14,8 +16,6 @@ from wheezy.template.loader import DictLoader
 units = pn.UnitRegistry()
 
 class HomeworkAssignment:
-
-
 
   def __init__(self):
     self.latex_template= r'''
@@ -115,21 +115,29 @@ class HomeworkAssignment:
 
   def write_quiz(self, filename="quiz.yaml"):
     with open(filename,'w') as f:
+      # this will write a yaml file that can be processed by BbQuiz
+      for q in self.quiz_questions:
+        if 'unit' in q:
+          q['text'] += 'Give your answer in %s.' % q['unit']
+        if 'instructions' in q:
+          q['text'] += q['instructions']
       f.write( yaml.dump({ 'latex' : {'aux' : self.config['latex_aux']}, 'questions' : self.quiz_questions}, default_flow_style=False) )
 
-
-
-  def build_PDF( self, filename=None):
-    if not filename:
-      filename = "main.pdf"
-
-    basename = os.path.splitext(filename)[0]
+  def build_PDF( self, basename="main"):
+    basename = os.path.splitext(basename)[0]
 
     self.write_latex(basename+".tex")
 
     with open("/dev/stdout",'w') as FNULL:
       ret = subprocess.call(shlex.split( 'latexmk -pdf '+basename), stdout=sys.stdout, stderr=subprocess.STDOUT)
 
+  def build_quiz(self, basename="quiz"):
+    basename = os.path.splitext(basename)[0]
+
+    self.write_quiz(basename+".yaml")
+
+    with open("/dev/stdout",'w') as FNULL:
+      ret = subprocess.call(shlex.split( 'BbQuiz.py '+basename+".yaml"), stdout=sys.stdout, stderr=subprocess.STDOUT)
 
     
 
@@ -164,19 +172,26 @@ class HomeworkAssignment:
     self.quiz_questions[-1]['text'] = "For problem #${/vars/%s}: "%self.get_ref()
 
   def quiz_add_text(self,text=""):
-      self.quiz_questions[-1]['text']  += text + " "
+    text = text.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
+    self.quiz_questions[-1]['text']  += text + " "
 
   def quiz_add_unit(self,unit=None):
     if unit:
-      if isinstance( unit, units.Quantity ):
-        unit = str(unit.units)
-      else:
-        unit = str(unit)
+      self.quiz_questions[-1]['unit'] = self.get_unit( unit )
+    else:
+      if 'unit' in self.quiz_questions[-1]:
+        del self.quiz_questions[-1]['unit']
 
-      self.quiz_questions[-1]['text']  += "Give your answer in %s." % unit
+  def quiz_add_instruction(self,text):
+    self.quiz_questions[-1]['instructions'] += text
 
   def quiz_add_answer(self, answer = None):
     self.quiz_questions[-1]['answer'] = answer
+
+  def quiz_set_answer_value(self, value):
+    self.quiz_add_answer( {'raw' : str(value), 'value' : self.get_value( value ), 'unit' : self.get_unit( value ) } )
+    self.quiz_add_unit( value )
+
 
   def add_star(self, text="*"):
     if 'parts' in self.questions[-1]:
@@ -195,3 +210,91 @@ class HomeworkAssignment:
     if len(self.figures) > 0:
       self.figures[-1][data] = text
 
+
+  def get_unit(self, x=None):
+    u = ""
+    if x:
+      if isinstance( x, str ):
+        u = x
+
+      if isinstance( x, units.Quantity ):
+        u = str(x.units)
+
+    return u
+
+  def get_value(self, x=None):
+    if isinstance( x, str ):
+      return x
+
+    v = 0
+    if x:
+      if isinstance( x, units.Quantity ):
+        v = x.magnitude
+
+    return to_sigfig(v,3)
+
+
+def to_sigfig(x,p):
+    """
+    This code was taken from here:
+    http://randlet.com/blog/python-significant-figures-format/
+
+    returns a string representation of x formatted with a precision of p
+    Based on the webkit javascript implementation taken from here:
+    https://code.google.com/p/webkit-mirror/source/browse/JavaScriptCore/kjs/number_object.cpp
+    """
+
+
+    import math
+    x = float(x)
+
+    if x == 0.:
+        return "0." + "0"*(p-1)
+
+    out = []
+
+    if x < 0:
+        out.append("-")
+        x = -x
+
+    e = int(math.log10(x))
+    tens = math.pow(10, e - p + 1)
+    n = math.floor(x/tens)
+
+    if n < math.pow(10, p - 1):
+        e = e -1
+        tens = math.pow(10, e - p+1)
+        n = math.floor(x / tens)
+
+    if abs((n + 1.) * tens - x) <= abs(n * tens -x):
+        n = n + 1
+
+    if n >= math.pow(10,p):
+        n = n / 10.
+        e = e + 1
+
+
+    m = "%.*g" % (p, n)
+
+    if e < -2 or e >= p:
+        out.append(m[0])
+        if p > 1:
+            out.append(".")
+            out.extend(m[1:p])
+        out.append('e')
+        if e > 0:
+            out.append("+")
+        out.append(str(e))
+    elif e == (p -1):
+        out.append(m)
+    elif e >= 0:
+        out.append(m[:e+1])
+        if e+1 < len(m):
+            out.append(".")
+            out.extend(m[e+1:])
+    else:
+        out.append("0.")
+        out.extend(["0"]*-(e+1))
+        out.append(m)
+
+    return "".join(out)
