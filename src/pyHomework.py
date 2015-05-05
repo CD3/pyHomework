@@ -5,7 +5,7 @@ import sys, os, subprocess, shlex
 import time
 import yaml
 import sympy as sy
-import sympy.assumptions as ass
+import sympy.assumptions as assumptions
 import numpy as np
 import pint  as pn
 
