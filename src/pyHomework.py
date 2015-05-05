@@ -97,7 +97,7 @@ class HomeworkAssignment:
     self.blank_question = {'text' : "", 'label' : "", 'star' : "" }
     self.blank_part     = self.blank_question.copy()
     self.blank_figure   = {'filename' : "", 'caption' : "", 'label' : "", 'options' : "" }
-    self.blank_quiz_question = {'text' : "", 'answer' : {} }
+    self.blank_quiz_question = {'text' : "", 'answer' : {}, 'instructions' : "" }
 
 
 
@@ -117,8 +117,8 @@ class HomeworkAssignment:
     with open(filename,'w') as f:
       # this will write a yaml file that can be processed by BbQuiz
       for q in self.quiz_questions:
-        if 'unit' in q:
-          q['text'] += 'Give your answer in %s.' % q['unit']
+        if 'unit' in q and ("%s"%q['unit']) != 'dimensionless':
+          q['text'] += 'Give your answer in %s. ' % q['unit']
         if 'instructions' in q:
           q['text'] += q['instructions']
       f.write( yaml.dump({ 'latex' : {'aux' : self.config['latex_aux']}, 'questions' : self.quiz_questions}, default_flow_style=False) )
