@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 
-import sys, os, subprocess, shlex
+import sys, os, os.path, subprocess, shlex
 
 import time
+import tempfile
+import shutil
 import yaml
 import sympy as sy
 import sympy.assumptions as assumptions
@@ -125,11 +127,20 @@ class HomeworkAssignment:
 
   def build_PDF( self, basename="main"):
     basename = os.path.splitext(basename)[0]
+    scratch = tempfile.mkdtemp()
 
-    self.write_latex(basename+".tex")
+    self.write_latex(os.path.join(scratch,basename+".tex") )
+
+    # copy all the figure files
+    for figure in self.figures:
+      shutil.copy( figure['filename'], os.path.join(scratch,figure['filename']) )
 
     with open("/dev/stdout",'w') as FNULL:
-      ret = subprocess.call(shlex.split( 'latexmk -pdf '+basename), stdout=sys.stdout, stderr=subprocess.STDOUT)
+      ret = subprocess.call(shlex.split( 'latexmk -pdf '+basename), cwd=scratch, stdout=sys.stdout, stderr=subprocess.STDOUT)
+
+    for ext in ("pdf", "aux", "tex"):
+      filename = "%s.%s"%(basename,ext)
+      shutil.copy( os.path.join(scratch,filename), filename)
 
   def build_quiz(self, basename="quiz"):
     basename = os.path.splitext(basename)[0]
@@ -145,6 +156,7 @@ class HomeworkAssignment:
 
 
   def add_question(self):
+    '''Add a new (empyt) question to the stack.'''
     self.questions.append( self.blank_question.copy() )
     self.questions[-1]['label'] = r"prob_%d" % len(self.questions)
 
@@ -194,6 +206,7 @@ class HomeworkAssignment:
 
 
   def add_star(self, text="*"):
+    '''Add a star (*) to the current question or part.'''
     if 'parts' in self.questions[-1]:
       self.questions[-1]['parts'][-1]['star'] = text
     else:
@@ -232,6 +245,13 @@ class HomeworkAssignment:
         v = x.magnitude
 
     return to_sigfig(v,3)
+
+def get_semester():
+  month = int(time.strftime("%m"))
+  year  =     time.strftime("%Y")
+  semester = "Spring" if month < 6 else "Fall"
+
+  return (semester,year)
 
 
 def to_sigfig(x,p):
