@@ -1,0 +1,16 @@
+questions:
+- answer:
+    raw: 299000000.0 meter / second
+    unit: meter / second
+    value: '2.99e+8'
+  instructions: ''
+  text: 'What is the speed of light? Give your answer in meter / second. '
+  unit: meter / second
+- answer:
+    raw: 4.90873852123 centimeter ** 2
+    unit: centimeter ** 2
+    value: '4.91'
+  instructions: ''
+  text: !!python/unicode 'What is the area of a circle with diameter 2.5 centimeter?
+    Give your answer in centimeter ** 2. '
+  unit: centimeter ** 2

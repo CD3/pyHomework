@@ -1,0 +1,2 @@
+NUM	What is the speed of light? Give your answer in meter / second. 	2.99E+08	2.99E+06
+NUM	What is the area of a circle with diameter 2.5 centimeter? Give your answer in centimeter ** 2. 	4.91E+00	4.91E-02

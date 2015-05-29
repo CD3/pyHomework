@@ -90,6 +90,7 @@ class HomeworkAssignment:
                   , 'questions' : [ ]
                   , 'figures' : [ ]
                   , 'quiz_questions' : [ ]
+                  , 'latex_aux' : None
                   }
 
     self.questions = self.config['questions']
@@ -123,7 +124,11 @@ class HomeworkAssignment:
           q['text'] += 'Give your answer in %s. ' % q['unit']
         if 'instructions' in q:
           q['text'] += q['instructions']
-      f.write( yaml.dump({ 'latex' : {'aux' : self.config['latex_aux']}, 'questions' : self.quiz_questions}, default_flow_style=False) )
+
+      tree = {'questions' : self.quiz_questions}
+      if self.config['latex_aux']:
+        tree.update({ 'latex' : {'aux' : self.config['latex_aux']}})
+      f.write( yaml.dump(tree, default_flow_style=False) )
 
   def build_PDF( self, basename="main"):
     basename = os.path.splitext(basename)[0]
@@ -181,7 +186,8 @@ class HomeworkAssignment:
 
   def add_quiz_question(self):
     self.quiz_questions.append( self.blank_quiz_question.copy() )
-    self.quiz_questions[-1]['text'] = "For problem #${/vars/%s}: "%self.get_ref()
+    if len(self.questions):
+      self.quiz_questions[-1]['text'] = "For problem #${/vars/%s}: "%self.get_ref()
 
   def quiz_add_text(self,text=""):
     text = text.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
