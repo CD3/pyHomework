@@ -7,14 +7,25 @@ import math
 import yaml
 import dpath.util
 import subprocess, tempfile, shutil, shlex
-from wheezy.template.engine import Engine
-from wheezy.template.ext.core import CoreExtension
-from wheezy.template.loader import DictLoader
+from mako.template import Template
 
 
 
 latex_template= r'''
-@require(config)
+<%!
+    correct_answer_chars = "*^!@"
+    answers = dict()
+    def mca( text ):
+      if isAns( text ):
+        text = text[1:]
+      return text
+
+    def isAns( text ):
+      return correct_answer_chars.find( text[0] ) >= 0
+%>
+
+
+
 \documentclass[letterpaper,10pt]{article}
 \usepackage{amsmath}
 \usepackage{amsfonts}
@@ -27,51 +38,53 @@ latex_template= r'''
 
 \begin{document}
 \begin{center}
-{\Large @config['title']}
+{\Large ${config['title']}}
 \end{center}
 
-@if len(config['instructions']) > 0:
+%if len(config['instructions']) > 0:
 Special Instructions:
 \begin{itemize}
-  @for instruction in config['instructions']:
-    \item @instruction
-  @end
+  %for instruction in config['instructions']:
+    \item ${instruction}
+  %endfor
 \end{itemize}
 \vspace{10pt}
-@end
+%endif
 
 \begin{compactenum}
-@for question in config['questions']:
+%for question in config['questions']:
     \begin{minipage}{\linewidth}
-    \item @question['text']
-    @if question['type'] == "MC" or question['type'] == "MA":
+    \item ${question['text']}
+    %if question['type'] == "MC" or question['type'] == "MA":
     \begin{compactenum}
-        @for choice in question['answer']['choices']:
-        \item @choice!mca
-        @end
+        %for choice in question['answer']['choices']:
+        \item ${choice|mca}
+        <%doc>
+        %if isAns(choice):
+        %endif
+        </%doc>
+        %endfor
     \end{compactenum}
-    @end
-    @if question['type'] == "NUM":
-
-    @question['answer']['value']!na
-    @end
-
+    %endif
+    %if question['type'] == "NUM":
+    <%doc> ${question['answer']['value']} </%doc>
+    %endif
     \end{minipage}
 
     \vspace{10pt}
 
-@end
+%endfor
 \end{compactenum}
 
-@if config['options'].get('make_key',False):
+%if config['options'].get('make_key',False):
 \clearpage
 Answers:
-@for answer in config['answers']:
+%for answer in config['answers']:
 
-  @answer
-@end
+  ${answer}
+%endfor
 
-@end
+%endif
 
 \end{document}
 '''
@@ -82,55 +95,11 @@ class PaperQuiz(Quiz):
         super( PaperQuiz, self).__init__()
         self.interpolate   = True
         self.show_answers  = False
-        self.template_engine = Engine( loader=DictLoader( {'doc': latex_template} )
-                                     , extensions=[CoreExtension()] )
+        self.template_engine = Template(latex_template )
 
-        self.template_engine.global_vars.update({  'mca' : self.filter_multiple_choice_answer})
-        self.template_engine.global_vars.update({  'saa' : self.filter_short_answer__answer})
-        self.template_engine.global_vars.update({   'fa' : self.filter_formula_answer})
-        self.template_engine.global_vars.update({   'na' : self.filter_numerical_answer})
-        self.template_engine.global_vars.update({ 'rand' : random}                      )
 
         self.answers = []
 
-    def filter_multiple_choice_answer( self, obj ):
-        if isinstance( obj, str ):
-          if( self.correct_answer_chars.find( obj[0] ) >= 0 ):
-            if self.show_answers:
-              obj = "*"+obj[1:]
-            else:
-              obj = obj[1:]
-
-            # we want to generate an answer key
-            # we'll do this with a pair of \label/\ref commands
-            # first, create the label, then put it in the answer, then add it the answers list
-            lbl = ":".join(['ans','mc',str(random.randint(0,1000))])
-            obj = "".join( ['\label{',lbl,'}',obj] )
-            self.answers.append( "".join([ "MC/MCA \\ref{",lbl,"}"]) )
-
-          return obj
-
-    def filter_numerical_answer( self, obj ):
-        if isinstance( obj, str ):
-          ans = obj
-          if not self.show_answers:
-              obj = ""
-          lbl = ":".join(['ans','num',str(random.randint(0,1000))])
-          obj = "".join( ['\label{',lbl,'}',obj] )
-          self.answers.append( "".join([ "NUM \\ref{",lbl,"}"," : ",ans]) )
-        return obj
-
-    def filter_formula_answer( self, obj ):
-        if isinstance( obj, str ):
-            if not self.show_answers:
-                obj = ""
-        return obj
-
-    def filter_short_answer__answer( self, obj ):
-        if isinstance( obj, str ):
-            if not self.show_answers:
-                obj = ""
-        return obj
 
 
     def write_questions(self, filename=None):
@@ -176,7 +145,7 @@ class PaperQuiz(Quiz):
         if not filename:
             filename = "/dev/stdout"
         with open(filename, 'w') as f:
-          f.write( self.template_engine.get_template("doc").render( {'config': config} ) )
+          f.write( self.template_engine.render( config=config ) )
 
     def compile_latex(self, filename):
         basename = os.path.splitext(arg)[0]

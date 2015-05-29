@@ -11,9 +11,7 @@ import sympy.assumptions as assumptions
 import numpy as np
 import pint  as pn
 
-from wheezy.template.engine import Engine
-from wheezy.template.ext.core import CoreExtension
-from wheezy.template.loader import DictLoader
+from mako.template import Template
 
 units = pn.UnitRegistry()
 
@@ -21,7 +19,6 @@ class HomeworkAssignment:
 
   def __init__(self):
     self.latex_template= r'''
-@require(config)
 \documentclass[letterpaper,10pt]{article}
 \usepackage{amsmath}
 \usepackage{amsfonts}
@@ -36,17 +33,17 @@ class HomeworkAssignment:
 
 \setlength{\headheight}{0.5in}
 \pagestyle{fancyplain}
-\fancyhead[L]{@config['LH']}
-\fancyhead[C]{@config['CH']}
-\fancyhead[R]{@config['RH']}
-\fancyfoot[L]{@config['LF']}
-\fancyfoot[C]{@config['CF']}
-\fancyfoot[R]{@config['RF']}
+\fancyhead[L]{${config['LH']}}
+\fancyhead[C]{${config['CH']}}
+\fancyhead[R]{${config['RH']}}
+\fancyfoot[L]{${config['LF']}}
+\fancyfoot[C]{${config['CF']}}
+\fancyfoot[R]{${config['RF']}}
 \renewcommand{\headrulewidth}{0pt}
 
 \setlength{\parindent}{0cm}
 
-\title{@config['title']}
+\title{${config['title']}}
 \author{}
 \date{}
 
@@ -54,29 +51,29 @@ class HomeworkAssignment:
 \maketitle
 
 \begin{enumerate}
-@for q in config['questions']:
+%for q in config['questions']:
 \begin{minipage}{\linewidth}
-  \item @q['star'] \label{@q['label']} @q['text']
-    @if 'parts' in q:
+  \item ${q['star']} \label{${q['label']}} ${q['text']}
+    %if 'parts' in q:
     \begin{enumerate}
-      @for p in q['parts']:
-      \item @p['star'] \label{@p['label']} @p['text']
-      @end
+      %for p in q['parts']:
+      \item ${p['star']} \label{${p['label']}} ${p['text']}
+      %endfor
     \end{enumerate}
-    @end
+    %endif
 \end{minipage}
-@end
+%endfor
 \end{enumerate}
 
 
 \clearpage
 
-@for f in config['figures']:
+%for f in config['figures']:
 \begin{figure}
-\includegraphics[@f['options']]{@f['filename']}
-\caption{ \label{@f['label']} @f['caption']}
+\includegraphics[${f['options']}]{${f['filename']}}
+\caption{ \label{${f['label']}} ${f['caption']}}
 \end{figure}
-@end
+%endfor
 
 \end{document}
 '''
@@ -103,15 +100,14 @@ class HomeworkAssignment:
     self.blank_quiz_question = {'text' : "", 'answer' : {}, 'instructions' : "" }
 
 
-
-    self.template_engine = Engine( loader=DictLoader( {'doc': self.latex_template} ) , extensions=[CoreExtension()] )
+    self.template_engine = Template( self.latex_template )
 
   def write_latex(self, filename=None):
     if not filename:
         filename = "/dev/stdout"
 
     with open(filename, 'w') as f:
-      f.write( self.template_engine.get_template("doc").render( {'config': self.config} ) )
+      f.write( self.template_engine.render( config=self.config ) )
 
     basename = os.path.splitext(filename)[0]
     self.config['latex_aux'] = basename+'.aux'
