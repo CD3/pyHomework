@@ -5,4 +5,3 @@ install:
 	cp ./src/txt2yamlquiz.sh ~/install/bin
 
 	cp -r ./src/pyHomework ~/install/lib64/python2.7//site-packages/
-	cp -r ./externals/pyoptiontree ~/install/lib64/python2.7/site-packages/

@@ -5,8 +5,6 @@ import StringIO, json
 import re, os, yaml
 import collections
 import sys
-sys.path.append("../externals/pyoptiontree")
-import pyoptiontree
 
 class EvalTemplate(Template):
     delimiter = '~'
@@ -152,12 +150,7 @@ class LatexLabels(dict):
 
             tag = tag.strip()
 
-            
-            # the pyoptiontree is sensitive to non-alpha numeric characters in the keys
-            # so we will just replace all special characters with an underscore
             key = label
-            key = key.replace(":","_")
-            key = key.replace("@","_")
             self[key] = tag
 
 def toBool( v ):
@@ -205,53 +198,6 @@ def FindPairs( s, beg_str, end_str):
 
     return pairs
 
-def interpolate(self, fromtree = None):
-    if fromtree == None:
-        fromtree = self
-
-    for (name, branch) in self.items():
-        if isinstance( branch, str ):
-            pairs = FindPairs(branch, '${','}')
-            orig = branch
-            for i in range(len(pairs)):
-                pair = pairs[i]
-                link = branch[ pair[1][0]:pair[1][1]+1 ]
-                repl = fromtree( link )
-                branch = branch[:pair[0][0]] + repl + branch[pair[0][1]+1:]
-
-                shift = (pair[0][1]+1 - pair[0][0]) - len(repl)
-                for j in range(i+1,len(pairs)):
-                    pairs[j][0][0] -= shift
-                    pairs[j][0][1] -= shift
-                    pairs[j][1][0] -= shift
-                    pairs[j][1][1] -= shift
-
-                self.set(name,branch)
-
-                if branch != orig:
-                  pass
-                  # recursive interpolation is going to be tricky here. not ready yet.
-                  #self.interpolate( fromtree(link + "/.." ) )
-
-        elif isinstance( branch, pyoptiontree.PyOptionTree):
-            branch.interpolate()
-pyoptiontree.PyOptionTree.__dict__['interpolate'] = interpolate
-
-def extractDict( tree ):
-  d = dict()
-  for (name, branch) in tree.items():
-    try:
-      key = int(name)
-    except:
-      key = name
-
-    if isinstance( branch, pyoptiontree.PyOptionTree):
-      d[key] = extractDict( branch )
-    else:
-      d[key] = branch
-
-  return d
-
 def dict2list( d ):
     l = [None]*len( d )
     for k in d:
@@ -261,84 +207,72 @@ def dict2list( d ):
 
 class Quiz(object):
     def __init__(self):
-        self.quiz_tree = None
-        self.quiz_namespace = None
+        self.quiz_data = None
         self.correct_answer_chars = "*^!@"
         self.randomize_answers = True
-        self.interpolate = True
         self.latex_labels = LatexLabels()
 
     def load(self, obj):
         self.filename = "unknown"
-        quiz_dict = dict()
+        self.quiz_data = dict()
         if isinstance( obj, str ):
             self.filename = obj
             if os.path.isfile( obj ):
                 with open(obj) as f:
-                    quiz_dict = yaml.load( f )
+                    self.quiz_data = yaml.load( f )
             else:
                 raise IOError( "argument %s does not seem to be a file" % self.filename )
 
         if isinstance( obj, dict ):
-            quiz_dict = obj
+            self.quiz_data = obj
 
 
-        if 'latex' in quiz_dict:
-            if 'aux' in quiz_dict['latex']:
-                aux_file =  os.path.join( os.path.dirname(obj), quiz_dict['latex']['aux']  )
+        # load latex keys if available
+        if 'latex' in self.quiz_data:
+            if 'aux' in self.quiz_data['latex']:
+                aux_file =  os.path.join( os.path.dirname(obj), self.quiz_data['latex']['aux']  )
                 self.latex_labels.parse( aux_file )
-
-        for key in self.latex_labels:
-          pass
-
-        if not 'vars' in quiz_dict:
-          quiz_dict['vars'] = dict()
-        quiz_dict['vars'].update( self.latex_labels )
-
-        
-        self.quiz_tree = pyoptiontree.PyOptionTree()
-        for (key,val) in Flattener.flatten(quiz_dict, "", "/").items():
-          self.quiz_tree.set(key, val)
-
-        if self.interpolate:
-          self.quiz_tree.interpolate()
 
         self.detect_question_types()
 
     def detect_question_types(self):
-        for (qnum,question) in self.quiz_tree("questions").items():
-            qnum = int(qnum) + 1
+      for i in xrange(len(self.quiz_data["questions"])):
+            question = self.quiz_data["questions"][i]
 
             # if the question has an answer that is a subtree, we need to figure out what kind of question it is
-            if isinstance( question.get("answer", None), pyoptiontree.PyOptionTree):
+            if isinstance( question.get("answer", None), dict ):
 
                 # if the answer has an element named "value", then the question is numerical
                 if question.get("answer").get("value", None):
-                    question.set("type", "NUM")
+                    question["type"] = "NUM"
 
                 # if the answer has an element named "choices", then the question is multiple choice
                 if question.get("answer").get("choices", None):
-                    num_correct_answers = 0
-                    for (lbl,ans) in question.get("answer").get("choices").items():
-                        if( self.correct_answer_chars.find( ans[0] ) >= 0 ):
-                            num_correct_answers += 1
+                  # we need to see how many correct answers there are...
+                  num_correct_answers = 0
+                  for ans in question.get("answer").get("choices"):
+                    if( self.correct_answer_chars.find( ans[0] ) >= 0 ):
+                      num_correct_answers += 1
 
-                    if( num_correct_answers == 0 ):
-                        print "WARNING: question %d in file '%s' appears to be a multiple-choice question, but no correct answer was selected." % (qnum,self.filename)
-                        question.set("type", "MC")
-                    elif( num_correct_answers == 1 ):
-                        question.set("type","MC")
-                    else:
-                        question.set("type","MA")
+                  # if there weren't any correct answers, there was probably an error
+                  if( num_correct_answers == 0 ):
+                    print "WARNING: question %d in file '%s' appears to be a multiple-choice question, but no correct answer was selected." % (i+1,self.filename)
+                    question["type"] = "MC"
+                  # if there was only one answer, this is a multiple choic
+                  elif( num_correct_answers == 1 ):
+                    question["type"] = "MC"
+                  # otherwise, it is a multiple-answer
+                  else:
+                    question["type"] = "MA"
 
 
                 # if the answer has an element named "ordered", then the question is an ordering question
                 if question.get("answer").get("ordered", None):
-                  question.set("type", "ORD")
+                  question["type"] = "ORD"
 
 
             # the answer is a bool, so the question is True/False
             if isBool( question.get("answer", None) ):
-                question.set("type", "TF")
+                question["type"] = "TF"
 
 

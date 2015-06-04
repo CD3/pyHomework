@@ -12,9 +12,10 @@ questions:
     text: 'In problem #1, what was the force you calculated? Give your answer in Newtons.'
   -
     answer:
-      a: 'to the child'
-      b: '^to the carpet'
-      c: neither
+      choices:
+        - 'to the child'
+        - '^to the carpet'
+        - neither
     text: 'In problem #2, are electrons transferred to the carpet, or to the child?'
   -
     answer:
@@ -28,10 +29,11 @@ questions:
     text: 'In problem #4, assume that the electron and proton are separated by 0.50 m. What is the magnitude of the electrostatic force between the proton and electron? Give your answer in Newtons.'
   -
     answer:
-      a: '^No, the ratio of the magnitude of the two forces does not depend on their separation distance.'
-      b: 'Yes, if the proton and electron are brought very close together, the force of gravity will be larger.'
-      c: 'Yes, if the proton and electron are separated by a very large distance, the force of gravity will be larger.'
-      d: 'Yes, for short and long distances the electrostaitc force is greater, for for medium ranges, the force of gravity will be larger.'
+      choices:
+        - '^No, the ratio of the magnitude of the two forces does not depend on their separation distance.'
+        - 'Yes, if the proton and electron are brought very close together, the force of gravity will be larger.'
+        - 'Yes, if the proton and electron are separated by a very large distance, the force of gravity will be larger.'
+        - 'Yes, for short and long distances the electrostaitc force is greater, for for medium ranges, the force of gravity will be larger.'
     text: 'In problem #4, is it possible to place the electron and proton some distance appart such that the force of gravity is stronger than the electrostatic force?'
   -
     answer:
@@ -45,23 +47,26 @@ questions:
     text: 'In problem #5, how much charge does each sphere have after they are brought into contact? Give your answer in Coulombs.'
   -
     answer:
-      a: 'both are positive'
-      b: 'both are negative'
-      c: 'one is positive, the other is negative'
-      d: '^they could be positive or negative, but they must both be the same'
-      e: 'they could be positive or negative, but they must be opposite of each other'
+      choices:
+        - 'both are positive'
+        - 'both are negative'
+        - 'one is positive, the other is negative'
+        - '^they could be positive or negative, but they must both be the same'
+        - 'they could be positive or negative, but they must be opposite of each other'
     text: 'In problem #5, are the charges on the conducting spheres positive or negative?'
   -
     answer:
-      a: positive
-      b: '^negative'
-      c: "it's actually zero"
+      choices:
+        - positive
+        - '^negative'
+        - "it's actually zero"
     text: 'In problem #6, is the x-component of the force you calculated positive or negative?'
   -
     answer:
-      a: '^positive'
-      b: negative
-      c: "it's actually zero"
+      choices:
+        - '^positive'
+        - negative
+        - "it's actually zero"
     text: 'In problem #6, is the y-component of the force you calculated positive or negative?'
   -
     answer:
@@ -70,31 +75,35 @@ questions:
     text: 'In problem #7a, what is the magnitude of the force you calculated? Give your answer in N.'
   -
     answer:
-      a: '0'
-      b: '1'
-      c: '2'
-      d: '^3'
-      e: '5'
-      f: '6'
+      choices:
+        - '0'
+        - '1'
+        - '2'
+        - '^3'
+        - '5'
+        - '6'
     text: 'In problem #8, how many forces should your free body diagram for one pithball include?'
   -
     answer:
-      a: "it doesn't"
-      b: 'it is proportional to the mass'
-      c: '^it is proportional to the square root of the mass'
-      d: 'it is porportional to one over the mass'
-      e: 'it is proportional to the mass squared'
-      f: 'it is proportional to one over the mass squared'
+      choices:
+        - "it doesn't"
+        - 'it is proportional to the mass'
+        - '^it is proportional to the square root of the mass'
+        - 'it is porportional to one over the mass'
+        - 'it is proportional to the mass squared'
+        - 'it is proportional to one over the mass squared'
     text: 'In problem #8, how does the expression for charge depend on the pith ball mass?'
   -
     answer:
-      a: positive
-      b: negative
-      c: '^it is not possible to tell without more information'
+      choices:
+        - positive
+        - negative
+        - '^it is not possible to tell without more information'
     text: 'In problem #8, are the pith balls positivly charged or negativly charged?'
   -
     answer:
-      - 'small sphere'
-      - 'medium sphere'
-      - 'large sphere'
+      ordered:
+        - 'small sphere'
+        - 'medium sphere'
+        - 'large sphere'
     text: 'In problem #9, what order did you determine.'

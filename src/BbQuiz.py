@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from Utils import *
+from pyHomework.Utils import *
 import sys, os, re, random
 import math
 import yaml
@@ -24,11 +24,10 @@ class BbQuiz(Quiz):
         entry = []
         entry.append( "MC" )
         entry.append( q.get("text") ) 
-        lbls = sorted( q.get("answer").get("choices").leafList() )
+        choices = q.get("answer").get("choices")
         if self.randomize_answers:
-            random.shuffle(lbls)
-        for lbl in lbls:
-            answer = q.get("answer").get("choices").get(lbl)
+            random.shuffle(choices)
+        for answer in choices:
             if( self.correct_answer_chars.find( answer[0] ) >= 0 ):
                 entry.append( answer[1:] )
                 entry.append( "correct" )
@@ -48,11 +47,8 @@ class BbQuiz(Quiz):
         entry = []
         entry.append( "ORD" )
         entry.append( q.get("text") ) 
-        # lists are stored in the tree keyed on the array index, which is a string.
-        # so, we need to make sure and sort them to get the correct order
-        lbls = sorted( q.get("answer").get("ordered").leafList() )
-        for lbl in lbls:
-            entry.append( q.get("answer").get("ordered").get(lbl) )
+        for answer in q.get("answer").get("ordered"):
+            entry.append( answer )
 
         return entry
 
@@ -89,26 +85,17 @@ class BbQuiz(Quiz):
         return entry
 
 
-
     def write_questions(self, filename="/dev/stdout"):
-        with open(filename, 'w') as f:
-            branches = self.quiz_tree("questions").branchList()
-            branches.sort(key=float)
-            for i in branches:
-                if self.quiz_tree("questions").get(i).get("enabled", None):
-                    if not toBool( self.quiz_tree("questions").get(i).get("enabled") ):
-                        continue
-
-                qnum = int(i) + 1
-                question = self.quiz_tree("questions").get(i)
-                builder = getattr(self, "build_"+question.get("type")+"_tokens")
-                q = builder(question)
-                f.write("\t".join(q)+"\n")
-                if question.get("graphic",None):
-                    self.push_graphic( question.get("graphic") )
+      with open(filename, 'w') as f:
+        for question in self.quiz_data.get("questions", None):
+          if question.get("enabled", True):
+            builder = getattr(self, "build_"+question.get("type")+"_tokens")
+            q = builder(question)
+            f.write("\t".join(q)+"\n")
+            if question.get("graphic",None):
+              self.push_graphic( question.get("graphic") )
 
     def push_graphic(self, element):
-
         data = dict()
 
         data['file'] = element.get("file", None)
