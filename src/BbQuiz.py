@@ -10,8 +10,6 @@ import pprint
 import urlparse
 
 import sys
-sys.path.append("../externals/pyoptiontree")
-import pyoptiontree
 
 
 testing = 0
@@ -120,11 +118,6 @@ if __name__ == "__main__":
         quiz = BbQuiz()
         quiz.load( arg )
         quiz.write_questions(os.path.splitext(arg)[0]+".txt")
-
-
-if testing:
-    print EvalTemplate("this is interpolated once ${x}").substitute( EvalTemplateDict({'x' : 10, 'y' : "${x}"}))
-    print EvalTemplate("this is interpolated once ${y}").substitute( EvalTemplateDict({'x' : 10, 'y' : "${x}"}))
 
 
 

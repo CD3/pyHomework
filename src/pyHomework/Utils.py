@@ -5,6 +5,7 @@ import StringIO, json
 import re, os, yaml
 import collections
 import sys
+from mako.template import Template
 
 class EvalTemplate(Template):
     delimiter = '~'
@@ -216,22 +217,36 @@ class Quiz(object):
         self.filename = "unknown"
         self.quiz_data = dict()
         if isinstance( obj, str ):
-            self.filename = obj
-            if os.path.isfile( obj ):
-                with open(obj) as f:
-                    self.quiz_data = yaml.load( f )
-            else:
-                raise IOError( "argument %s does not seem to be a file" % self.filename )
+          self.filename = obj
+          if os.path.isfile( obj ):
+            # want to run the input file through Mako first, so the user
+            # can use some sweet template magic
+            self.quiz_data = yaml.load( Template(filename = obj, strict_undefined=True).render() )
+          else:
+              raise IOError( "argument %s does not seem to be a file" % self.filename )
 
         if isinstance( obj, dict ):
             self.quiz_data = obj
 
+        # run the data tree through Mako to do variable replacement, including latex refernce/label replacement
+        # this is pretty slick, we do the following:
+        # 1. build a dictionary of variables from the latex aux file and the 'vars' entry of the yaml file
+        # 2. dump the dict to a yaml string.
+        # 3. pass this string to the Mako template class.
+        # 4. render the template using the variables we git in part 1
+        # 5. parse the new yaml to a dict tree
 
         # load latex keys if available
         if 'latex' in self.quiz_data:
             if 'aux' in self.quiz_data['latex']:
                 aux_file =  os.path.join( os.path.dirname(obj), self.quiz_data['latex']['aux']  )
                 self.latex_labels.parse( aux_file )
+        
+        variables = dict()
+        variables.update( self.quiz_data.get('vars', dict() ) )
+        variables.update( self.latex_labels )
+
+        self.quiz_data = yaml.load( Template( yaml.dump( self.quiz_data ), strict_undefined=True ).render( **variables ) )
 
         self.detect_question_types()
 

@@ -9,11 +9,11 @@ import yaml
 import sympy as sy
 import sympy.assumptions as assumptions
 import numpy as np
-import pint  as pn
+import pint
 
 from mako.template import Template
 
-units = pn.UnitRegistry()
+units = pint.UnitRegistry()
 
 class HomeworkAssignment:
 
@@ -183,7 +183,7 @@ class HomeworkAssignment:
   def add_quiz_question(self):
     self.quiz_questions.append( self.blank_quiz_question.copy() )
     if len(self.questions):
-      self.quiz_questions[-1]['text'] = "For problem #${/vars/%s}: "%self.get_ref()
+      self.quiz_questions[-1]['text'] = 'For problem #${"${%s}"}: '%self.get_ref()
 
   def quiz_add_text(self,text=""):
     text = text.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
