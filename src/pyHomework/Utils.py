@@ -214,6 +214,17 @@ class Quiz(object):
         self.latex_labels = LatexLabels()
 
     def load(self, obj):
+
+        class Namespace(dict):
+
+          def __init__(self, name, *args, **kargs):
+            self.name = name
+            dict.__init__(self, *args, **kargs )
+
+          def __getattr__(self,key):
+            return dict.get(self,key,"${%s.%s}" % (self.name, key))
+
+
         self.filename = "unknown"
         self.quiz_data = dict()
         if isinstance( obj, str ):
@@ -221,7 +232,7 @@ class Quiz(object):
           if os.path.isfile( obj ):
             # want to run the input file through Mako first, so the user
             # can use some sweet template magic
-            self.quiz_data = yaml.load( Template(filename = obj, strict_undefined=True).render() )
+            self.quiz_data = yaml.load( Template(filename = obj, strict_undefined=True).render( vars = Namespace('vars'), lbls = Namespace("lbls") ) )
           else:
               raise IOError( "argument %s does not seem to be a file" % self.filename )
 
@@ -242,11 +253,9 @@ class Quiz(object):
                 aux_file =  os.path.join( os.path.dirname(obj), self.quiz_data['latex']['aux']  )
                 self.latex_labels.parse( aux_file )
         
-        variables = dict()
-        variables.update( self.quiz_data.get('vars', dict() ) )
-        variables.update( self.latex_labels )
+        variables = self.quiz_data.get('vars', dict() )
 
-        self.quiz_data = yaml.load( Template( yaml.dump( self.quiz_data ), strict_undefined=True ).render( **variables ) )
+        self.quiz_data = yaml.load( Template( yaml.dump( self.quiz_data ), strict_undefined=True ).render( vars = Namespace( 'vars', variables), lbls = Namespace('lbls', **self.latex_labels) ) )
 
         self.detect_question_types()
 

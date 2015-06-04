@@ -183,7 +183,7 @@ class HomeworkAssignment:
   def add_quiz_question(self):
     self.quiz_questions.append( self.blank_quiz_question.copy() )
     if len(self.questions):
-      self.quiz_questions[-1]['text'] = 'For problem #${"${%s}"}: '%self.get_ref()
+      self.quiz_questions[-1]['text'] = 'For problem #${lbls.%s}: '%self.get_ref()
 
   def quiz_add_text(self,text=""):
     text = text.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
