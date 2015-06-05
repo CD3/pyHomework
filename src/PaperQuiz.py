@@ -1,9 +1,7 @@
 #! /usr/bin/env python
 
-from Utils import *
+from pyHomework.Utils import *
 import sys, os, re, random
-import getopt
-import math
 import yaml
 import dpath.util
 import subprocess, tempfile, shutil, shlex
@@ -13,15 +11,19 @@ from mako.template import Template
 
 latex_template= r'''
 <%!
-    correct_answer_chars = "*^!@"
+    import random
+
     answers = dict()
+%>
+
+<%
     def mca( text ):
       if isAns( text ):
         text = text[1:]
       return text
 
     def isAns( text ):
-      return correct_answer_chars.find( text[0] ) >= 0
+      return special_chars['correct_answer'].find( text[0] ) >= 0
 %>
 
 
@@ -38,13 +40,13 @@ latex_template= r'''
 
 \begin{document}
 \begin{center}
-{\Large ${config['title']}}
+{\Large ${title}}
 \end{center}
 
-%if len(config['instructions']) > 0:
+%if not instructions is UNDEFINED:
 Special Instructions:
 \begin{itemize}
-  %for instruction in config['instructions']:
+  %for instruction in instructions:
     \item ${instruction}
   %endfor
 \end{itemize}
@@ -52,22 +54,17 @@ Special Instructions:
 %endif
 
 \begin{compactenum}
-%for question in config['questions']:
+%for question in questions:
     \begin{minipage}{\linewidth}
     \item ${question['text']}
     %if question['type'] == "MC" or question['type'] == "MA":
     \begin{compactenum}
         %for choice in question['answer']['choices']:
         \item ${choice|mca}
-        <%doc>
-        %if isAns(choice):
-        %endif
-        </%doc>
         %endfor
     \end{compactenum}
     %endif
     %if question['type'] == "NUM":
-    <%doc> ${question['answer']['value']} </%doc>
     %endif
     \end{minipage}
 
@@ -76,10 +73,10 @@ Special Instructions:
 %endfor
 \end{compactenum}
 
-%if config['options'].get('make_key',False):
+%if make_key:
 \clearpage
 Answers:
-%for answer in config['answers']:
+%for answer in answers:
 
   ${answer}
 %endfor
@@ -93,59 +90,32 @@ Answers:
 class PaperQuiz(Quiz):
     def __init__(self):
         super( PaperQuiz, self).__init__()
-        self.interpolate   = True
-        self.show_answers  = False
-        self.template_engine = Template(latex_template )
-
-
+        self.template_engine = Template(latex_template, strict_undefined=False )
         self.answers = []
+
+
+        self.config['make_key'] = False
+        self.quiz_data['title'] = "Quiz"
 
 
 
     def write_questions(self, filename=None):
-        config = extractDict(self.quiz_tree)
 
-        # setup options tree, take care of defaults
-        config['options'] = config.get('options',{})
+      if self.config['randomize']['questions']:
+        random.shuffle(self.quiz_data['questions'])
 
-        self.show_answers = config['options'].get('show_answers',False)
+      if self.config['randomize']['answers']:
+        for q in self.quiz_data['questions']:
+          if q['type'] == "MC" or q['type'] == "MA":
+            random.shuffle( q['answer']['choices'] )
 
-
-
-
-
-
-
-        # add an empty instructions entry if non exists
-        config['instructions'] = config.get('instructions',{})
-
-
-        # replace questions, 
-        config['questions']    = dict2list( config['questions'] )
-        config['instructions'] = dict2list( config['instructions'] )
-
-        # now do the same thing for the answers to MC questions
-        for question in config['questions']:
-          if question.get('answer',{}).get('choices',{}):
-            question['answer']['choices'] = dict2list( question['answer']['choices'] )
-
-        # randomize questions and answers
-        if config.get('options',{}).get('randomize',{}).get('questions',False):
-          random.shuffle( config['questions'] )
-
-        if config.get('options',{}).get('randomize',{}).get('answers',False):
-          for question in config['questions']:
-            random.shuffle(question['answer']['choices'])
-
-        config['answers'] = self.answers
-
-        #import pprint
-        #pprint.pprint(config['questions'])
-
-        if not filename:
-            filename = "/dev/stdout"
-        with open(filename, 'w') as f:
-          f.write( self.template_engine.render( config=config ) )
+      if not filename:
+          filename = "/dev/stdout"
+      with open(filename, 'w') as f:
+        render_data = dict()
+        render_data.update(self.config)
+        render_data.update(self.quiz_data)
+        f.write( self.template_engine.render( **render_data ) )
 
     def compile_latex(self, filename):
         basename = os.path.splitext(arg)[0]
@@ -170,28 +140,40 @@ class PaperQuiz(Quiz):
 
     def preview_pdf(self, filename):
       with open(os.devnull,'w') as FNULL:
-        viewer = opts.get('-P', 'evince')
+        viewer = args.preview_viewer
         ret = subprocess.call([viewer,filename], stdout=FNULL, stderr=subprocess.STDOUT)
 
 
 if __name__ == "__main__":
-    try:
-      optlist,args = getopt.getopt(sys.argv[1:], "pP:" )
-      opts = dict()
-      for o,a in optlist:
-        opts[o] = a if  a else True
+  from argparse import ArgumentParser
 
-    except getopt.GetoptError as err:
-      print str(err)
-      sys.exit(1)
+  parser = ArgumentParser(description="A simple Python script for creating paper quizzes from a YAML configuration file.")
 
-    for arg in args:
-      basename = os.path.splitext(arg)[0]
-      quiz = PaperQuiz()
-      quiz.load( arg )
-      quiz.write_questions( basename+".tex" )
-      quiz.compile_latex(   basename+".tex" )
-      if opts.get('-p', False) or opts.get('-P', False):
-        quiz.preview_pdf(     basename+".pdf" )
+  parser.add_argument("quiz_files",
+                      action="store",
+                      nargs='*',
+                      help="Quiz YAML files." )
+
+  parser.add_argument("-p", "--preview",
+                      action='store_true',
+                      help="Preview the generated PDF after it is created. In other words... open it" )
+
+  parser.add_argument("-P", "--preview-viewer",
+                      action='store',
+                      default='evince',
+                      help="Preview the generated PDF after it is created. In other words... open it" )
+
+
+  args = parser.parse_args()
+
+
+  for arg in args.quiz_files:
+    basename = os.path.splitext(arg)[0]
+    quiz = PaperQuiz()
+    quiz.load( arg )
+    quiz.write_questions( basename+".tex" )
+    quiz.compile_latex(   basename+".tex" )
+    if args.preview:
+      quiz.preview_pdf(   basename+".pdf" )
 
 

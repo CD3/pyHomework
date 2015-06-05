@@ -5,7 +5,6 @@ import sys, os, re, random
 import yaml
 from dpath import util
 import urlparse
-import re
 
 
 

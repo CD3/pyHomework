@@ -208,7 +208,7 @@ def dict2list( d ):
 
 class Quiz(object):
     def __init__(self):
-        self.quiz_data = None
+        self.quiz_data = dict()
         self.latex_labels = LatexLabels()
         self.config = { 'special_chars' : { 'correct_answer' : "*^!@" }
                       , 'randomize' : { 'answers' : True
@@ -228,13 +228,12 @@ class Quiz(object):
 
 
         self.filename = "unknown"
-        self.quiz_data = dict()
         if isinstance( obj, str ):
           self.filename = obj
           if os.path.isfile( obj ):
             # want to run the input file through Mako first, so the user
             # can use some sweet template magic
-            self.quiz_data = yaml.load( Template(filename = obj, strict_undefined=True).render( vars = Namespace('vars'), lbls = Namespace("lbls") ) )
+            self.quiz_data.update( yaml.load( Template(filename = obj, strict_undefined=True).render( vars = Namespace('vars'), lbls = Namespace("lbls") ) ) )
           else:
               raise IOError( "argument %s does not seem to be a file" % self.filename )
 

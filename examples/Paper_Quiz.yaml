@@ -1,7 +1,13 @@
-title : "Phys 677 - Reading Quiz 1"
-options:
-  show_answers: false
+title : "Paper Quiz 1"
+instructions:
+  - "Do answer the questions correctly"
+  - "Do NOT answer the questions incorrectly"
+
+configuration:
   make_key:     true
+  randomize: 
+    answers: True
+    questions : True
 
 vars:
   velocity_of_electron : "1.44545 m/s"
@@ -21,4 +27,4 @@ questions:
        - "*three"
   - text: "4 - NUM question"
     answer:
-      value: ${/vars/velocity_of_electron}
+      value: ${vars.velocity_of_electron}
