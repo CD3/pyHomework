@@ -2,17 +2,16 @@
 
 from pyHomework.Utils import *
 import sys, os, re, random
-import math
 import yaml
-import collections
 from dpath import util
-import pprint
 import urlparse
+import re
 
-import sys
 
 
-testing = 0
+
+
+
 
 
 
@@ -23,10 +22,10 @@ class BbQuiz(Quiz):
         entry.append( "MC" )
         entry.append( q.get("text") ) 
         choices = q.get("answer").get("choices")
-        if self.randomize_answers:
+        if self.config['randomize']['answers']:
             random.shuffle(choices)
         for answer in choices:
-            if( self.correct_answer_chars.find( answer[0] ) >= 0 ):
+            if( self.config['special_chars']['correct_answer'].find( answer[0] ) >= 0 ):
                 entry.append( answer[1:] )
                 entry.append( "correct" )
             else:
@@ -85,39 +84,83 @@ class BbQuiz(Quiz):
 
     def write_questions(self, filename="/dev/stdout"):
       with open(filename, 'w') as f:
-        for question in self.quiz_data.get("questions", None):
+        questions = self.quiz_data.get("questions")
+        if self.config['randomize']['questions']:
+          random.shuffle(questions)
+        for question in questions:
           if question.get("enabled", True):
             builder = getattr(self, "build_"+question.get("type")+"_tokens")
             q = builder(question)
-            f.write("\t".join(q)+"\n")
-            if question.get("graphic",None):
-              self.push_graphic( question.get("graphic") )
 
-    def push_graphic(self, element):
+            if question.get("image",None):
+              link = self.push_image( question.get("image"), self.config['remote'] )
+              # need to add the link to the question text, which is at q[1].
+              q[1] = "To answer this question, view the picture at %s by copying the link into your browser IN A NEW TAB (DO NOT USE THIS TAB). %s" %(link, q[1])
+
+            f.write("\t".join(q)+"\n")
+
+    def push_image(self, image_filename, remote_config):
         data = dict()
 
-        data['file'] = element.get("file", None)
-        link = urlparse.urlparse( element.get("link", "") )
+        if 'copy_root' in remote_config:
+          url = urlparse.urlparse( os.path.join( remote_config['copy_root'], remote_config['image_dir'] ) )
+        else:
+          return None
 
-        data['user'] = 'cdclark'
-        data['host'] = link.netloc
-        data['path'] = link.path.replace('/~cclark','./public_html')
+        if url.scheme == 'ssh':
 
-        cmd = 'scp "%(file)s" "%(user)s@%(host)s:%(path)s" > /dev/null' % data
+          data['file']   = image_filename
+          data['netloc'] = url.netloc
+          data['path']   = url.path[1:]
 
-        print "found file/link pair. copying file to server with '%s'." % cmd
-        os.system( cmd )
+          cmd = 'scp "%(file)s" "%(netloc)s:%(path)s" > /dev/null' % data
+          print "found file/link pair. copying file to server with '%s'." % cmd
+          os.system( cmd )
         
+        link = urlparse.urljoin( remote_config['web_root'], os.path.join(remote_config['image_dir'], image_filename) )
+        return link
 
 
 
 
 
 if __name__ == "__main__":
-    for arg in sys.argv[1:]:
-        quiz = BbQuiz()
-        quiz.load( arg )
-        quiz.write_questions(os.path.splitext(arg)[0]+".txt")
+
+  from argparse import ArgumentParser
+
+  manual = '''
+  {prog} reads a description of a quiz stored in a YAML file and creates a txt file formatted such that they can be imported
+  into Blackboard. Blackboard can import questions from text file,
+  but these files must have a specific format (https://help.blackboard.com/en-us/Learn/9.1_SP_10_and_SP_11/Instructor/070_Tests_Surveys_Pools/106_Uploading_Questions#file_format),
+  which is not easy to manage. YAML is a standard file format that provides a simple syntax to organize data. It is easier
+  to manage quizzes stored in YAML format.
+
+  In addition to simplifying quiz management, {prog} also has several features for simplifying quiz writing. For example, the 'tolorance' for
+  numerical answers can be automatically calculated, multiple choice answers can be randomized, and so on.
+  
+           '''
+  parser = ArgumentParser(description="A simple script for creating Blackboard quizzes from YAML files.")
+
+  parser.add_argument("quiz_files",
+                      nargs='*',
+                      action="store",
+                      help="The YAML quiz files." )
+
+  parser.add_argument('-m', '--manual',
+                      action="store_true",
+                      help="Print manual." )
+
+
+  args = parser.parse_args()
+
+  if args.manual:
+    print manual.format( prog = 'BbQuiz.py' )
+    sys.exit(0)
+
+  for arg in args.quiz_files:
+      quiz = BbQuiz()
+      quiz.load( arg )
+      quiz.write_questions(os.path.splitext(arg)[0]+".txt")
 
 
 

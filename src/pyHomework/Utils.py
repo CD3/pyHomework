@@ -209,9 +209,11 @@ def dict2list( d ):
 class Quiz(object):
     def __init__(self):
         self.quiz_data = None
-        self.correct_answer_chars = "*^!@"
-        self.randomize_answers = True
         self.latex_labels = LatexLabels()
+        self.config = { 'special_chars' : { 'correct_answer' : "*^!@" }
+                      , 'randomize' : { 'answers' : True
+                                      , 'questions' : False }
+                      }
 
     def load(self, obj):
 
@@ -238,6 +240,9 @@ class Quiz(object):
 
         if isinstance( obj, dict ):
             self.quiz_data = obj
+
+        # update configuration with config in entry in config file
+        self.config.update( self.quiz_data.get('configuration', dict() ) )
 
         # run the data tree through Mako to do variable replacement, including latex refernce/label replacement
         # this is pretty slick, we do the following:
@@ -275,7 +280,7 @@ class Quiz(object):
                   # we need to see how many correct answers there are...
                   num_correct_answers = 0
                   for ans in question.get("answer").get("choices"):
-                    if( self.correct_answer_chars.find( ans[0] ) >= 0 ):
+                    if( self.config['special_chars']['correct_answer'].find( ans[0] ) >= 0 ):
                       num_correct_answers += 1
 
                   # if there weren't any correct answers, there was probably an error
