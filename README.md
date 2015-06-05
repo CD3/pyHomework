@@ -41,3 +41,16 @@ BbQuiz.py also has a few unique fetures that I have not found anywhere else:
      to your homework set, all of the labels in the quiz referring to specific
      questions will automatically be updated. Labels are
      extracted from a .aux file specified in the quiz file.
+
+PaperQuiz.py
+---------
+
+PaperQuiz.py reads a YAML file containing the description of a quiz and generates a PDF of the quiz. It has several useful features:
+
+   - Randomize question order
+   - Randomize answer order
+   - Generate key
+
+The YAML quiz description read by PaperQuiz.py is the same format read by BbQuiz.py, so it is possible to create a Blackboard and Paper version of the
+same quiz.
+

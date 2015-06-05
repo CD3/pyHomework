@@ -84,8 +84,8 @@ Questions:
     %endif
     <%
       if question['type'] == "NUM":
-        answers[qref].append( question['answer']['value'] )
-        answers[qref][-1] +=  question['answer'].get('unit', "")
+        answers[qref].append( str( question['answer']['value'] ) )
+        answers[qref][-1] +=  str( question['answer'].get('unit', "") )
 
       if question['type'] == "TF":
         answers[qref].append( "True" if question['answer'] else "False" )
