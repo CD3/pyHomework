@@ -12,8 +12,9 @@ from mako.template import Template
 latex_template= r'''
 <%!
     import random
+    import collections
 
-    answers = dict()
+    answers = collections.OrderedDict()
 %>
 
 <%
@@ -51,21 +52,44 @@ Special Instructions:
   %endfor
 \end{itemize}
 \vspace{10pt}
+Questions:
+\vspace{10pt}
 %endif
 
-\begin{compactenum}
+\begin{compactenum} <% i = 0 %>
 %for question in questions:
-    \begin{minipage}{\linewidth}
-    \item ${question['text']}
+<%
+  i += 1
+  qlbl = '\label{%d}' % i
+  qref = qlbl.replace("label", "ref")
+  answers[qref] = []
+%>\begin{minipage}{\linewidth}
+    \item ${qlbl} ${question['text']}
     %if question['type'] == "MC" or question['type'] == "MA":
-    \begin{compactenum}
+    \begin{compactenum} <% j = 0 %>
         %for choice in question['answer']['choices']:
-        \item ${choice|mca}
+        <% 
+          j += 1
+          plbl = '\label{%d%d}' % (i,j)
+          pref = plbl.replace("label", "ref")
+          if isAns( choice ):
+            answers[qref].append( pref )
+        %>\item ${plbl} ${choice|mca}
         %endfor
     \end{compactenum}
     %endif
-    %if question['type'] == "NUM":
+    %if question['type'] == "TF":
+
+        True \hskip 1cm False
     %endif
+    <%
+      if question['type'] == "NUM":
+        answers[qref].append( question['answer']['value'] )
+        answers[qref][-1] +=  question['answer'].get('unit', "")
+
+      if question['type'] == "TF":
+        answers[qref].append( "True" if question['answer'] else "False" )
+    %>
     \end{minipage}
 
     \vspace{10pt}
@@ -76,11 +100,15 @@ Special Instructions:
 %if make_key:
 \clearpage
 Answers:
-%for answer in answers:
+\begin{itemize}
+  %for k in answers:
+      \item ${k}.
+    %for v in answers[k]:
+            ${v} 
+    %endfor
+  %endfor
 
-  ${answer}
-%endfor
-
+\end{itemize}
 %endif
 
 \end{document}

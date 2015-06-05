@@ -13,18 +13,20 @@ vars:
   velocity_of_electron : "1.44545 m/s"
 
 questions:
-  - text: "1 - MC question"
+  - text: "1 - MC question (one)"
     answer:
       choices:
        - "*one"
        - "two"
        - "three"
-  - text: "2 - MC question"
+  - text: "2 - MA question (two and three)"
     answer:
       choices:
        - "one"
        - "*two"
        - "*three"
-  - text: "4 - NUM question"
+  - text: "3 - TF question (True)"
+    answer: True
+  - text: "4 - NUM question (${vars.velocity_of_electron})"
     answer:
       value: ${vars.velocity_of_electron}
