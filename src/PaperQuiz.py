@@ -5,6 +5,7 @@ import sys, os, re, random
 import yaml
 import dpath.util
 import subprocess, tempfile, shutil, shlex
+import pyPdf
 from mako.template import Template
 
 
@@ -99,7 +100,7 @@ Questions:
 
 %if make_key:
 \clearpage
-Answers:
+Key - Quiz Answers:
 \begin{itemize}
   %for k in answers:
       \item ${k}.
@@ -171,6 +172,42 @@ class PaperQuiz(Quiz):
         viewer = args.preview_viewer
         ret = subprocess.call([viewer,filename], stdout=FNULL, stderr=subprocess.STDOUT)
 
+    def split_quiz_and_key(self, filename):
+      '''Splits a PDF containing into the quiz and a separate key'''
+
+      FirstKeyPage = -1
+      pdfDoc = pyPdf.PdfFileReader(open(filename, "rb"))
+      for i in xrange(pdfDoc.getNumPages()):
+          content = ""
+          content += pdfDoc.getPage(i).extractText() + "\n"
+          content = content.encode('ascii', 'ignore')
+          if content.find( "Key-QuizAnswers:" ) > -1:
+            FirstKeyPage = i
+            break
+
+      if FirstKeyPage > -1:
+
+        # write the quiz first write the key
+        output = pyPdf.PdfFileWriter()
+        ofilename = filename.replace(".pdf", "-Key.pdf")
+        for i in xrange(FirstKeyPage, pdfDoc.getNumPages() ):
+          output.addPage(pdfDoc.getPage(i))
+        with open( ofilename, 'wb' ) as f:
+          output.write(f)
+
+        # now write the quiz.
+        output = pyPdf.PdfFileWriter()
+        ofilename = filename.replace(".pdf", "-Quiz.pdf")
+        for i in xrange(0, FirstKeyPage):
+          output.addPage(pdfDoc.getPage(i))
+        with open( ofilename, 'wb' ) as f:
+          output.write(f)
+
+
+        # overwrite the original quiz
+        shutil.move( ofilename, filename)
+
+
 
 if __name__ == "__main__":
   from argparse import ArgumentParser
@@ -199,9 +236,10 @@ if __name__ == "__main__":
     basename = os.path.splitext(arg)[0]
     quiz = PaperQuiz()
     quiz.load( arg )
-    quiz.write_questions( basename+".tex" )
-    quiz.compile_latex(   basename+".tex" )
+    quiz.write_questions(    basename+".tex" )
+    quiz.compile_latex(      basename+".tex" )
+    quiz.split_quiz_and_key( basename+".pdf" )
     if args.preview:
-      quiz.preview_pdf(   basename+".pdf" )
+      quiz.preview_pdf(      basename+".pdf" )
 
 
