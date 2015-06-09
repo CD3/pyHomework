@@ -6,6 +6,7 @@ import re, os, yaml
 import collections
 import sys
 from mako.template import Template
+import validictory
 
 class EvalTemplate(Template):
     delimiter = '~'
@@ -207,6 +208,50 @@ def dict2list( d ):
     return l
 
 class Quiz(object):
+
+    quiz_schema = '''
+    type : object
+    properties:
+      questions:
+        required : True
+        type : array 
+        items :
+          type : object
+          properties :
+            text : {type : string, required : True}
+            answer :
+              required : True
+              type :
+                - type : object
+                  description : A Numerical answer question.
+                  properties :
+                    value : {type : number, required : True}
+                    uncertainty : {type : [ number, string ] }
+                - type : object
+                  properties :
+                    choices : { type : array, required : True }
+                - type : object
+                  properties :
+                    ordered : { type : array, required : True }
+                - boolean
+            type : {type : string}
+            image : {type : string}
+      configuration:
+        type: object
+        properties:
+          randomize :
+            type : object
+            properties :
+              questions : {type : boolean}
+              answers : {type : boolean}
+          special_chars : 
+            type : object
+            properties :
+              correct_answer : {type : string}
+    '''
+
+
+
     def __init__(self):
         self.quiz_data = dict()
         self.latex_labels = LatexLabels()
@@ -214,9 +259,17 @@ class Quiz(object):
                       , 'randomize' : { 'answers' : True
                                       , 'questions' : False }
                       }
+        
 
-    def load(self, obj):
 
+    def validate(self):
+      schema = yaml.load( Quiz.quiz_schema )
+      validictory.validate( self.quiz_data, schema, required_by_default=False, fail_fast=False )
+
+
+
+
+    def load(self, filename = None, text = None, quiz_data = None):
         class Namespace(dict):
 
           def __init__(self, name, *args, **kargs):
@@ -226,19 +279,19 @@ class Quiz(object):
           def __getattr__(self,key):
             return dict.get(self,key,"${%s.%s}" % (self.name, key))
 
-
         self.filename = "unknown"
-        if isinstance( obj, str ):
-          self.filename = obj
-          if os.path.isfile( obj ):
-            # want to run the input file through Mako first, so the user
-            # can use some sweet template magic
-            self.quiz_data.update( yaml.load( Template(filename = obj, strict_undefined=True).render( vars = Namespace('vars'), lbls = Namespace("lbls") ) ) )
-          else:
-              raise IOError( "argument %s does not seem to be a file" % self.filename )
+        if not filename is None:
+          self.filename = filename
+          with open( filename, 'r' ) as f:
+            text = f.read()
 
-        if isinstance( obj, dict ):
-            self.quiz_data = obj
+        if quiz_data is None:
+          # want to run the input file through Mako first, so the user
+          # can use some sweet template magic
+          self.quiz_data.update( yaml.load( Template(text, strict_undefined=True).render( vars = Namespace('vars'), lbls = Namespace("lbls") ) ) )
+
+        else:
+          self.quiz_data = quiz_data
 
         # update configuration with config in entry in config file
         self.config.update( self.quiz_data.get('configuration', dict() ) )
