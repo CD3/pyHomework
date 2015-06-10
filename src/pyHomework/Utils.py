@@ -6,63 +6,7 @@ import re, os, yaml
 import collections
 import sys
 from mako.template import Template
-import validictory
-
-class EvalTemplate(Template):
-    delimiter = '~'
-    idpattern = "[^{}]+"
-
-    def substitute(self,mapping,**kws):
-        original_template = self.template
-        last_template = self.template
-        self.template = super(EvalTemplate,self).substitute(mapping,**kws)
-        while self.template != last_template:
-            last_template = self.template
-            self.template = super(EvalTemplate,self).substitute(mapping,**kws)
-
-        ret = self.template
-        self.teplate = original_template
-        
-        return ret
-
-
-class InterpEvalError(KeyError):
-    pass
-
-class EvalTemplateDict(dict):
-    """A dictionary that be used to add support for evaluating
-       expresions with the string.Transform class"""
-
-    def __init__(self, *args, **kwargs):
-        self.store = dict()
-        self.update(dict(*args, **kwargs))
-
-    def __getitem__(self, key):
-        try:
-            return dict.__getitem__(self,key)
-        except KeyError:
-            try:
-                return eval(self.__keytransform__(key),self)
-            except Exception, e:
-                raise InterpEvalError(key,e)
-
-        return self.store[self.__keytransform__(key)]
-
-    def __setitem__(self, key, value):
-        self.store[self.__keytransform__(key)] = value
-
-    def __delitem__(self, key):
-        del self.store[self.__keytransform__(key)]
-
-    def __iter__(self):
-        return iter(self.store)
-
-    def __len__(self):
-        return len(self.store)
-
-    def __keytransform__(self, key):
-        
-        return key
+import cerberus
 
 class Flattener:
     def __init__( self, ns = "", delim=".", allow_empty_ns=False, allow_leading_delim=False ):
@@ -137,6 +81,9 @@ class Flattener:
         
         return ret
 
+
+
+
 class LatexLabels(dict):
     def parse(self,filename):
         with open(filename) as file:
@@ -209,46 +156,49 @@ def dict2list( d ):
 
 class Quiz(object):
 
-    quiz_schema = '''
-    type : object
-    properties:
-      questions:
-        required : True
-        type : array 
-        items :
-          type : object
-          properties :
-            text : {type : string, required : True}
-            answer :
-              required : True
-              type :
-                - type : object
-                  description : A Numerical answer question.
-                  properties :
-                    value : {type : number, required : True}
-                    uncertainty : {type : [ number, string ] }
-                - type : object
-                  properties :
-                    choices : { type : array, required : True }
-                - type : object
-                  properties :
-                    ordered : { type : array, required : True }
-                - boolean
-            type : {type : string}
-            image : {type : string}
-      configuration:
-        type: object
-        properties:
-          randomize :
-            type : object
-            properties :
-              questions : {type : boolean}
-              answers : {type : boolean}
-          special_chars : 
-            type : object
-            properties :
-              correct_answer : {type : string}
-    '''
+    class QuizValidator(cerberus.Validator):
+      def __init__(self, *args, **kwargs):
+        quiz_schema = '''
+        questions:
+          required : True
+          type : list
+          schema :
+            type : dict
+            allow_unknown : True
+            schema:
+              image: {type: string}
+              type:  {type: string}
+              text:  {type: string, required: False }
+              answer:
+                anyof:
+                  - type: dict
+                    schema :
+                      value: {type : [number, string], required: False}
+                      uncertainty: {type : [number, string] }
+                  - type: dict
+                    schema:
+                      choices: {type : list, required: False}
+                  - type: dict
+                    schema:
+                      ordered: { type : list, required: False}
+                  - type: boolean
+        configuration:
+          type: dict
+          schema :
+            randomize :
+              type : dict
+              schema :
+                questions : {type : boolean}
+                answers   : {type : boolean}
+            special_chars : 
+              type : dict
+              schema :
+                correct_answer : {type : string}
+        '''
+        if 'schema' not in kwargs:
+          kwargs['schema'] = yaml.load(quiz_schema)
+        super(Quiz.QuizValidator,self).__init__(*args, **kwargs)
+
 
 
 
@@ -263,8 +213,12 @@ class Quiz(object):
 
 
     def validate(self):
-      schema = yaml.load( Quiz.quiz_schema )
-      validictory.validate( self.quiz_data, schema, required_by_default=False, fail_fast=False )
+      v = Quiz.QuizValidator( )
+      if not v.validate( self.quiz_data ):
+        print v.document
+        raise cerberus.ValidationError( yaml.dump( v.errors, default_flow_style=False) )
+      else:
+        return True
 
 
 
@@ -272,9 +226,9 @@ class Quiz(object):
     def load(self, filename = None, text = None, quiz_data = None):
         class Namespace(dict):
 
-          def __init__(self, name, *args, **kargs):
+          def __init__(self, name, *args, **kwargs):
             self.name = name
-            dict.__init__(self, *args, **kargs )
+            dict.__init__(self, *args, **kwargs )
 
           def __getattr__(self,key):
             return dict.get(self,key,"${%s.%s}" % (self.name, key))

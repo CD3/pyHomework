@@ -1,9 +1,12 @@
 
 import sys, os
+import pytest
 moddir = os.path.join( os.path.dirname( __file__ ), '../src' )
 sys.path = [moddir] + sys.path
+sys.path = ['/home/cclark/build/cerberus/'] + sys.path
 
 from pyHomework.Utils import Quiz
+import cerberus
 
 def test_simple():
   quiz_text= '''
@@ -58,17 +61,34 @@ questions:
       choices:
         - '*yes'
         - 'no'
-  # vvv not valid vvv
-  #- 
-    #text: "Can you see the picture?"
-    #answer :
-      #unknown : this is not a valid q type
-  #- 
-    #text: "Can you see the picture?"
-  #- 
-    #text: 10
   '''
 
   q = Quiz()
   q.load( text = quiz_text )
-  q.validate()
+  assert q.validate()
+
+def test_invalid():
+  quiz_text= '''
+configuration:
+  randomize:
+    questions: True
+    answers: False
+  special_chars:
+    correct_answer : '*'
+
+questions:
+  - 
+    text: "Can you see the picture?"
+    answer :
+      unknown : this is not a valid q type
+  - 
+    text: "Can you see the picture?"
+  - 
+    text: 10
+  '''
+
+  q = Quiz()
+  q.load( text = quiz_text )
+  with pytest.raises(cerberus.ValidationError) as e:
+    q.validate()
+
