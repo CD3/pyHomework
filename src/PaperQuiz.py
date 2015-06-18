@@ -228,9 +228,17 @@ if __name__ == "__main__":
                       default='evince',
                       help="Preview the generated PDF after it is created. In other words... open it" )
 
+  parser.add_argument('-e', '--example',
+                      action="store",
+                      help="Write an example quiz file." )
 
   args = parser.parse_args()
 
+  if args.example:
+    quiz = PaperQuiz()
+    with open( args.example, 'w' ) as f:
+      f.write( quiz.dump_example() )
+    sys.exit(0)
 
   for arg in args.quiz_files:
     basename = os.path.splitext(arg)[0]

@@ -6,16 +6,7 @@ import yaml
 from dpath import util
 import urlparse
 
-
-
-
-
-
-
-
-
 class BbQuiz(Quiz):
-
     def build_MC_tokens(self, q):
         entry = []
         entry.append( "MC" )
@@ -121,8 +112,6 @@ class BbQuiz(Quiz):
 
 
 
-
-
 if __name__ == "__main__":
 
   from argparse import ArgumentParser
@@ -149,11 +138,21 @@ if __name__ == "__main__":
                       action="store_true",
                       help="Print manual." )
 
+  parser.add_argument('-e', '--example',
+                      action="store",
+                      help="Write an example quiz file." )
+
 
   args = parser.parse_args()
 
   if args.manual:
     print manual.format( prog = 'BbQuiz.py' )
+    sys.exit(0)
+
+  if args.example:
+    quiz = BbQuiz()
+    with open( args.example, 'w' ) as f:
+      f.write( quiz.dump_example() )
     sys.exit(0)
 
   for arg in args.quiz_files:
