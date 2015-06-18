@@ -92,19 +92,19 @@ class Quiz(object):
             schema:
               image: {type: string}
               type:  {type: string}
-              text:  {type: string, required: False }
+              text:  {type: string, required: True }
               answer:
                 anyof:
                   - type: dict
                     schema :
-                      value: {type : [number, string], required: False}
+                      value: {type : [number, string], required: True }
                       uncertainty: {type : [number, string] }
                   - type: dict
                     schema:
-                      choices: {type : list, required: False}
+                      choices: {type : list, required: True }
                   - type: dict
                     schema:
-                      ordered: { type : list, required: False}
+                      ordered: { type : list, required: True }
                   - type: boolean
         configuration:
           type: dict
