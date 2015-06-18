@@ -140,7 +140,7 @@ that can be uploaded to Bloackboard. Running `BbQuiz.py` on the example file dir
     NUM	(Numerical Answer) What is the correct number, plus or minus 20%?	7.00E+00	1.40E+00
 
 Notice that the questions are not in the same order as they where in the YAML file. This is because BbQuiz.py has randomized them. Note too that the first Numerical Answer questions
-had an uncertainty, even though none was specified in the YAML file. This is because `BbQuiz.py` assumes a 10% uncertainty if none is given.
+had an uncertainty, even though none was specified in the YAML file. This is because `BbQuiz.py` assumes a 1% uncertainty if none is given.
 
 `PaperQuiz.py` generates a PDF, and it reads the same file format as `BbQuiz.py`, so you can run it on the same YAML file
 
