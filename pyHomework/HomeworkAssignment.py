@@ -29,7 +29,7 @@ class HomeworkAssignment:
 \usepackage{fancyhdr}
 \usepackage{enumitem}
 \usepackage[ampersand]{easylist}
-\ListProperties(Numbers1=a,Numbers2=l,Hide2=1,Progressive*=0.5cm,Hang=true,Space2=0.2cm,Space1=0.4cm,Space1*=0.4cm)
+\ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)
 
 \setlength{\headheight}{0.5in}
 \pagestyle{fancyplain}
@@ -50,20 +50,18 @@ class HomeworkAssignment:
 \begin{document}
 \maketitle
 
-\begin{enumerate}
 %for q in config['questions']:
 \begin{minipage}{\linewidth}
-  \item ${q['star']} \label{${q['label']}} ${q['text']}
-    %if 'parts' in q:
-    \begin{enumerate}
-      %for p in q['parts']:
-      \item ${p['star']} \label{${p['label']}} ${p['text']}
-      %endfor
-    \end{enumerate}
-    %endif
+  \begin{easylist}
+  & ${q['star']} \label{${q['label']}} ${q['text']}
+  %if 'parts' in q:
+    %for p in q['parts']:
+      && ${p['star']} \label{${p['label']}} ${p['text']}
+    %endfor
+  %endif
+  \end{easylist}
 \end{minipage}
 %endfor
-\end{enumerate}
 
 
 \clearpage
@@ -137,7 +135,7 @@ class HomeworkAssignment:
       shutil.copy( figure['filename'], os.path.join(scratch,figure['filename']) )
 
     with open("/dev/stdout",'w') as FNULL:
-      ret = subprocess.call(shlex.split( 'latexmk -pdf '+basename), cwd=scratch, stdout=sys.stdout, stderr=subprocess.STDOUT)
+      ret = subprocess.call(shlex.split( 'latexmk -f -pdf '+basename), cwd=scratch, stdout=sys.stdout, stderr=subprocess.STDOUT)
 
     for ext in ("pdf", "aux", "tex"):
       filename = "%s.%s"%(basename,ext)

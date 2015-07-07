@@ -1,13 +1,13 @@
 latex:
-  aux: /tmp/tmpyiG07H/HW_Example-Problem_Set.aux
+  aux: HW_Example-Problem_Set.aux
 questions:
 - answer:
     raw: 299000000.0 meter / second
     unit: meter / second
     value: '2.99e+8'
   instructions: ''
-  text: 'For problem #${/vars/prob_3}: What was the speed of light? Give your answer
-    in meter / second. '
+  text: 'For problem #${lbls.prob_3}: What was the speed of light? Give your answer
+    in meter / second. Give your answer in meter / second. '
   unit: meter / second
 - answer:
     choices:
@@ -15,4 +15,4 @@ questions:
     - '*slower'
     - it is not possible to tell
   instructions: Assume crown glass
-  text: 'For problem #${/vars/prob_4}: Assume crown glass'
+  text: 'For problem #${lbls.prob_4_1}: Assume crown glassAssume crown glass'

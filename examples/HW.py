@@ -1,8 +1,8 @@
 #! /bin/env python
 import sys
-sys.path.append("../src")
+sys.path.append("../pyHomework")
 
-from pyHomework import *
+from HomeworkAssignment import *
 # shorthand for defining quantities withunits
 Q_ = units.Quantity
 
@@ -76,7 +76,10 @@ ass.quiz_set_answer_value( SpeedOfLight )
 
 
 ass.add_question()
-ass.add_text("Will the speed of light be faster in glass or water?")
+ass.add_text("Will the speed of light be faster in:")
+
+ass.add_part()
+ass.add_text("glass or water?")
 
 ass.add_quiz_question()
 # HomeworkAssignment only provides a helper function for Numerical questions types. The answer for all other question types are
@@ -88,6 +91,24 @@ ass.quiz_add_answer( {'choices' : [ 'faster'
 # some quiz questions may require some special instructions in order to remove ambiguity in the question.
 ass.quiz_add_instruction("Assume crown glass")
 
+for i in range(10):
+  ass.add_question()
+  ass.add_text("These questions are just to fill the page...")
+  ass.add_part()
+  ass.add_text("to show how page breaks work...")
+  ass.add_part()
+  ass.add_text("questions should not be split across pages...")
+  ass.add_part()
+  ass.add_text("the main question and all parts should appear on the same page.")
+  ass.add_part()
+  ass.add_text("so, yea.")
+
+
+# we can just write the latex and yaml quiz
+ass.write_latex('test-latex.tex')
+ass.write_quiz('test-latex.yaml')
+
+# or build a PDF and Bb quiz
 
 # this will create the pdf
 ass.build_PDF('HW_Example-Problem_Set')
