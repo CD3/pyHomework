@@ -178,7 +178,8 @@ class Quiz(object):
         # load latex keys if available
         if 'latex' in self.quiz_data:
             if 'aux' in self.quiz_data['latex']:
-                aux_file =  os.path.join( os.path.dirname(obj), self.quiz_data['latex']['aux']  )
+                
+                aux_file =  os.path.join( os.path.dirname(filename) if filename else ".", self.quiz_data['latex']['aux']  )
                 self.latex_labels.parse( aux_file )
         
         variables = self.quiz_data.get('vars', dict() )
