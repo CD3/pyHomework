@@ -1,0 +1,2 @@
+include versioneer.py
+include pyHomework/_version.py
