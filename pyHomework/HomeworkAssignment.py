@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import sys, os, os.path, subprocess, shlex
+import sys, os, os.path, subprocess, shlex, re
 
 import time
 import tempfile
@@ -14,6 +14,103 @@ import pint
 from mako.template import Template
 
 units = pint.UnitRegistry()
+
+class Question(object):
+  def __init__(self):
+    self.text = ""
+    self.label = ""
+    self.starred = False
+    self.parts = []
+
+  def add_text(self, text):
+    self.text += text + " "
+
+  def num_parts(self):
+    return len( self.parts )
+
+class Figure(object):
+  def __init__(self):
+    self.filename = ""
+    self.label = ""
+    self.caption  = ""
+    self.options = ""
+
+class QuizQuestion(Question):
+  def __init__(self):
+    super(QuizQuestion,self).__init__()
+    self.answer = None
+    self.instructions = ""
+    self.unit = None
+
+  def add_instruction(self, text):
+    self.instructions += text + " "
+
+  def set_unit(self, unit):
+    unit = get_unit( unit )
+
+  def set_answer(self, answer):
+    self.answer = answer
+    if isinstance( answer, NumericalAnswer ):
+      self.unit = answer.unit
+
+
+  def dict(self):
+    text = self.text
+    if self.unit and ("%s" % self.unit != 'dimensionless'):
+      text += 'Give your answer in %s. ' % self.unit
+    text += self.instructions
+
+    return {'text': text, 'answer': self.answer.dict() }
+
+class NumericalAnswer(object):
+  def __init__(self, value=None):
+    self.raw = None
+    self.value = None
+    self.uncertainty = '1%'
+    self.unit = None
+
+    self.set_value( value )
+
+  def set_value( self, value ):
+    if value:
+      self.raw = str(value)
+      self.value = get_value(value)
+      self.unit = get_unit(value)
+
+  def set_uncertainty( self, uncertainty ):
+    self.uncertainty = uncertainty
+
+  def dict(self):
+    return {'raw' : self.raw,
+            'unit' : self.unit,
+            'value' : self.value,
+            'uncertainty' : self.uncertainty }
+
+class MultipleChoiceAnswer(object):
+  def __init__(self):
+    self.choices = []
+    self.correct = -1
+
+  def filter( self, text ):
+    filtered_text = re.sub('^\s*\*\s*','',text)
+    return (filtered_text != text, filtered_text)
+    
+  def add_choice( self, text ):
+    self.choices.append( text )
+
+  def dict(self):
+    return {'choices' : self.choices }
+
+
+
+  def set_correct( self, i = None):
+    if i:
+      self.correct = i
+    else:
+      self.correct = len(self.choices)-1
+
+
+
 
 class HomeworkAssignment:
 
@@ -50,27 +147,23 @@ class HomeworkAssignment:
 \begin{document}
 \maketitle
 
-%for q in config['questions']:
+%for item in config['stack']:
+%if config['isQuestion']( item ):
 \begin{minipage}{\linewidth}
   \begin{easylist}
-  & ${q['star']} \label{${q['label']}} ${q['text']}
-  %if 'parts' in q:
-    %for p in q['parts']:
-      && ${p['star']} \label{${p['label']}} ${p['text']}
-    %endfor
-  %endif
+  & ${'*' if item.starred else ''} \label{${item.label}} ${item.text}
+  %for p in item.parts:
+    && ${'*' if p.starred else ''} \label{${p.label}} ${p.text}
+  %endfor
   \end{easylist}
 \end{minipage}
-%endfor
-
-
-\clearpage
-
-%for f in config['figures']:
+%endif
+%if config['isFigure']( item ):
 \begin{figure}
-\includegraphics[${f['options']}]{${f['filename']}}
-\caption{ \label{${f['label']}} ${f['caption']}}
+\includegraphics[${item.options}]{${item.filename}}
+\caption{ \label{${item.label}} ${item.caption}}
 \end{figure}
+%endif
 %endfor
 
 \end{document}
@@ -82,21 +175,14 @@ class HomeworkAssignment:
                   , 'LF' : ""
                   , 'CF' : r"\thepage"
                   , 'RF' : r"powered by \LaTeX"
-                  , 'questions' : [ ]
-                  , 'figures' : [ ]
-                  , 'quiz_questions' : [ ]
+                  , 'isQuestion' : lambda obj: isinstance( obj, Question ) and not isinstance( obj, QuizQuestion )
+                  , 'isQuizQuestion' : lambda obj: isinstance( obj, QuizQuestion )
+                  , 'isFigure' : lambda obj: isinstance( obj, Figure )
+                  , 'stack' : [ ]
                   , 'latex_aux' : None
                   }
 
-    self.questions = self.config['questions']
-    self.figures   = self.config['figures']
-    self.quiz_questions = self.config['quiz_questions']
-
-    self.blank_question = {'text' : "", 'label' : "", 'star' : "" }
-    self.blank_part     = self.blank_question.copy()
-    self.blank_figure   = {'filename' : "", 'caption' : "", 'label' : "", 'options' : "" }
-    self.blank_quiz_question = {'text' : "", 'answer' : {}, 'instructions' : "" }
-
+    self.stack     = self.config['stack']
 
     self.template_engine = Template( self.latex_template )
 
@@ -113,13 +199,11 @@ class HomeworkAssignment:
   def write_quiz(self, filename="quiz.yaml"):
     with open(filename,'w') as f:
       # this will write a yaml file that can be processed by BbQuiz
-      for q in self.quiz_questions:
-        if 'unit' in q and ("%s"%q['unit']) != 'dimensionless':
-          q['text'] += 'Give your answer in %s. ' % q['unit']
-        if 'instructions' in q:
-          q['text'] += q['instructions']
+      tree = {'questions' : [] }
+      for item in self.stack:
+        if self.config['isQuizQuestion'](item):
+          tree['questions'].append( item.dict() )
 
-      tree = {'questions' : self.quiz_questions}
       if self.config['latex_aux']:
         tree.update({ 'latex' : {'aux' : self.config['latex_aux']}})
       f.write( yaml.dump(tree, default_flow_style=False) )
@@ -131,8 +215,9 @@ class HomeworkAssignment:
     self.write_latex(os.path.join(scratch,basename+".tex") )
 
     # copy all the figure files
-    for figure in self.figures:
-      shutil.copy( figure['filename'], os.path.join(scratch,figure['filename']) )
+    for item in self.stack:
+      if self.config['isFigure'](item):
+        shutil.copy( item.filename, os.path.join(scratch,item.filename) )
 
     with open("/dev/stdout",'w') as FNULL:
       ret = subprocess.call(shlex.split( 'latexmk -f -pdf '+basename), cwd=scratch, stdout=sys.stdout, stderr=subprocess.STDOUT)
@@ -151,100 +236,139 @@ class HomeworkAssignment:
 
     
 
+  def clean_text( self, text ):
+    return text.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
+
+  def num_questions(self):
+    count = 0
+    for item in self.stack:
+      if isinstance( item, Question ):
+        count += 1
+
+    return count
+
+  # return last item in stack that check evaluates to true on
+  def get_last( self, check ):
+    i = len(self.stack)-1
+    while i >= 0 and (not check( self.stack[i] ) ):
+      i = i - 1
+
+    if i >= 0:
+      return self.stack[i]
+    else:
+      return None
+
+  def get_last_question(self):
+    return self.get_last( lambda x : isinstance( x, Question ) and not isinstance( x, QuizQuestion ) )
+
+  def get_last_part(self):
+    question = self.get_last_question()
+    if len( question.parts ) == 0:
+      return None
+    else:
+      return question.parts[-1]
+
+  def get_last_question_or_part(self):
+    q = self.get_last_part()
+    if not q:
+      q = self.get_last_question()
+    return q
+
+  def get_last_quiz_question(self):
+    return self.get_last( lambda x : isinstance( x, QuizQuestion ) )
+
+  def get_last_figure(self):
+    return self.get_last( lambda x : isinstance( x, Figure ) )
 
 
+  def get_last_ref(self):
+    q = self.get_last_question_or_part()
+    if q:
+      return q.label
+    else:
+      return None
+      
 
   def add_question(self):
     '''Add a new (empyt) question to the stack.'''
-    self.questions.append( self.blank_question.copy() )
-    self.questions[-1]['label'] = r"prob_%d" % len(self.questions)
+    self.stack.append( Question() )
+    self.get_last_question().label = r"prob_%d" % self.num_questions()
 
   def add_part(self):
-    if not 'parts' in self.questions[-1]:
-      self.questions[-1]['parts'] = list()
-    self.questions[-1]['parts'].append( self.blank_part.copy() )
-    self.questions[-1]['parts'][-1]['label']  = r"prob_%d_%d" % (len(self.questions), len(self.questions[-1]['parts']))
-    
-  def get_ref(self):
-    if 'parts' in self.questions[-1]:
-      return self.questions[-1]['parts'][-1]['label']
-    else:
-      return self.questions[-1]['label']
+    self.get_last_question().parts.append( Question() )
+    self.get_last_part().label = r"prob_%d_%d" % (self.num_questions(), self.get_last_question().num_parts())
 
   def add_text(self,text=""):
-    if 'parts' in self.questions[-1]:
-      self.questions[-1]['parts'][-1]['text'] += text + " "
-    else:
-      self.questions[-1]['text']  += text + " "
-
-
-  def add_quiz_question(self):
-    self.quiz_questions.append( self.blank_quiz_question.copy() )
-    if len(self.questions):
-      self.quiz_questions[-1]['text'] = 'For problem #${lbls.%s}: '%self.get_ref()
-
-  def quiz_add_text(self,text=""):
-    text = text.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
-    self.quiz_questions[-1]['text']  += text + " "
-
-  def quiz_add_unit(self,unit=None):
-    if unit:
-      self.quiz_questions[-1]['unit'] = self.get_unit( unit )
-    else:
-      if 'unit' in self.quiz_questions[-1]:
-        del self.quiz_questions[-1]['unit']
-
-  def quiz_add_instruction(self,text):
-    self.quiz_questions[-1]['instructions'] += text
-
-  def quiz_add_answer(self, answer = None):
-    self.quiz_questions[-1]['answer'] = answer
-
-  def quiz_set_answer_value(self, value):
-    self.quiz_add_answer( {'raw' : str(value), 'value' : self.get_value( value ), 'unit' : self.get_unit( value ) } )
-    self.quiz_add_unit( value )
-
+    text = self.clean_text( text )
+    q = self.get_last_question_or_part()
+    if q:
+      q.add_text( text )
 
   def add_star(self, text="*"):
-    '''Add a star (*) to the current question or part.'''
-    if 'parts' in self.questions[-1]:
-      self.questions[-1]['parts'][-1]['star'] = text
-    else:
-      self.questions[-1]['star'] = text
+    q.get_last_question_or_part()
+    if q:
+      q.starred = True
 
   def add_vars(self,vars={}):
     self.config.update( vars )
 
+
+
+  def add_quiz_question(self):
+    self.stack.append( QuizQuestion() )
+    self.get_last_quiz_question().add_text( 'For problem #${lbls.%s}: ' % self.get_last_ref() )
+
+  def quiz_add_text(self,text=""):
+    text = self.clean_text( text )
+    q = self.get_last_quiz_question()
+    if q:
+      q.add_text( text )
+
+  def quiz_add_instruction(self,text):
+    self.get_last_quiz_question().add_instruction( text )
+
+  def quiz_set_unit(self,unit=None):
+    self.get_last_quiz_question().set_unit( unit )
+
+  def quiz_set_answer(self, answer = None):
+    self.get_last_quiz_question().set_answer(answer)
+
   def add_figure(self,filename=""):
-    self.figures.append( self.blank_figure.copy() )
-    self.figures[-1]['filename'] = filename
+    self.stack.append( Figure() )
+    self.get_last_figure().filename = filename
 
-  def add_figure_data(self,data,text=""):
-    if len(self.figures) > 0:
-      self.figures[-1][data] = text
+  def set_figure_data(self,data,text=""):
+    f = self.get_last_figure()
+    if f:
+      setattr( f, data, text )
 
 
-  def get_unit(self, x=None):
-    u = ""
-    if x:
-      if isinstance( x, str ):
-        u = x
 
-      if isinstance( x, units.Quantity ):
-        u = str(x.units)
 
-    return u
+def get_unit(x=None):
+  if x is None:
+    return x
 
-  def get_value(self, x=None):
+  u = ""
+  if x:
     if isinstance( x, str ):
-      return x
+      u = x
 
-    v = 0
-    if x:
-      if isinstance( x, units.Quantity ):
-        v = x.magnitude
+    if isinstance( x, units.Quantity ):
+      u = str(x.units)
 
-    return to_sigfig(v,3)
+  return u
+
+def get_value(x=None):
+  if isinstance( x, str ):
+    return x
+
+  v = 0
+  if x:
+    if isinstance( x, units.Quantity ):
+      v = x.magnitude
+
+  return to_sigfig(v,3)
 
 def get_semester():
   month = int(time.strftime("%m"))

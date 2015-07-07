@@ -3,16 +3,15 @@ latex:
 questions:
 - answer:
     raw: 299000000.0 meter / second
+    uncertainty: 1%
     unit: meter / second
     value: '2.99e+8'
-  instructions: ''
-  text: 'For problem #${lbls.prob_3}: What was the speed of light? Give your answer
-    in meter / second. Give your answer in meter / second. '
-  unit: meter / second
+  text: 'For problem #${lbls.prob_3}:  What was the speed of light? Give your answer
+    in meter / second. '
 - answer:
     choices:
     - faster
     - '*slower'
     - it is not possible to tell
-  instructions: Assume crown glass
-  text: 'For problem #${lbls.prob_4_1}: Assume crown glassAssume crown glass'
+  text: 'For problem #${lbls.prob_5_1}:  which material will it be faster in? Assume
+    crown glass. '

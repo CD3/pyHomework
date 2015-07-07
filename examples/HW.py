@@ -43,7 +43,6 @@ ass.add_vars( {"title" : "the Title"
 ass.add_question()
 ass.add_text("Does light travel faster or slower (compared to vacuum) in materials with a high refractive index?")
 
-
 ass.add_question()
 ass.add_text("Consider a ray of light that enters a piece of glass from air.")
 
@@ -55,6 +54,10 @@ ass.add_part()
 ass.add_text(r"If the ray is incident on the glass at an angle of \SI{45}{\degree} to the surface, by what angle will it be bent?")
 
 
+# add a figure
+ass.add_figure( 'picture.png' )
+ass.set_figure_data( 'label', 'fig:pic1' )
+ass.set_figure_data( 'caption', 'This is an example figure.' )
 
 ass.add_question()
 ass.add_text("What is the speed of light in water?")
@@ -70,7 +73,7 @@ ass.add_quiz_question()
 ass.quiz_add_text("What was the speed of light?")
 # we can use this helper function for setting numerical values. it will automatically create a
 # statement indicating the units that the answer should be given in.
-ass.quiz_set_answer_value( SpeedOfLight )
+ass.quiz_set_answer( NumericalAnswer(SpeedOfLight) )
 
 
 
@@ -82,14 +85,24 @@ ass.add_part()
 ass.add_text("glass or water?")
 
 ass.add_quiz_question()
+ass.quiz_add_text("which material will it be faster in?")
 # HomeworkAssignment only provides a helper function for Numerical questions types. The answer for all other question types are
 # passes in as dictionaries correctly formatted for BbQuiz.py. Here is a multiple choice answer.
-ass.quiz_add_answer( {'choices' : [ 'faster'
-                                , '*slower'
-                                , 'it is not possible to tell'
-                                ] } )
+answer = MultipleChoiceAnswer()
+answer.add_choice( 'faster' )
+answer.add_choice( '*slower' )
+answer.add_choice( 'it is not possible to tell' )
+ass.quiz_set_answer( answer )
+
 # some quiz questions may require some special instructions in order to remove ambiguity in the question.
-ass.quiz_add_instruction("Assume crown glass")
+ass.quiz_add_instruction("Assume crown glass.")
+
+# add another figure
+ass.add_figure( 'picture.png' )
+ass.set_figure_data( 'label', 'fig:pic2' )
+ass.set_figure_data( 'caption', 'This is another example figure.' )
+ass.set_figure_data( 'options', 'width=2in' )
+
 
 for i in range(10):
   ass.add_question()
@@ -101,12 +114,12 @@ for i in range(10):
   ass.add_part()
   ass.add_text("the main question and all parts should appear on the same page.")
   ass.add_part()
-  ass.add_text("so, yea.")
+  ass.add_text(r"so, yea. Figures \ref{fig:pic1} and \ref{fig:pic2} are the same.")
 
 
 # we can just write the latex and yaml quiz
-ass.write_latex('test-latex.tex')
-ass.write_quiz('test-latex.yaml')
+#ass.write_latex('test-latex.tex')
+#ass.write_quiz('test-latex.yaml')
 
 # or build a PDF and Bb quiz
 
