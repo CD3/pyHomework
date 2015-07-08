@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import sys, os, os.path, subprocess, shlex, re
+import sys, os, os.path, subprocess, shlex, re, StringIO
 
 import time
 import tempfile
@@ -329,8 +329,16 @@ ${item.text}
       if self.config['isFigure'](item):
         shutil.copy( item.filename, os.path.join(scratch,item.filename) )
 
-    with open("/dev/stdout",'w') as FNULL:
-      ret = subprocess.call(shlex.split( 'latexmk -f -pdf '+basename), cwd=scratch, stdout=sys.stdout, stderr=subprocess.STDOUT)
+
+    p = subprocess.Popen(shlex.split( 'latexmk -interaction=nonstopmode -f -pdf '+basename), cwd=scratch, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout,stderr = p.communicate()
+    ret = p.returncode
+    if ret != 0:
+      print "ERROR: LaTeX code failed to compile. Dumping output"
+      print "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      print stderr
+      print stdout
+      print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 
     for ext in ("pdf", "aux", "tex"):
       filename = "%s.%s"%(basename,ext)
@@ -417,10 +425,10 @@ ${item.text}
     if q:
       q.add_text( text )
 
-  def add_star(self, text="*"):
-    q.get_last_question_or_part()
+  def set_star(self, starred = True):
+    q = self.get_last_question_or_part()
     if q:
-      q.starred = True
+      q.starred = starred
 
   def add_vars(self,vars={}):
     self.config.update( vars )
@@ -450,7 +458,7 @@ ${item.text}
     self.stack.append( Figure() )
     self.get_last_figure().filename = filename
 
-  def set_figure_data(self,data,text=""):
+  def figure_set_data(self,data,text=""):
     f = self.get_last_figure()
     if f:
       setattr( f, data, text )

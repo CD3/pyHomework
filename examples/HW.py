@@ -47,6 +47,8 @@ ass.add_paragraph( Paragraph("Paragraphs can be used to put some text between qu
 
 ass.add_question()
 ass.add_text("Consider a ray of light that enters a piece of glass from air.")
+# we can also star questions
+ass.set_star()
 
 ass.add_part()
 ass.add_text("If the ray is incident on the glass perpendicular to the surface, by what angle will it be bent?")
@@ -56,12 +58,14 @@ ass.add_paragraph( Paragraph("but they cannot go between parts.") )
 ass.add_part()
 # use a raw python string if you want to embed latex code. this will turn off string interpolation.
 ass.add_text(r"If the ray is incident on the glass at an angle of \SI{45}{\degree} to the surface, by what angle will it be bent?")
+# we can also star parts
+ass.set_star()
 
 
 # add a figure
 ass.add_figure( 'picture.png' )
-ass.set_figure_data( 'label', 'fig:pic1' )
-ass.set_figure_data( 'caption', 'This is an example figure.' )
+ass.figure_set_data( 'label', 'fig:pic1' )
+ass.figure_set_data( 'caption', 'This is an example figure.' )
 
 ass.add_question()
 ass.add_text("What is the speed of light in water?")
@@ -103,9 +107,9 @@ ass.quiz_add_instruction("Assume crown glass.")
 
 # add another figure
 ass.add_figure( 'picture.png' )
-ass.set_figure_data( 'label', 'fig:pic2' )
-ass.set_figure_data( 'caption', 'This is another example figure.' )
-ass.set_figure_data( 'options', 'width=2in' )
+ass.figure_set_data( 'label', 'fig:pic2' )
+ass.figure_set_data( 'caption', 'This is another example figure.' )
+ass.figure_set_data( 'options', 'width=2in' )
 
 
 ass.add_paragraph( Paragraph(r'''\vspace{1in}If you need more spacing,
