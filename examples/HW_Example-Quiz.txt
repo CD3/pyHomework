@@ -1,2 +1,2 @@
 NUM	For problem #3:  What was the speed of light? Give your answer in meter / second. 	2.99E+08	2.99E+06
-MC	For problem #4:  which material will it be faster in? Assume crown glass. 	faster	incorrect	it is not possible to tell	incorrect	slower	correct
+MC	For problem #4:  which material will it be faster in? Assume crown glass. 	it is not possible to tell	incorrect	slower	correct	faster	incorrect

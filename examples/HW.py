@@ -43,11 +43,15 @@ ass.add_vars( {"title" : "the Title"
 ass.add_question()
 ass.add_text("Does light travel faster or slower (compared to vacuum) in materials with a high refractive index?")
 
+ass.add_paragraph( Paragraph("Paragraphs can be used to put some text between questions") )
+
 ass.add_question()
 ass.add_text("Consider a ray of light that enters a piece of glass from air.")
 
 ass.add_part()
 ass.add_text("If the ray is incident on the glass perpendicular to the surface, by what angle will it be bent?")
+
+ass.add_paragraph( Paragraph("but they cannot go between parts.") )
 
 ass.add_part()
 # use a raw python string if you want to embed latex code. this will turn off string interpolation.
@@ -104,6 +108,9 @@ ass.set_figure_data( 'caption', 'This is another example figure.' )
 ass.set_figure_data( 'options', 'width=2in' )
 
 
+ass.add_paragraph( Paragraph(r'''\vspace{1in}If you need more spacing,
+  
+just embed latex spacing commands.''') )
 for i in range(10):
   ass.add_question()
   ass.add_text("These questions are just to fill the page...")

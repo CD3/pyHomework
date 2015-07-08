@@ -62,6 +62,14 @@ class QuizQuestion(Question):
 
     return {'text': text, 'answer': self.answer.dict() }
 
+class Paragraph(object):
+  def __init__(self, text = ""):
+    self.text = text
+
+  def add_text(self, text):
+    self.text += text + " "
+
+
 class NumericalAnswer(object):
   def __init__(self, value=None):
     self.raw = None
@@ -110,6 +118,102 @@ class MultipleChoiceAnswer(object):
       self.correct = len(self.choices)-1
 
 
+def get_unit(x=None):
+  if x is None:
+    return x
+
+  u = ""
+  if x:
+    if isinstance( x, str ):
+      u = x
+
+    if isinstance( x, units.Quantity ):
+      u = str(x.units)
+
+  return u
+
+def get_value(x=None):
+  if isinstance( x, str ):
+    return x
+
+  v = 0
+  if x:
+    if isinstance( x, units.Quantity ):
+      v = x.magnitude
+
+  return to_sigfig(v,3)
+
+def get_semester():
+  month = int(time.strftime("%m"))
+  year  =     time.strftime("%Y")
+  semester = "Spring" if month < 6 else "Fall"
+
+  return (semester,year)
+
+def to_sigfig(x,p):
+    """
+    This code was taken from here:
+    http://randlet.com/blog/python-significant-figures-format/
+
+    returns a string representation of x formatted with a precision of p
+    Based on the webkit javascript implementation taken from here:
+    https://code.google.com/p/webkit-mirror/source/browse/JavaScriptCore/kjs/number_object.cpp
+    """
+
+
+    import math
+    x = float(x)
+
+    if x == 0.:
+        return "0." + "0"*(p-1)
+
+    out = []
+
+    if x < 0:
+        out.append("-")
+        x = -x
+
+    e = int(math.log10(x))
+    tens = math.pow(10, e - p + 1)
+    n = math.floor(x/tens)
+
+    if n < math.pow(10, p - 1):
+        e = e -1
+        tens = math.pow(10, e - p+1)
+        n = math.floor(x / tens)
+
+    if abs((n + 1.) * tens - x) <= abs(n * tens -x):
+        n = n + 1
+
+    if n >= math.pow(10,p):
+        n = n / 10.
+        e = e + 1
+
+
+    m = "%.*g" % (p, n)
+
+    if e < -2 or e >= p:
+        out.append(m[0])
+        if p > 1:
+            out.append(".")
+            out.extend(m[1:p])
+        out.append('e')
+        if e > 0:
+            out.append("+")
+        out.append(str(e))
+    elif e == (p -1):
+        out.append(m)
+    elif e >= 0:
+        out.append(m[:e+1])
+        if e+1 < len(m):
+            out.append(".")
+            out.extend(m[e+1:])
+    else:
+        out.append("0.")
+        out.extend(["0"]*-(e+1))
+        out.append(m)
+
+    return "".join(out)
 
 
 class HomeworkAssignment:
@@ -164,6 +268,11 @@ class HomeworkAssignment:
 \caption{ \label{${item.label}} ${item.caption}}
 \end{figure}
 %endif
+%if config['isParagraph']( item ):
+
+${item.text}
+
+%endif
 %endfor
 
 \end{document}
@@ -178,6 +287,7 @@ class HomeworkAssignment:
                   , 'isQuestion' : lambda obj: isinstance( obj, Question ) and not isinstance( obj, QuizQuestion )
                   , 'isQuizQuestion' : lambda obj: isinstance( obj, QuizQuestion )
                   , 'isFigure' : lambda obj: isinstance( obj, Figure )
+                  , 'isParagraph' : lambda obj: isinstance( obj, Paragraph )
                   , 'stack' : [ ]
                   , 'latex_aux' : None
                   }
@@ -294,6 +404,9 @@ class HomeworkAssignment:
     self.stack.append( Question() )
     self.get_last_question().label = r"prob_%d" % self.num_questions()
 
+  def add_paragraph(self,para):
+    self.stack.append( para )
+
   def add_part(self):
     self.get_last_question().parts.append( Question() )
     self.get_last_part().label = r"prob_%d_%d" % (self.num_questions(), self.get_last_question().num_parts())
@@ -345,100 +458,3 @@ class HomeworkAssignment:
 
 
 
-def get_unit(x=None):
-  if x is None:
-    return x
-
-  u = ""
-  if x:
-    if isinstance( x, str ):
-      u = x
-
-    if isinstance( x, units.Quantity ):
-      u = str(x.units)
-
-  return u
-
-def get_value(x=None):
-  if isinstance( x, str ):
-    return x
-
-  v = 0
-  if x:
-    if isinstance( x, units.Quantity ):
-      v = x.magnitude
-
-  return to_sigfig(v,3)
-
-def get_semester():
-  month = int(time.strftime("%m"))
-  year  =     time.strftime("%Y")
-  semester = "Spring" if month < 6 else "Fall"
-
-  return (semester,year)
-
-
-def to_sigfig(x,p):
-    """
-    This code was taken from here:
-    http://randlet.com/blog/python-significant-figures-format/
-
-    returns a string representation of x formatted with a precision of p
-    Based on the webkit javascript implementation taken from here:
-    https://code.google.com/p/webkit-mirror/source/browse/JavaScriptCore/kjs/number_object.cpp
-    """
-
-
-    import math
-    x = float(x)
-
-    if x == 0.:
-        return "0." + "0"*(p-1)
-
-    out = []
-
-    if x < 0:
-        out.append("-")
-        x = -x
-
-    e = int(math.log10(x))
-    tens = math.pow(10, e - p + 1)
-    n = math.floor(x/tens)
-
-    if n < math.pow(10, p - 1):
-        e = e -1
-        tens = math.pow(10, e - p+1)
-        n = math.floor(x / tens)
-
-    if abs((n + 1.) * tens - x) <= abs(n * tens -x):
-        n = n + 1
-
-    if n >= math.pow(10,p):
-        n = n / 10.
-        e = e + 1
-
-
-    m = "%.*g" % (p, n)
-
-    if e < -2 or e >= p:
-        out.append(m[0])
-        if p > 1:
-            out.append(".")
-            out.extend(m[1:p])
-        out.append('e')
-        if e > 0:
-            out.append("+")
-        out.append(str(e))
-    elif e == (p -1):
-        out.append(m)
-    elif e >= 0:
-        out.append(m[:e+1])
-        if e+1 < len(m):
-            out.append(".")
-            out.extend(m[e+1:])
-    else:
-        out.append("0.")
-        out.extend(["0"]*-(e+1))
-        out.append(m)
-
-    return "".join(out)
