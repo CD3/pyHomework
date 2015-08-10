@@ -232,6 +232,14 @@ if __name__ == "__main__":
                       action="store",
                       help="Write an example quiz file." )
 
+  parser.add_argument('-c', '--config-var',
+                      action="append",
+                      help="Override parameter in configuration file." )
+
+  parser.add_argument("-l", "--list-config",
+                      action='store_true',
+                      help="Show all configuration options." )
+
   args = parser.parse_args()
 
   if args.example:
@@ -244,6 +252,13 @@ if __name__ == "__main__":
     basename = os.path.splitext(arg)[0]
     quiz = PaperQuiz()
     quiz.load( arg )
+    for v in args.config_var:
+      key,val = v.split('=')
+      print "Overriding '%s' with '%s'. Was '%s'" % (key,val, dpath.util.search( quiz.config, key ))
+      dpath.util.new( quiz.config, key, val )
+    if args.list_config:
+      print quiz.config
+
     quiz.write_questions(    basename+".tex" )
     quiz.compile_latex(      basename+".tex" )
     quiz.split_quiz_and_key( basename+".pdf" )
