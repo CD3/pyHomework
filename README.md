@@ -16,6 +16,29 @@ The primary benefit of using the module is the creation of quizzes to accompany 
 could just as easily be written directly using document templates. However, using the utilities provided by the module, a quiz can be generated that
 references questions in the homework set, and the reference numbers will be automatically managed.
 
+Installing
+----------
+
+To install the `pyHomework` module and program scripts, run the `setup.py` script with the `install` argument,
+
+  > sudo python setup.py install
+
+The module and scripts depend on a few python modules that may not be installed by default, but can easily be installed via `pip`,
+
+  > sudo pip install pyyaml cerberus dpath pypdf sympy numpy pint
+
+The scripts that generate PDF files (for paper quizzes or problem sets) do so by writing `LaTeX` and compiling it with `latexmk`. You therefore
+must install `latexmk` to use these scripts. On Debian-based distros (Ubuntu, Mint, etc.) you can install `latexmk` with `apt-get`:
+
+  > sudo apt-get install latexmk
+
+In addition to this, the generated `LaTeX` files use a few packages that may not be installed by default,
+most notibly the `siunitx` package that formats quantities with units correctly. You need to install these packages before attempting to compile
+the generated `LaTeX`. On Debian-based distributions, install the required packages with the following command:
+
+  > sudo apt-get install texlive-science texlive-latex-extras
+ 
+
 BbQuiz.py
 ---------
 
@@ -302,7 +325,7 @@ Here is a demonstration of how the `HomeworkAssignment` class can be used:used
 
     # or build a PDF and Bb quiz
 
-  # this will create the pdf
-  ass.build_PDF('HW_Example-Problem_Set')
-  # this will create a yaml file that can be parsed by BbQuiz.py to generate a blackboard quiz.
-  ass.build_quiz('HW_Example-Quiz')
+    # this will create the pdf
+    ass.build_PDF('HW_Example-Problem_Set')
+    # this will create a yaml file that can be parsed by BbQuiz.py to generate a blackboard quiz.
+    ass.build_quiz('HW_Example-Quiz')
