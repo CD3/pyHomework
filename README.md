@@ -264,8 +264,6 @@ Here is a demonstration of how the `HomeworkAssignment` class can be used:used
 
     ass.add_quiz_question()
     ass.quiz_add_text("which material will it be faster in?")
-    # HomeworkAssignment only provides a helper function for Numerical questions types. The answer for all other question types are
-    # passes in as dictionaries correctly formatted for BbQuiz.py. Here is a multiple choice answer.
     answer = MultipleChoiceAnswer()
     answer.add_choice( 'faster' )
     answer.add_choice( '*slower' )
