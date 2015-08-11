@@ -248,6 +248,10 @@ class HomeworkAssignment:
 \author{}
 \date{}
 
+%for line in config['preamble']:
+${line}
+%endfor
+
 \begin{document}
 \maketitle
 
@@ -289,10 +293,12 @@ ${item.text}
                   , 'isFigure' : lambda obj: isinstance( obj, Figure )
                   , 'isParagraph' : lambda obj: isinstance( obj, Paragraph )
                   , 'stack' : [ ]
+                  , 'preamble' : [ ]
                   , 'latex_aux' : None
                   }
 
     self.stack     = self.config['stack']
+    self.preamble  = self.config['preamble']
 
     self.template_engine = Template( self.latex_template )
 
@@ -414,6 +420,9 @@ ${item.text}
 
   def add_paragraph(self,para):
     self.stack.append( para )
+
+  def add_preamble(self,line):
+    self.preamble.append( line )
 
   def add_part(self):
     self.get_last_question().parts.append( Question() )
