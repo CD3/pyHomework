@@ -234,6 +234,7 @@ if __name__ == "__main__":
 
   parser.add_argument('-c', '--config-var',
                       action="append",
+                      default=[],
                       help="Override parameter in configuration file." )
 
   parser.add_argument("-l", "--list-config",
