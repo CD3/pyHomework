@@ -15,12 +15,10 @@ class LatexLabels(dict):
         
         r  = re.compile("\\\\newlabel\{([^\}]+)\}\{\{([^\}]+)\}\{([^\}]+)\}\}")
         rr = re.compile("\\\\bgroup\s*([0-9a-zA-Z]+)\s*\\\\egroup")
-        for match in r.findall( data ):
-            (label,tag,page) = match
-            match = rr.search(tag)
-            if match:
-                tag = match.group(1)
-
+        for m in r.findall( data ):
+            (label,tag,page) = m
+            mm = rr.findall(tag)
+            tag = ''.join(mm)
             tag = tag.strip()
 
             key = label
