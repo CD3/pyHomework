@@ -21,12 +21,19 @@ class Question(object):
     self.label = ""
     self.starred = False
     self.parts = []
+    self.answer = None
 
   def add_text(self, text):
     self.text += text + " "
 
   def num_parts(self):
     return len( self.parts )
+
+  def set_answer(self, answer):
+    self.answer = answer
+    if isinstance( answer, NumericalAnswer ):
+      self.unit = answer.unit
+
 
 class Figure(object):
   def __init__(self):
@@ -38,7 +45,6 @@ class Figure(object):
 class QuizQuestion(Question):
   def __init__(self):
     super(QuizQuestion,self).__init__()
-    self.answer = None
     self.instructions = ""
     self.unit = None
 
@@ -47,11 +53,6 @@ class QuizQuestion(Question):
 
   def set_unit(self, unit):
     unit = get_unit( unit )
-
-  def set_answer(self, answer):
-    self.answer = answer
-    if isinstance( answer, NumericalAnswer ):
-      self.unit = answer.unit
 
 
   def dict(self):
@@ -94,6 +95,10 @@ class NumericalAnswer(object):
             'value' : self.value,
             'uncertainty' : self.uncertainty }
 
+  def __str__(self):
+    return self.raw
+
+
 class MultipleChoiceAnswer(object):
   def __init__(self):
     self.choices = []
@@ -109,6 +114,18 @@ class MultipleChoiceAnswer(object):
   def dict(self):
     return {'choices' : self.choices }
 
+  def __str__(self):
+    return self.choices[ self.correct ]
+
+class LatexAnswer(object):
+  def __init__(self, text=None):
+    self.set_value( text )
+
+  def set_value(self, text=None):
+    self.text = text
+
+  def __str__(self):
+    return self.text
 
 
   def set_correct( self, i = None):
@@ -279,6 +296,19 @@ ${item.text}
 %endif
 %endfor
 
+\clearpage
+
+%if config['make_key']:
+\textbf{Answers:} \\\
+
+%for item in config['stack']:
+%if config['isQuestion']( item ) and not item.answer is None:
+
+  \ref{${item.label}} ${str(item.answer)} \\\
+%endif
+%endfor
+%endif
+
 \end{document}
 '''
     self.config = { 'title' : "UNKNOWN"
@@ -438,6 +468,10 @@ ${item.text}
     q = self.get_last_question_or_part()
     if q:
       q.starred = starred
+
+  def set_answer(self, answer = None):
+    self.config['make_key'] = True
+    self.get_last_question_or_part().set_answer(answer)
 
   def add_vars(self,vars={}):
     self.config.update( vars )

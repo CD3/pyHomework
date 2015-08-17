@@ -52,6 +52,7 @@ ass.set_star()
 
 ass.add_part()
 ass.add_text("If the ray is incident on the glass perpendicular to the surface, by what angle will it be bent?")
+ass.set_answer( LatexAnswer( r'''$v = \frac{dx}{dt} $''') )
 
 ass.add_paragraph( Paragraph("but they cannot go between parts.") )
 
@@ -82,6 +83,7 @@ ass.quiz_add_text("What was the speed of light?")
 # we can use this helper function for setting numerical values. it will automatically create a
 # statement indicating the units that the answer should be given in.
 ass.quiz_set_answer( NumericalAnswer(SpeedOfLight) )
+ass.set_answer( NumericalAnswer(SpeedOfLight) )
 
 
 
