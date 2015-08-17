@@ -325,6 +325,7 @@ ${item.text}
                   , 'stack' : [ ]
                   , 'preamble' : [ ]
                   , 'latex_aux' : None
+                  , 'image_dir' : './'
                   }
 
     self.stack     = self.config['stack']
@@ -363,7 +364,10 @@ ${item.text}
     # copy all the figure files
     for item in self.stack:
       if self.config['isFigure'](item):
-        shutil.copy( item.filename, os.path.join(scratch,item.filename) )
+        fr  = os.path.join(self.config['image_dir'],item.filename)
+        to  = os.path.join(scratch,item.filename)
+        print "Copying %s to %s" % (fr,to)
+        shutil.copy( fr, to )
 
 
     p = subprocess.Popen(shlex.split( 'latexmk -interaction=nonstopmode -f -pdf '+basename), cwd=scratch, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
