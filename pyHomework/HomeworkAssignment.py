@@ -298,13 +298,19 @@ ${item.text}
 
 \clearpage
 
-%if config['make_key']:
+%if config.get('make_key',False):
 \textbf{Answers:} \\\
 
 %for item in config['stack']:
-%if config['isQuestion']( item ) and not item.answer is None:
-
+%if config['isQuestion']( item ):
+%if not item.answer is None:
   \ref{${item.label}} ${str(item.answer)} \\\
+%endif
+%for p in item.parts:
+%if not p.answer is None:
+  \ref{${item.label}} ${str(p.answer)} \\\
+%endif
+%endfor
 %endif
 %endfor
 %endif
