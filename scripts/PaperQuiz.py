@@ -253,13 +253,7 @@ if __name__ == "__main__":
     basename = os.path.splitext(arg)[0]
     quiz = PaperQuiz()
     quiz.load( arg )
-    for v in args.config_var:
-      key,val = v.split('=')
-      key = key.strip()
-      val = val.strip()
-      print "Overriding '%s' with '%s'. Was '%s'" % (key,val, dpath.util.search( quiz.config, key ))
-      val = eval(val)
-      dpath.util.new( quiz.config, key, val )
+    quiz.override( args.config_var )
     if args.list_config:
       print quiz.config
 

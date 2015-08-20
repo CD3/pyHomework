@@ -142,6 +142,16 @@ if __name__ == "__main__":
                       action="store",
                       help="Write an example quiz file." )
 
+  parser.add_argument('-c', '--config-var',
+                      action="append",
+                      default=[],
+                      help="Override parameter in configuration file." )
+
+  parser.add_argument("-l", "--list-config",
+                      action='store_true',
+                      help="Show all configuration options." )
+
+
 
   args = parser.parse_args()
 
@@ -149,16 +159,18 @@ if __name__ == "__main__":
     print manual.format( prog = 'BbQuiz.py' )
     sys.exit(0)
 
-  if args.example:
-    quiz = BbQuiz()
+  if args.example: quiz = BbQuiz()
     with open( args.example, 'w' ) as f:
       f.write( quiz.dump_example() )
     sys.exit(0)
 
   for arg in args.quiz_files:
-      quiz = BbQuiz()
-      quiz.load( arg )
-      quiz.write_questions(os.path.splitext(arg)[0]+".txt")
+    quiz = BbQuiz()
+    quiz.load( arg )
+    quiz.override( args.config_var )
+    if args.list_config:
+      print quiz.config
+    quiz.write_questions(os.path.splitext(arg)[0]+".txt")
 
 
 
