@@ -308,7 +308,7 @@ ${item.text}
 %endif
 %for p in item.parts:
 %if not p.answer is None:
-  \ref{${item.label}} ${str(p.answer)} \\\
+  \ref{${p.label}} ${str(p.answer)} \\\
 %endif
 %endfor
 %endif
