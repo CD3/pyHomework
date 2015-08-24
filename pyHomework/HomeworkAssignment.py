@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import sys, os, os.path, subprocess, shlex, re, StringIO
+import sys, os, os.path, subprocess, shlex, re, StringIO, datetime
 
 import time
 import tempfile
@@ -160,12 +160,24 @@ def get_value(x=None):
 
   return to_sigfig(v,3)
 
-def get_semester():
-  month = int(time.strftime("%m"))
-  year  =     time.strftime("%Y")
-  semester = "Spring" if month < 6 else "Fall"
+def get_semester( day = datetime.date.today()):
+  '''Return the semester string, i.e. 'Spring 2015', for a date.'''
+  year = day.year
+  month = day.month
 
-  return (semester,year)
+  season = "Unknown"
+
+  if month in range(1,5):
+    season = "Spring"
+
+  if month in range(6,7):
+    season = "Summer"
+
+  if month in range(8,12):
+    season = "Fall"
+
+  sem = '%s %s' % (year,season)
+  return sem
 
 def to_sigfig(x,p):
     """
@@ -231,6 +243,31 @@ def to_sigfig(x,p):
         out.append(m)
 
     return "".join(out)
+
+def expr_eval( expr, context = {} ):
+  '''Evaluates a sympy expression with the given context.'''
+
+  # if we have a list of expressions, evaluate each
+  if isinstance( expr, list ):
+    results = [ expr_eval(x,context) for x in expr ]
+    return results
+
+  # symbols that we have values for
+  symbols = context.keys()
+  # values of the symbols (these can be pint quantities!)
+  vals = [ context[k] for k in symbols ]
+  # create a lambda function that can be evaluated
+  f = sy.lambdify( symbols, expr, "numpy" )
+  # evaluate and return
+  return f( *vals )
+
+class vector_quantity_calcs:
+  '''A collection of unit enabled functions for numpy vectors.'''
+  @staticmethod
+  def length( vec ):
+    ret = sum( [ x*x for x in vec ] )
+    return np.sqrt( ret )
+
 
 
 class HomeworkAssignment:
