@@ -229,6 +229,7 @@ class Quiz(object):
     def dump_example(self):
       text = '''
 configuration:
+  make_key : True
   randomize:
     questions: True
     answers: False
