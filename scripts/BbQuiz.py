@@ -159,8 +159,7 @@ if __name__ == "__main__":
     print manual.format( prog = 'BbQuiz.py' )
     sys.exit(0)
 
-  if args.example:
-    quiz = BbQuiz()
+  if args.example: quiz = BbQuiz()
     with open( args.example, 'w' ) as f:
       f.write( quiz.dump_example() )
     sys.exit(0)

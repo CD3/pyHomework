@@ -7,6 +7,7 @@ import collections
 import sys
 from mako.template import Template
 import cerberus
+import dpath
 
 class LatexLabels(dict):
     def parse(self,filename):
@@ -185,6 +186,24 @@ class Quiz(object):
         self.quiz_data = yaml.load( Template( yaml.dump( self.quiz_data ), strict_undefined=True ).render( vars = Namespace( 'vars', variables), lbls = Namespace('lbls', **self.latex_labels) ) )
 
         self.detect_question_types()
+
+
+    def override(self, overrides = {} ):
+      # if overrides is a list, it means that we have a list of 'key = val' strings that we need to parse
+      # first and pass to ourself.
+      if isinstance( overrides, list ):
+        tmp = dict()
+        for line in overrides:
+          key,val = re.split( "\s*=\s*", line )
+          val = eval(val)  # val is a string, which is not what we want
+          tmp[key] = val
+
+        return self.override( tmp )
+
+
+      for key,val in overrides.items():
+        print "Overriding '%s' with '%s'. Was '%s'" % (key,val, dpath.util.search( self.config, key ))
+        dpath.util.new( self.config, key, val )
 
     def detect_question_types(self):
       for i in xrange(len(self.quiz_data["questions"])):
