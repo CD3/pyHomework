@@ -264,9 +264,23 @@ def expr_eval( expr, context = {} ):
 class vector_quantity_calcs:
   '''A collection of unit enabled functions for numpy vectors.'''
   @staticmethod
-  def length( vec ):
+  def modsquared( vec ):
     ret = sum( [ x*x for x in vec ] )
-    return np.sqrt( ret )
+    return ret
+  @staticmethod
+  def mod( vec ):
+    return np.sqrt( vector_quantity_calcs.modsquared( vec ) )
+
+  @staticmethod
+  def length( vec ):
+    return vector_quantity_calcs.mod( vec )
+
+  @staticmethod
+  def direction( vec ):
+    ret = np.arctan2( vec[1], vec[0] )
+    if ret < 0*units.radian:
+      ret += 2*3.14159*units.radian
+    return ret
 
 
 
