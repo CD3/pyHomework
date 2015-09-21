@@ -383,6 +383,7 @@ ${item.text}
                   , 'preamble' : [ ]
                   , 'latex_aux' : None
                   , 'image_dir' : './'
+                  , 'extra_files' : []
                   }
 
     self.stack     = self.config['stack']
@@ -418,13 +419,12 @@ ${item.text}
 
     self.write_latex(os.path.join(scratch,basename+".tex") )
 
-    # copy all the figure files
-    for item in self.stack:
-      if self.config['isFigure'](item):
-        fr  = os.path.join(self.config['image_dir'],item.filename)
-        to  = os.path.join(scratch,item.filename)
-        print "Copying %s to %s" % (fr,to)
-        shutil.copy( fr, to )
+    # copy dependencies
+    for item in self.config['extra_files']:
+      fr  = item
+      to  = os.path.join(scratch, os.path.basename( item ))
+      print "Copying %s to %s" % (fr,to)
+      shutil.copy( fr, to )
 
 
     p = subprocess.Popen(shlex.split( 'latexmk -interaction=nonstopmode -f -pdf '+basename), cwd=scratch, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -562,11 +562,18 @@ ${item.text}
     self.stack.append( Figure() )
     self.get_last_figure().filename = filename
 
+    self.add_extra_file( os.path.join(self.config['image_dir'],filename) )
+
+
+
+
   def figure_set_data(self,data,text=""):
     f = self.get_last_figure()
     if f:
       setattr( f, data, text )
 
 
+  def add_extra_file(self,filename):
+    self.config['extra_files'].append( filename )
 
 
