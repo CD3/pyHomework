@@ -47,9 +47,13 @@ class QuizQuestion(Question):
     super(QuizQuestion,self).__init__()
     self.instructions = ""
     self.unit = None
+    self.image = None
 
   def add_instruction(self, text):
     self.instructions += text + " "
+
+  def add_image(self, name):
+    self.image = name
 
   def set_unit(self, unit):
     unit = get_unit( unit )
@@ -61,7 +65,11 @@ class QuizQuestion(Question):
       text += 'Give your answer in %s. ' % self.unit
     text += self.instructions
 
-    return {'text': text, 'answer': self.answer.dict() }
+    d = {'text': text, 'answer': self.answer.dict() }
+    if self.image:
+      d.update( {'image' : self.image} )
+
+    return d
 
 class Paragraph(object):
   def __init__(self, text = ""):
@@ -384,6 +392,7 @@ ${item.text}
                   , 'latex_aux' : None
                   , 'image_dir' : './'
                   , 'extra_files' : []
+                  , 'quiz_config' : None
                   }
 
     self.stack     = self.config['stack']
@@ -409,8 +418,12 @@ ${item.text}
         if self.config['isQuizQuestion'](item):
           tree['questions'].append( item.dict() )
 
-      if self.config['latex_aux']:
+      if not self.config['latex_aux'] is None:
         tree.update({ 'latex' : {'aux' : self.config['latex_aux']}})
+      
+      if not self.config['quiz_config'] is None:
+        tree.update( {'configuration' : self.config['quiz_config'] } )
+
       f.write( yaml.dump(tree, default_flow_style=False) )
 
   def build_PDF( self, basename="main"):
@@ -548,6 +561,11 @@ ${item.text}
     q = self.get_last_quiz_question()
     if q:
       q.add_text( text )
+
+  def quiz_add_image(self,name=None):
+    q = self.get_last_quiz_question()
+    if q:
+      q.add_image( name )
 
   def quiz_add_instruction(self,text):
     self.get_last_quiz_question().add_instruction( text )
