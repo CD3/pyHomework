@@ -107,7 +107,9 @@ class BbQuiz(Quiz):
           print "found file/link pair. copying file to server with '%s'." % cmd
           os.system( cmd )
         
-        link = urlparse.urljoin( remote_config['web_root'], os.path.join(remote_config['image_dir'], image_filename) )
+        # the link that points to the image may not be the same as the url we copied it too, so we want to construct the
+        # correct link and return it.
+        link = urlparse.urljoin( remote_config['web_root'], os.path.join(remote_config['image_dir'], os.path.basename(image_filename) ) )
         return link
 
 
