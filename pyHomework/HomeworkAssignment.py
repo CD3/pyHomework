@@ -89,7 +89,7 @@ class NumericalAnswer(object):
     self.set_value( value )
 
   def set_value( self, value ):
-    if value:
+    if not value is None:
       self.raw = str(value)
       self.value = get_value(value)
       self.unit = get_unit(value)
@@ -148,7 +148,7 @@ def get_unit(x=None):
     return x
 
   u = ""
-  if x:
+  if not x is None:
     if isinstance( x, str ):
       u = x
 
@@ -162,7 +162,7 @@ def get_value(x=None):
     return x
 
   v = 0
-  if x:
+  if not x is None:
     if isinstance( x, units.Quantity ):
       v = x.magnitude
 

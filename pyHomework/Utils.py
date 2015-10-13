@@ -213,11 +213,11 @@ class Quiz(object):
             if isinstance( question.get("answer", None), dict ):
 
                 # if the answer has an element named "value", then the question is numerical
-                if question.get("answer").get("value", None):
+                if 'value' in question.get("answer"):
                     question["type"] = "NUM"
 
                 # if the answer has an element named "choices", then the question is multiple choice
-                if question.get("answer").get("choices", None):
+                if "choices" in question.get("answer"):
                   # we need to see how many correct answers there are...
                   num_correct_answers = 0
                   for ans in question.get("answer").get("choices"):
