@@ -10,14 +10,82 @@ import cerberus
 import dpath
 
 class LatexLabels(dict):
+
+    def get_newlabel_tokens( self, s ):
+      '''Finds and returns newlabel tokens in a string'''
+
+      tokens = []
+      i = 0
+      
+      # looking for \newlabel{some_text}{{data1}{data2}} in the aux file
+      tag = r'\newlabel{'
+      i = s.find( tag, i+1 )
+      while i > -1:  # continue while we have more \newlabel commands 
+
+        # find the key/value pair for the \newlabel command
+        j = 0
+        token = []
+        for k in range(2): # there are two sets of {} that we want to retrieve
+          # find first '{'
+          while s[i+j] != '{':
+            j = j + 1
+
+          # now find the matching '}', taking into account that there may be nested pairs
+          start = i+j
+          j = j+1
+          count = 1
+          while count > 0:
+            if s[i+j] == '{':
+              count = count + 1
+            if s[i+j] == '}':
+              count = count - 1
+            j = j + 1
+
+          end = i+j
+
+          # append the text, removing the outer brackets
+          token.append( s[start+1:end-1] )
+
+        tokens.append( token )
+
+        i = s.find( tag, i+1 )
+
+      return tokens
+
+    def get_tag( self, s ):
+
+      j = 0
+      # find first '{'
+      while s[j] != '{':
+        j = j + 1
+
+      # now find the matching '}', taking into account that there may be nested pairs
+      start = j
+      j = j+1
+      count = 1
+      while count > 0:
+        if s[j] == '{':
+          count = count + 1
+        if s[j] == '}':
+          count = count - 1
+        j = j + 1
+
+      end = j
+
+      # return the text, removing the outer brackets
+      return s[start+1:end-1]
+
+
+
     def parse(self,filename):
         with open(filename) as file:
             data = file.read()
         
-        r  = re.compile("\\\\newlabel\{([^\}]+)\}\{\{([^\}]+)\}\{([^\}]+)\}\}")
+        newlabel_tokens = self.get_newlabel_tokens( data )
         rr = re.compile("\\\\bgroup\s*([0-9a-zA-Z]+)\s*\\\\egroup")
-        for m in r.findall( data ):
-            (label,tag,page) = m
+        for t in newlabel_tokens:
+            label = t[0]
+            tag   = self.get_tag( t[1] )
             mm = rr.findall(tag)
             tag = ''.join(mm)
             tag = tag.strip()
