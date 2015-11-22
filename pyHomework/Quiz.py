@@ -7,6 +7,8 @@ import cerberus
 import dpath
 from mako.template import Template
 
+from .Utils import *
+
 class LatexLabels(dict):
     def get_newlabel_tokens( self, s ):
       '''Finds and returns newlabel tokens in a string'''
