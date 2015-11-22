@@ -1,21 +1,37 @@
 #! /usr/bin/env python
 
-import sys, os, os.path, subprocess, shlex, re, StringIO, datetime
-
-import time
-import tempfile
-import shutil
+import sys, os, os.path, subprocess, shlex, re, StringIO, datetime, time, tempfile, shutil
 import yaml
+
 import sympy as sy
-import sympy.assumptions as assumptions
 import numpy as np
-import pint
 
 from mako.template import Template
 
-units = pint.UnitRegistry()
+from pyErrorProp import *
+
+from .Utils import *
+
+# UTIL FUNCTIONS
+def get_unit(x=None):
+  if x is None:
+    return x
+
+  u = ""
+  if not x is None:
+    if isinstance( x, str ):
+      u = x
+
+    if isinstance( x, (pint.quantity._Quantity, pint.measurement._Measurement) ):
+      u = str(x.units)
+
+  return u
+
+
+# ELEMENT CLASSES
 
 class Question(object):
+  '''A class representing a questions on a homework problem set.'''
   def __init__(self):
     self.text = ""
     self.label = ""
@@ -34,7 +50,6 @@ class Question(object):
     if isinstance( answer, NumericalAnswer ):
       self.unit = answer.unit
 
-
 class Figure(object):
   def __init__(self):
     self.filename = ""
@@ -43,6 +58,7 @@ class Figure(object):
     self.options = ""
 
 class QuizQuestion(Question):
+  '''A class representing a quiz question about homework.'''
   def __init__(self):
     super(QuizQuestion,self).__init__()
     self.instructions = ""
@@ -56,7 +72,14 @@ class QuizQuestion(Question):
     self.image = name
 
   def set_unit(self, unit):
-    unit = get_unit( unit )
+    self.unit = ""
+    if not unit is None:
+      if isinstance( unit, str ):
+        self.unit = unit
+      if isinstance( x, (pint.quantity._Quantity, pint.measurement._Measurement) ):
+        self.unit = str(unit.units)
+
+
 
 
   def dict(self):
@@ -79,7 +102,13 @@ class Paragraph(object):
     self.text += text + " "
 
 
-class NumericalAnswer(object):
+
+# ANSWER CLASSES
+
+class Answer(object):
+  '''A class representing an answer to a homework or quiz question.'''
+
+class NumericalAnswer(Answer):
   def __init__(self, value=None):
     self.raw = None
     self.value = None
@@ -91,8 +120,21 @@ class NumericalAnswer(object):
   def set_value( self, value ):
     if not value is None:
       self.raw = str(value)
-      self.value = get_value(value)
-      self.unit = get_unit(value)
+      if isinstance( value, pint.measurement._Measurement ):
+        value_str = '{:.2uE}'.format(value.magnitude)
+        val,pow = value_str.split('E')
+        nom,unc = val.split('/')
+        nom = nom[1:-1] + 'E' + pow
+        unc = unc[1:-1] + 'E' + pow
+        self.value = nom
+        self.uncertainty = unc
+        self.unit  = str( value.units )
+      elif isinstance( value, pint.quantity._Quantity):
+        self.value = '{:.2E}'.format(value.magnitude)
+        self.unit  = str( value.units )
+      else:
+        self.value = '{:.2E}'.format(value)
+        self.unit = ''
 
   def set_uncertainty( self, uncertainty ):
     self.uncertainty = uncertainty
@@ -106,8 +148,7 @@ class NumericalAnswer(object):
   def __str__(self):
     return self.raw
 
-
-class MultipleChoiceAnswer(object):
+class MultipleChoiceAnswer(Answer):
   def __init__(self):
     self.choices = []
     self.correct = -1
@@ -125,7 +166,7 @@ class MultipleChoiceAnswer(object):
   def __str__(self):
     return self.choices[ self.correct ]
 
-class LatexAnswer(object):
+class LatexAnswer(Answer):
   def __init__(self, text=None):
     self.set_value( text )
 
@@ -143,154 +184,8 @@ class LatexAnswer(object):
       self.correct = len(self.choices)-1
 
 
-def get_unit(x=None):
-  if x is None:
-    return x
 
-  u = ""
-  if not x is None:
-    if isinstance( x, str ):
-      u = x
-
-    if isinstance( x, units.Quantity ):
-      u = str(x.units)
-
-  return u
-
-def get_value(x=None):
-  if isinstance( x, str ):
-    return x
-
-  v = 0
-  if not x is None:
-    if isinstance( x, units.Quantity ):
-      v = x.magnitude
-
-  return to_sigfig(v,3)
-
-def get_semester( day = datetime.date.today()):
-  '''Return the semester string, i.e. 'Spring 2015', for a date.'''
-  year = day.year
-  month = day.month
-
-  season = "Unknown"
-
-  if month in range(1,5):
-    season = "Spring"
-
-  if month in range(6,7):
-    season = "Summer"
-
-  if month in range(8,12):
-    season = "Fall"
-
-  sem = '%s %s' % (year,season)
-  return sem
-
-def to_sigfig(x,p):
-    """
-    This code was taken from here:
-    http://randlet.com/blog/python-significant-figures-format/
-
-    returns a string representation of x formatted with a precision of p
-    Based on the webkit javascript implementation taken from here:
-    https://code.google.com/p/webkit-mirror/source/browse/JavaScriptCore/kjs/number_object.cpp
-    """
-
-
-    import math
-    x = float(x)
-
-    if x == 0.:
-        return "0." + "0"*(p-1)
-
-    out = []
-
-    if x < 0:
-        out.append("-")
-        x = -x
-
-    e = int(math.log10(x))
-    tens = math.pow(10, e - p + 1)
-    n = math.floor(x/tens)
-
-    if n < math.pow(10, p - 1):
-        e = e -1
-        tens = math.pow(10, e - p+1)
-        n = math.floor(x / tens)
-
-    if abs((n + 1.) * tens - x) <= abs(n * tens -x):
-        n = n + 1
-
-    if n >= math.pow(10,p):
-        n = n / 10.
-        e = e + 1
-
-
-    m = "%.*g" % (p, n)
-
-    if e < -2 or e >= p:
-        out.append(m[0])
-        if p > 1:
-            out.append(".")
-            out.extend(m[1:p])
-        out.append('e')
-        if e > 0:
-            out.append("+")
-        out.append(str(e))
-    elif e == (p -1):
-        out.append(m)
-    elif e >= 0:
-        out.append(m[:e+1])
-        if e+1 < len(m):
-            out.append(".")
-            out.extend(m[e+1:])
-    else:
-        out.append("0.")
-        out.extend(["0"]*-(e+1))
-        out.append(m)
-
-    return "".join(out)
-
-def expr_eval( expr, context = {} ):
-  '''Evaluates a sympy expression with the given context.'''
-
-  # if we have a list of expressions, evaluate each
-  if isinstance( expr, list ):
-    results = [ expr_eval(x,context) for x in expr ]
-    return results
-
-  # symbols that we have values for
-  symbols = context.keys()
-  # values of the symbols (these can be pint quantities!)
-  vals = [ context[k] for k in symbols ]
-  # create a lambda function that can be evaluated
-  f = sy.lambdify( symbols, expr, "numpy" )
-  # evaluate and return
-  return f( *vals )
-
-class vector_quantity_calcs:
-  '''A collection of unit enabled functions for numpy vectors.'''
-  @staticmethod
-  def modsquared( vec ):
-    ret = sum( [ x*x for x in vec ] )
-    return ret
-  @staticmethod
-  def mod( vec ):
-    return np.sqrt( vector_quantity_calcs.modsquared( vec ) )
-
-  @staticmethod
-  def length( vec ):
-    return vector_quantity_calcs.mod( vec )
-
-  @staticmethod
-  def direction( vec ):
-    ret = np.arctan2( vec[1], vec[0] )
-    if ret < 0*units.radian:
-      ret += 2*3.14159*units.radian
-    return ret
-
-
+# ASSIGNMENT CLASSES
 
 class HomeworkAssignment:
 
