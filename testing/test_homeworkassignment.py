@@ -12,30 +12,52 @@ def test_quiz():
 
 
   ass.add_question()
-  ass.add_text("Question #1")
+  ass.add_text("Question \#1")
+  ref1 = ass.get_last_ref()
   
   ass.add_part()
-  ass.add_text("Question #1, Part a")
+  ass.add_text("Question \#1, Part a")
+  ref1a = ass.get_last_ref()
 
   ass.add_part()
-  ass.add_text("Question #1, Part a")
+  ass.add_text("Question \#1, Part b")
 
 
   ass.add_question()
-  ass.add_text("Question #2")
+  ass.add_text("Question \#2")
   
   ass.add_part()
-  ass.add_text("Question #2, Part a")
+  ass.add_text("Question \#2, Part a")
 
   ass.add_part()
-  ass.add_text("Question #2, Part a")
+  ass.add_text("Question \#2, Part b")
+  ref2b = ass.get_last_ref()
 
 
   ass.add_question()
-  ass.add_text("Question #3")
+  ass.add_text(r"Question \#3 references \ref{%s}, \ref{%s}, \ref{%s}." % (ref1,ref1a,ref2b) )
 
   ass.add_quiz_question()
   ass.quiz_add_text("What is the answer?")
+  Answer = HA.Q_(123456789,'N')
+  ass.quiz_set_answer( HA.NumericalAnswer( Answer ) )
+
+
+  ass.add_part()
+  ass.add_text(r"Question \#3, Part b, also references \ref{${r1}}, \ref{${r1a}}, \ref{${r2b}}.")
+  ass.format_text( r1=ref1 )
+  ass.format_text( r1a=ref1a, r2b=ref2b )
+
+  ass.add_quiz_question()
+  ass.quiz_add_text("What is the answer?")
+  Answer = HA.UQ_(123456789,40,'N')
+  ass.quiz_set_answer( HA.NumericalAnswer( Answer ) )
+
+  ass.write_latex('test.tex')
+  ass.write_quiz('test-quiz.yaml')
+
+  ass.build_PDF('test.pdf')
+
 
 
 def test_numerical_answer():

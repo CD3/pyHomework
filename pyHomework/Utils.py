@@ -110,4 +110,3 @@ class vector_quantity_calcs:
     if ret < 0*units.radian:
       ret += 2*3.14159*units.radian
     return ret
-

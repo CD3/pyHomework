@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import sys, os, os.path, subprocess, shlex, re, StringIO, datetime, time, tempfile, shutil
+import sys, os, os.path, subprocess, shlex, re, StringIO, datetime, time, tempfile, shutil, string
 import yaml
 
 import sympy as sy
@@ -295,31 +295,41 @@ ${item.text}
 
     self.template_engine = Template( self.latex_template )
 
-  def write_latex(self, filename=None):
-    if not filename:
-        filename = "/dev/stdout"
+  def write_latex(self, stream=None):
+    if stream is None:
+        stream = "/dev/stdout"
 
-    with open(filename, 'w') as f:
-      f.write( self.template_engine.render( config=self.config ) )
+    if isinstance(stream,(str,unicode)):
+      basename = os.path.splitext( os.path.basename(stream))[0]
+      self.config['latex_aux'] = basename+'.aux'
+      with open(stream, 'w') as f:
+        self.write_latex( f )
+      return
 
-    basename = os.path.splitext( os.path.basename(filename))[0]
-    self.config['latex_aux'] = basename+'.aux'
+    stream.write( self.template_engine.render( config=self.config ) )
 
-  def write_quiz(self, filename="quiz.yaml"):
-    with open(filename,'w') as f:
-      # this will write a yaml file that can be processed by BbQuiz
-      tree = {'questions' : [] }
-      for item in self.stack:
-        if self.config['isQuizQuestion'](item):
-          tree['questions'].append( item.dict() )
+  def write_quiz(self, stream="quiz.yaml"):
+    if stream is None:
+        stream = "/dev/stdout"
 
-      if not self.config['latex_aux'] is None:
-        tree.update({ 'latex' : {'aux' : self.config['latex_aux']}})
-      
-      if not self.config['quiz_config'] is None:
-        tree.update( {'configuration' : self.config['quiz_config'] } )
+    if isinstance(stream,(str,unicode)):
+      with open(stream, 'w') as f:
+        self.write_quiz( f )
+      return
 
-      f.write( yaml.dump(tree, default_flow_style=False) )
+    # this will write a yaml file that can be processed by BbQuiz
+    tree = {'questions' : [] }
+    for item in self.stack:
+      if self.config['isQuizQuestion'](item):
+        tree['questions'].append( item.dict() )
+
+    if not self.config['latex_aux'] is None:
+      tree.update({ 'latex' : {'aux' : self.config['latex_aux']}})
+    
+    if not self.config['quiz_config'] is None:
+      tree.update( {'configuration' : self.config['quiz_config'] } )
+
+    stream.write( yaml.dump(tree, default_flow_style=False) )
 
   def build_PDF( self, basename="main"):
     basename = os.path.splitext(basename)[0]
@@ -432,6 +442,13 @@ ${item.text}
     q = self.get_last_question_or_part()
     if q:
       q.add_text( text )
+
+  def format_text(self,*args,**kwargs):
+    q = self.get_last_question_or_part()
+    if q:
+      q.text = string.Template(q.text).safe_substitute( **kwargs )
+      # q.text = string.Formatter().vformat( q.text, args, SafeDict( kwargs ) )
+      # q.text = q.text.format( *args, **kwargs )
 
   def set_star(self, starred = True):
     q = self.get_last_question_or_part()
