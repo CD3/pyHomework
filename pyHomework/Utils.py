@@ -54,23 +54,6 @@ def dict2list( d ):
       l[int(k)] = d[k]
     return l
 
-def expr_eval( expr, context = {} ):
-  '''Evaluates a sympy expression with the given context.'''
-
-  # if we have a list of expressions, evaluate each
-  if isinstance( expr, list ):
-    results = [ expr_eval(x,context) for x in expr ]
-    return results
-
-  # symbols that we have values for
-  symbols = context.keys()
-  # values of the symbols (these can be pint quantities!)
-  vals = [ context[k] for k in symbols ]
-  # create a lambda function that can be evaluated
-  f = sy.lambdify( symbols, expr, "numpy" )
-  # evaluate and return
-  return f( *vals )
-
 def get_semester( day = datetime.date.today()):
   '''Return the semester string, i.e. 'Spring 2015', for a date.'''
   year = day.year
@@ -90,23 +73,14 @@ def get_semester( day = datetime.date.today()):
   sem = '%s %s' % (year,season)
   return sem
 
-class vector_quantity_calcs:
-  '''A collection of unit enabled functions for numpy vectors.'''
-  @staticmethod
-  def modsquared( vec ):
-    ret = sum( [ x*x for x in vec ] )
-    return ret
-  @staticmethod
-  def mod( vec ):
-    return np.sqrt( vector_quantity_calcs.modsquared( vec ) )
+def generate_latex_image( filename, text, extra_opts = [], config = {} ):
+  '''Generates an image file from LaTeX code using l2p (https://github.com/CD3/l2p)'''
+  image_filename = os.path.join(  config.get('image_dir','./'), filename )
+  latex_filename = os.path.join(  config.get('image_dir','./'), filename+'tmp.latex' )
 
-  @staticmethod
-  def length( vec ):
-    return vector_quantity_calcs.mod( vec )
+  with open('tmp.latex','w') as f:
+    f.write(text)
 
-  @staticmethod
-  def direction( vec ):
-    ret = np.arctan2( vec[1], vec[0] )
-    if ret < 0*units.radian:
-      ret += 2*3.14159*units.radian
-    return ret
+  packages = 'circuitikz/siunitx/amsmath/amsfonts/amssymb'
+
+  call( ['l2p', '-p', packages, '-t', '-B', '10x10'] + extra_opts + ['-o', image_filename, latex_filename] )

@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from pyHomework.Utils import *
+from pyHomework.Quiz import *
 import sys, os, re, random
 import yaml
 from dpath import util

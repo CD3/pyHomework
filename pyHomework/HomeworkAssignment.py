@@ -199,6 +199,24 @@ class HomeworkAssignment:
 \usepackage{enumitem}
 \usepackage[ampersand]{easylist}
 \ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)
+\usepackage{hyperref}
+
+
+\DeclareSIUnit \mile {mi}
+\DeclareSIUnit \inch {in}
+\DeclareSIUnit \foot {ft}
+\DeclareSIUnit \yard {yd}
+\DeclareSIUnit \acre {acre}
+\DeclareSIUnit \lightyear {ly}
+\DeclareSIUnit \parcec {pc}
+\DeclareSIUnit \teaspoon {tsp.}
+\DeclareSIUnit \tablespoon {tbsp.}
+\DeclareSIUnit \gallon {gal}
+\DeclareSIUnit \fluidounce{fl oz}
+\DeclareSIUnit \ounce{oz}
+\DeclareSIUnit \pound{lb}
+\DeclareSIUnit \hour{hr}
+
 
 \setlength{\headheight}{0.5in}
 \pagestyle{fancyplain}
