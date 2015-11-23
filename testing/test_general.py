@@ -1,6 +1,8 @@
 from pyHomework import Constants
 from pyHomework.sympy import Equations
 
+import sympy as sy
+
 def Close( a, b, tol = 0.01 ):
     if isinstance(a,int):
         a = float(a)
@@ -47,4 +49,17 @@ def test_equations():
   assert 'K == m*v**2/2' == str(eqs.KineticEnergy)
   assert 'U == g*h*m'    == str(eqs.GravitationalPotentialEnergy)
 
+
+def test_sympy_solve():
+  import pint
+  units = pint.UnitRegistry()
+  Q = units.Quantity
+  e = Equations.EquationsCollection()
+  e.c = Constants.ConstantsCollection( units )
+  s = e.s
+  
+  K = e.eval( e.KineticEnergy, s.K, { s.m : Q(2.,'kg')
+                                    , s.v : Q(3.,'cm/s') } )
+
+  assert Close( 0.5*2.*3.*3./100./100., K.to('kg m^2 / s^2').magnitude )
 

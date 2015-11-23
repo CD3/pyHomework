@@ -10,6 +10,8 @@ class ConstantsCollection:
     def make( value, unit ):
       return sigfig_round( Q( value, unit ), n = sigfigs )
 
+    self.Pi                    = make(math.pi,              'dimensionless')
+
     self.SpeedOfLight          = make(299792458,            'm/s')
     self.GravitationalConstant = make(6.6738e-11,           'm^3 kg^-1 s^-2')
     self.MassOfSun             = make(1.989e30,             'kg')

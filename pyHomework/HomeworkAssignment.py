@@ -3,9 +3,6 @@
 import sys, os, os.path, subprocess, shlex, re, StringIO, datetime, time, tempfile, shutil, string
 import yaml
 
-import sympy as sy
-import numpy as np
-
 from mako.template import Template
 
 from pyErrorProp import *
