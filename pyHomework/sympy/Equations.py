@@ -1,4 +1,4 @@
-from sympy import *
+from sympy import symbols, solve, Eq, sqrt, sin, cos, tan, lambdify
 
 class SymbolCollection:
   def __init__(self):
@@ -94,7 +94,6 @@ class EquationsCollection:
     sol = solve( fromexpr, var )[soli]
     ret = toexpr.subs( var, sol )
     return ret
-
 
 def expr_eval( expr, context = {} ):
   '''Evaluates a sympy expression with the given context.'''

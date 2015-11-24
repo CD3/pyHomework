@@ -5,9 +5,9 @@ import yaml
 
 from mako.template import Template
 
-from pyErrorProp import *
-
 from .Utils import *
+
+from pyErrorProp import *
 
 # UTIL FUNCTIONS
 def get_unit(x=None):
@@ -459,11 +459,16 @@ ${item.text}
       q.add_text( text )
 
   def format_text(self,*args,**kwargs):
+    class SafeDict(dict):
+      def __missing__(self,key):
+        return '{'+key+'}'
+
     q = self.get_last_question_or_part()
     if q:
-      q.text = string.Template(q.text).safe_substitute( **kwargs )
-      # q.text = string.Formatter().vformat( q.text, args, SafeDict( kwargs ) )
-      # q.text = q.text.format( *args, **kwargs )
+      if 'formatter' in kwargs and kwargs['formatter'] == 'template':
+        q.text = string.Template(q.text).safe_substitute( **kwargs )
+      else:
+        q.text = string.Formatter().vformat( q.text, args, SafeDict( kwargs ) )
 
   def set_star(self, starred = True):
     q = self.get_last_question_or_part()

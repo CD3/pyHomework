@@ -1,4 +1,4 @@
-from pyHomework import HomeworkAssignment as HA
+from pyHomework import *
 
 def Close( a, b, tol = 0.001 ):
     if isinstance(a,int):
@@ -8,7 +8,7 @@ def Close( a, b, tol = 0.001 ):
     return (a - b)**2 / (a**2 + b**2) < 4*tol*tol
 
 def test_quiz():
-  ass = HA.HomeworkAssignment()
+  ass = HomeworkAssignment()
 
 
   ass.add_question()
@@ -39,19 +39,19 @@ def test_quiz():
 
   ass.add_quiz_question()
   ass.quiz_add_text("What is the answer?")
-  Answer = HA.Q_(123456789,'N')
-  ass.quiz_set_answer( HA.NumericalAnswer( Answer ) )
+  Answer = Q_(123456789,'N')
+  ass.quiz_set_answer( NumericalAnswer( Answer ) )
 
 
   ass.add_part()
   ass.add_text(r"Question \#3, Part b, also references \ref{${r1}}, \ref{${r1a}}, \ref{${r2b}}.")
-  ass.format_text( r1=ref1 )
-  ass.format_text( r1a=ref1a, r2b=ref2b )
+  ass.format_text( r1=ref1, formatter='template' )
+  ass.format_text( r1a=ref1a, r2b=ref2b, formatter='template' )
 
   ass.add_quiz_question()
   ass.quiz_add_text("What is the answer?")
-  Answer = HA.UQ_(123456789,40,'N')
-  ass.quiz_set_answer( HA.NumericalAnswer( Answer ) )
+  Answer = UQ_(123456789,40,'N')
+  ass.quiz_set_answer( NumericalAnswer( Answer ) )
 
   ass.write_latex('test.tex')
   ass.write_quiz('test-quiz.yaml')
@@ -67,7 +67,7 @@ def test_numerical_answer():
   M_ = units.Measurement
 
   Answer = Q_(1.2345,'m/s')
-  a = HA.NumericalAnswer(Answer)
+  a = NumericalAnswer(Answer)
   d = a.dict()
 
   assert d['value'] == '1.23E+00'
@@ -76,7 +76,7 @@ def test_numerical_answer():
 
 
   Answer = M_(1.2345,0.034,'m/s')
-  a = HA.NumericalAnswer(Answer)
+  a = NumericalAnswer(Answer)
   d = a.dict()
 
   assert d['value'] == '1.234E+00'
@@ -85,7 +85,7 @@ def test_numerical_answer():
 
 
   Answer = Q_(123.45,'m/s')
-  a = HA.NumericalAnswer(Answer)
+  a = NumericalAnswer(Answer)
   d = a.dict()
 
   assert d['value'] == '1.23E+02'
@@ -94,7 +94,7 @@ def test_numerical_answer():
 
 
   Answer = M_(123.45,3.4,'m/s')
-  a = HA.NumericalAnswer(Answer)
+  a = NumericalAnswer(Answer)
   d = a.dict()
 
   assert d['value'] == '1.234E+02'
@@ -103,7 +103,7 @@ def test_numerical_answer():
 
 
   Answer = Q_(0.00012345,'m/s')
-  a = HA.NumericalAnswer(Answer)
+  a = NumericalAnswer(Answer)
   d = a.dict()
 
   assert d['value'] == '1.23E-04'
@@ -112,7 +112,7 @@ def test_numerical_answer():
 
 
   Answer = M_(0.00012345,0.0000034,'m/s')
-  a = HA.NumericalAnswer(Answer)
+  a = NumericalAnswer(Answer)
   d = a.dict()
 
   assert d['value'] == '1.234E-04'

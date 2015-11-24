@@ -2,23 +2,26 @@
 Unit support for numpy array calculations.
 '''
 
+import numpy as np
+import pyErrorProp as ep
+
 def unitof(q):
-  if isinstance(q,Q_):
+  if isinstance(q,eq.Q_):
     return q.units
   else:
-    return Q_("dimensionless")
+    return eq.Q_("dimensionless")
 
 def dot(v1,v2):
   u1 = unitof( v1 )
   u2 = unitof( v2 )
   w  = v1.dot(v2)
-  return w*Q_(1,u1)*Q_(1,u2)
+  return w*eq.Q_(1,u1)*eq.Q_(1,u2)
 
 def cross(v1,v2):
   u1 = unitof( v1 )
   u2 = unitof( v2 )
   w  = np.cross(v1,v2)
-  return w*Q_(1,u1)*Q_(1,u2)
+  return w*eq.Q_(1,u1)*eq.Q_(1,u2)
 
 def magnitude( vec ):
   return np.sqrt( dot( vec, vec ) )
