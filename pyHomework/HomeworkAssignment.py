@@ -157,6 +157,11 @@ class MultipleChoiceAnswer(Answer):
   def add_choice( self, text ):
     self.choices.append( text )
 
+  def add_choices( self, text ):
+    for line in text.splitlines():
+      if len(line) > 0:
+        self.add_choice( line )
+
   def dict(self):
     return {'choices' : self.choices }
 
@@ -493,6 +498,19 @@ ${item.text}
     q = self.get_last_quiz_question()
     if q:
       q.add_text( text )
+
+  def quiz_format_text(self,*args,**kwargs):
+    class SafeDict(dict):
+      def __missing__(self,key):
+        return '{'+key+'}'
+
+    q = self.get_last_quiz_question()
+    if q:
+      if 'formatter' in kwargs and kwargs['formatter'] == 'template':
+        q.text = string.Template(q.text).safe_substitute( **kwargs )
+      else:
+        q.text = string.Formatter().vformat( q.text, args, SafeDict( kwargs ) )
+
 
   def quiz_add_image(self,name=None):
     q = self.get_last_quiz_question()
