@@ -506,10 +506,10 @@ ${item.text}
 
     q = self.get_last_quiz_question()
     if q:
-      if 'formatter' in kwargs and kwargs['formatter'] == 'template':
-        q.text = string.Template(q.text).safe_substitute( **kwargs )
-      else:
+      if 'formatter' in kwargs and kwargs['formatter'] == 'format':
         q.text = string.Formatter().vformat( q.text, args, SafeDict( kwargs ) )
+      else:
+        q.text = string.Template(q.text).safe_substitute( **kwargs )
 
 
   def quiz_add_image(self,name=None):
