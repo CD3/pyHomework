@@ -12,7 +12,7 @@ but other features exist such as the ability to randomize both question and answ
 a quiz key (for paper quizzes).
 
 The module provides utilities for creating homework problem sets, and Blackboard quizzes to accompany these problem sets, in a python program. 
-The primary benefit of using the module is the creation of quizzes to accompany homework set. The homework sets are generated using LaTeX, which
+The primary benefit of using the module is the creation of quizzes to accompany homework sets. The homework sets are generated using LaTeX, which
 could just as easily be written directly using document templates. However, using the utilities provided by the module, a quiz can be generated that
 references questions in the homework set, and the reference numbers will be automatically managed.
 
@@ -80,7 +80,19 @@ same quiz.
 The `HomeworkAssignment` Class
 ----------------------------
 
-The `pyHomework` module contains a `HomeworkAssignment` class that can be used to build a homework assignment in a Python program. The interface
+The `pyHomework` module contains a `HomeworkAssignment` class that can be used to build a homework assignment in a Python program. Its main features
+are
+
+    - Automatically cross reference homework questions in quiz questions.
+    - Full unit support provided by the `pint` module.
+    - Automatically generate instructions in a quiz question specifying the units that the answer is to be given in. Units are automatically determined
+      from the units of the answer.
+    - Automatically calculate a tolerance range for quiz answers (default is 1%)
+    - Support for quantities with uncertainty. If a quiz answer is set to an uncertain quantity, the answer tolerance will automatically be set to the uncertainty of the quantity.
+    - Support for symbolic algebra provided by the `sympy` module.
+
+
+The interface
 works like a stack. You create a `HomeworkAssignment` object and then begin adding questions, figures, quiz questions, etc. The class provides
 a set of member functions for adding text to, setting answers, settings units (and more) to questions, and these member act on the last question
 (or question part) in the stack.
