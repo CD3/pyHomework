@@ -49,6 +49,11 @@ class SymbolCollection:
     self.thi  = sy.symbols(r'\theta_i')
     self.thr  = sy.symbols(r'\theta_r')
 
+    self.nl   = sy.symbols('n_l')
+    self.nm   = sy.symbols('n_m')
+    self.Rf   = sy.symbols('R_f')
+    self.Rb   = sy.symbols('R_b')
+
     # constants
     self.g_    = sy.symbols('g')
     self.k_    = sy.symbols('k')
@@ -118,6 +123,9 @@ class EquationsCollection:
     self.LensEquation          = sy.Eq( 1/s.di + 1/s.do , 1/s.f )
     self.MagnificationEquation = sy.Eq( s.m , -s.di / s.do )
     self.SnellsLaw             = sy.Eq( s.ni*sy.sin(s.thi), s.nr*sy.sin(s.thr) )
+    self.LensMakersEquation    = sy.Eq( 1/s.f, ( s.nl / s.nm - 1 ) * ( 1/s.Rf - 1/s.Rb ) )
+
+
 
   def set_constants(self, c):
     self.c = c
