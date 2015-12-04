@@ -93,7 +93,7 @@ class LatexLabels(dict):
             self[key] = tag
 
 
-class Quiz(object):
+class QuizSpec(object):
     class QuizValidator(cerberus.Validator):
       def __init__(self, *args, **kwargs):
         quiz_schema = '''

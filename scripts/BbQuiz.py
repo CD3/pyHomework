@@ -1,12 +1,12 @@
 #! /usr/bin/env python
 
-from pyHomework.Quiz import *
+from pyHomework.QuizSpec import *
 import sys, os, re, random
 import yaml
 from dpath import util
 import urlparse
 
-class BbQuiz(Quiz):
+class BbQuizSpec(QuizSpec):
     def build_MC_tokens(self, q):
         entry = []
         entry.append( "MC" )
@@ -162,13 +162,13 @@ if __name__ == "__main__":
     sys.exit(0)
 
   if args.example:
-    quiz = BbQuiz()
+    quiz = BbQuizSqec()
     with open( args.example, 'w' ) as f:
       f.write( quiz.dump_example() )
     sys.exit(0)
 
   for arg in args.quiz_files:
-    quiz = BbQuiz()
+    quiz = BbQuizSpec()
     quiz.load( arg )
     quiz.override( args.config_var )
     if args.list_config:
