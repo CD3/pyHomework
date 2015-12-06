@@ -66,6 +66,27 @@ def test_numerical_answer_uncertainty():
   a.quantity = Q_(2,'m/s')
   assert a.uncertainty == '5.00E-01'
 
+def test_numerical_answer_bb_emitter():
+
+  q = 1.23456789
+  a = NumericalAnswer(q)
+  bb = a.emit('bb')
+  assert bb == '1.23E+00\t1.23E-02'
+
+  q = Q_(1.3579,'m/s^2')
+  a = NumericalAnswer(q)
+  bb = a.emit('bb')
+  assert bb == '1.36E+00\t1.36E-02'
+  a.sigfigs = 4
+  bb = a.emit('bb')
+  assert bb == '1.358E+00\t1.358E-02'
+
+
+  q = UQ_(1.3579, 0.89, 'm/s^2')
+  a = NumericalAnswer(q)
+  bb = a.emit('bb')
+  assert bb == '1.36E+00\t8.90E-01'
+
 
 def test_multiple_choice_answer():
   a = MultipleChoiceAnswer()
@@ -79,8 +100,38 @@ def test_multiple_choice_answer():
 
   assert str(a) == 'two, four'
 
+def test_multiple_choice_answer_bbquiz_emitter():
+  a = MultipleChoiceAnswer()
+  a.add_choice('one')
+  a.add_choice('*two')
+  a.add_choice('three')
+  a.add_choice('*four')
+
+  bbquiz = a.emit('bbquiz')
+  assert 'choices' in bbquiz
+  assert bbquiz['choices'][0] == 'one'
+  assert bbquiz['choices'][1] == '*two'
+  assert bbquiz['choices'][2] == 'three'
+  assert bbquiz['choices'][3] == '*four'
+
+def test_multiple_choice_answer_bb_emitter():
+  a = MultipleChoiceAnswer()
+  a.add_choice('one')
+  a.add_choice('*two')
+  a.add_choice('three')
+  a.add_choice('*four')
+
+  bb = a.emit('bb')
+
+  assert bb == 'one\tincorrect\ttwo\tcorrect\tthree\tincorrect\tfour\tcorrect'
+
+
 def test_written_answer():
-  pass
+  a = ShortAnswer('''Since A > B and B > C, A must also be > C.''')
+
+  bb = a.emit('bb')
+  assert bb == 'Since A > B and B > C, A must also be > C.'
+
 
 def test_latex_answer():
   pass
