@@ -1,25 +1,16 @@
-
+from .Question import *
+from .Answer import *
 
 class Quiz(object):
-  class Question(object):
-    def __init__(self):
-      self.text = []
-      self.instructions = []
-      self.image = None
-
-    def add_text(self, text):
-      self.text.append(text)
-
-    def add_instruction(self, text):
-      self.instructions.append(text)
-
-    def add_image(self, name):
-      self.image = name
-
+  Question = Question
 
   def __init__(self):
     self.questions = []
     pass
+
+  def add_question(self,text):
+    self.questions.append( Question() )
+
 
 
   def get_last_question( self ):
@@ -27,6 +18,4 @@ class Quiz(object):
       return self.questions
     else:
       return None
-
-
 

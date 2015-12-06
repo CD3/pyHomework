@@ -1,6 +1,20 @@
 #! /usr/bin/env python
 
 import datetime
+import string
+
+class FormatterDict(dict):
+  def __missing__(self,key):
+    return '{'+key+'}'
+
+def format_text(text, formatter, *args, **kwargs):
+  if formatter == 'format':
+    return string.Formatter().vformat( text, args, FormatterDict( kwargs ) )
+  elif formatter == 'template':
+    return string.Template( text ).safe_substitute( **kwargs )
+  else:
+    return text
+
 
 def toBool( v ):
     if isinstance(v,str):
