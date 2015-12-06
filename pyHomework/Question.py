@@ -92,7 +92,19 @@ class Question(object):
   def format_instruction(self, *args, **kwargs):
     return self.format_X(self._instructions,*args,**kwargs)
 
+  def emit(self,emitter=None):
+    if isinstance( emitter, (str,unicode) ):
+      if emitter.lower() == 'bb':
+        answer = self._answers[0]
 
+        tokens = []
+        tokens.append( answer.type('bb') )
+        tokens.append( self.question )
+        tokens.append( answer.emit('bb') )
+
+        return '\t'.join( tokens )
+
+    return self.question
 
 class PlainTextQuestion(Question):
   pass

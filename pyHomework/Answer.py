@@ -3,15 +3,27 @@ import pint
 from pyErrorProp import sigfig_round
 
 class Answer(object):
+  bb_type = 'ESS'
+
   def __init__(self, answer=None):
     self.answer = answer
 
   def __str__(self):
     return str(self.answer)
 
+  def type(self,emitter=None):
+    '''Returns the blackboard question type string.'''
+    if isinstance( emitter, (str,unicode) ):
+      if emitter.lower() == 'bb':
+        return self.bb_type
+
+    return self.__name__
+
+
 class LatexAnswer(Answer): pass
 
 class ShortAnswer(Answer):
+  bb_type = 'SA'
 
   def emit(self, emitter = None):
     if isinstance( emitter, (str,unicode) ):
@@ -26,7 +38,10 @@ class ShortAnswer(Answer):
     return str(self.answer)
 
 
+
 class NumericalAnswer(Answer):
+  bb_type = 'NUM'
+
   def __init__(self, quantity, units = "", uncertainty = '1%', sigfigs = 3):
     self._quant   = quantity
     self._units   = units
@@ -107,6 +122,16 @@ class NumericalAnswer(Answer):
     return self.emit()
 
 class MultipleChoiceAnswer(Answer):
+  bb_type = 'MC|MA'
+
+  def type(self,emitter=None):
+    if isinstance( emitter, (str,unicode) ):
+      if emitter.lower() == 'bb':
+        types = bb_type.split('|')
+        return types[0] if len(self.correct > 1) else types[1]
+
+    return super(MultipleChoiceAnswer,self).type(emitter)
+
   def __init__(self):
     self.choices = []
     self.correct = set()

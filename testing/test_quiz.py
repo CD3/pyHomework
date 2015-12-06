@@ -192,3 +192,18 @@ def test_question_set_instruction():
 
   assert q.question == "four"
 
+
+def test_question_with_answers():
+  q = Quiz.Question()
+
+  l = Q_(1.5,'m')
+  w = Q_(2.5,'m')
+  # print l*w
+  q.add_text("What is the area of a {l} x {w} square?")
+  q.format_text( l=l, w=w, formatter='format' )
+  q.set_answer( NumericalAnswer( l*w ) )
+
+  text = q.emit('bb')
+
+  assert text == 'NUM\tWhat is the area of a 1.5 meter x 2.5 meter square?\t3.75E+00\t3.75E-02'
+
