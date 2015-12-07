@@ -12,12 +12,15 @@ class Answer(object):
     return str(self.answer)
 
   def type(self,emitter=None):
-    '''Returns the blackboard question type string.'''
+    '''Returns a type string for the given emitter.'''
     if isinstance( emitter, (str,unicode) ):
       if emitter.lower() == 'bb':
         return self.bb_type
 
     return self.__name__
+
+  def emit(self,emitter):
+    raise RuntimeError("Unknown emitter type '%s' given." % emitter)
 
 
 class LatexAnswer(Answer): pass
@@ -26,16 +29,25 @@ class ShortAnswer(Answer):
   bb_type = 'SA'
 
   def emit(self, emitter = None):
-    if isinstance( emitter, (str,unicode) ):
+    # default emitter
+    if emitter is None or emitter == 'default':
+      return str(self.answer)
+
+    # support for user-defined emitter functions
+    if not isinstance( emitter, (str,unicode) ):
+      return emitter( self )
+
+    # emitters that we support
+    if     isinstance( emitter, (str,unicode) ):
       if emitter.lower() == 'bbquiz':
         return {'example': self.text}
 
       if emitter.lower() == 'bb':
         return str(self.answer)
 
+    return super(ShortAnswer,self).emit(emitter)
 
 
-    return str(self.answer)
 
 
 
@@ -101,7 +113,16 @@ class NumericalAnswer(Answer):
     self._units = v
 
   def emit(self, emitter = None):
-    if isinstance( emitter, (str,unicode) ):
+    # default emitter
+    if emitter is None or emitter == 'default':
+      return self.quantity
+
+    # support for user-defined emitter functions
+    if not isinstance( emitter, (str,unicode) ):
+      return emitter( self )
+
+    # emitters that we support
+    if     isinstance( emitter, (str,unicode) ):
       if emitter.lower() == 'bbquiz':
         return {'raw':         self.quantity
                ,'value':       self.value
@@ -115,8 +136,9 @@ class NumericalAnswer(Answer):
 
         return '\t'.join(tokens)
 
+    return super(NumericalAnswer,self).emit(emitter)
 
-    return self.quantity
+
 
   def __str__(self):
     return self.emit()
@@ -162,8 +184,21 @@ class MultipleChoiceAnswer(Answer):
     return len(self.correct)
 
   def emit(self,emitter = None):
-    if isinstance( emitter, (str,unicode) ):
+    # default emitter
+    if emitter is None or emitter == 'default':
+      tokens = []
+      for i in range( len( self.choices ) ):
+        if i in self.correct:
+          tokens.append( self.choices[i] )
 
+      return ', '.join(tokens)
+
+    # support for user-defined emitter functions
+    if not isinstance( emitter, (str,unicode) ):
+      return emitter( self )
+
+    # emitters that we support
+    if     isinstance( emitter, (str,unicode) ):
       if emitter.lower() == 'bbquiz':
         choices = []
         for i in range( len( self.choices ) ):
@@ -184,12 +219,8 @@ class MultipleChoiceAnswer(Answer):
 
         return '\t'.join(tokens)
 
-    tokens = []
-    for i in range( len( self.choices ) ):
-      if i in self.correct:
-        tokens.append( self.choices[i] )
+    return super(MultipleChoiceAnswer,self).emit(emitter)
 
-    return ', '.join(tokens)
 
   def __str__(self):
     return self.emit()

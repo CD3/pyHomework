@@ -93,7 +93,16 @@ class Question(object):
     return self.format_X(self._instructions,*args,**kwargs)
 
   def emit(self,emitter=None):
-    if isinstance( emitter, (str,unicode) ):
+    # default emitter
+    if emitter is None or emitter == 'default':
+      return self.question
+
+    # support for user-defined emitter functions
+    if not isinstance( emitter, (str,unicode) ):
+      return emitter( self )
+
+    # emitters that we support
+    if     isinstance( emitter, (str,unicode) ):
       if emitter.lower() == 'bb':
         answer = self._answers[0]
 
@@ -104,7 +113,7 @@ class Question(object):
 
         return '\t'.join( tokens )
 
-    return self.question
+    raise RuntimeError("Unknown emitter type '%s' given." % emitter)
 
 class PlainTextQuestion(Question):
   pass

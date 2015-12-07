@@ -1,4 +1,6 @@
 
+import pytest
+
 from pyHomework.Quiz import Quiz
 from pyHomework.Answer import *
 from pyErrorProp import *
@@ -31,7 +33,6 @@ def test_numerical_answer_value():
   a.sigfigs = 4
   assert a.quantity == '1.358E+00 meter / second ** 2'
   assert a.value    == '1.358E+00'
-
 
 def test_numerical_answer_units():
   q = 1.23456789
@@ -82,6 +83,40 @@ def test_numerical_answer_bb_emitter():
   a = NumericalAnswer(q)
   bb = a.emit('bb')
   assert bb == '1.36E+00\t8.90E-01'
+
+def test_answer_emitter_exceptions():
+  q = 1.23456789
+  a = NumericalAnswer(q)
+  with pytest.raises(RuntimeError) as e:
+    a.emit('undefined')
+  assert str(e.value) == "Unknown emitter type 'undefined' given."
+
+
+  a = MultipleChoiceAnswer()
+  with pytest.raises(RuntimeError) as e:
+    a.emit('undefined')
+  assert str(e.value) == "Unknown emitter type 'undefined' given."
+
+def test_answer_custom_emitters():
+  def num_emit(a):
+    return "Answer is: %s" % a.quantity
+
+  q = 1.23456789
+  a = NumericalAnswer(q)
+  text = a.emit(num_emit)
+  assert text == "Answer is: 1.23E+00"
+
+  def mc_emit(a):
+    return "Answer is: '%s'" % a.choices[ a.correct.copy().pop() ]
+
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  not correct
+  *this one
+  not this one
+  ''')
+  text = a.emit(mc_emit)
+  assert text == "Answer is: 'this one'"
 
 def test_multiple_choice_answer():
   a = MultipleChoiceAnswer()
@@ -236,4 +271,19 @@ def test_question_with_ma_answer():
 
   assert text == 'MA\tThe answer is c... its always c.\tthis is not the answer you are looking for.\tincorrect\tnope.\tincorrect\tthis is it!\tcorrect\treally?\tincorrect\toh...this one too.\tcorrect'
 
+def test_question_emitter_exceptions():
+  q = Quiz.Question()
+  q.add_text("The answer is c... its always c.")
+  with pytest.raises(RuntimeError) as e:
+    q.emit('undefined')
+  assert str(e.value) == "Unknown emitter type 'undefined' given."
 
+
+def test_question_emitter_exceptions():
+  def q_emit(q):
+    return "Question: '%s'\nThe answer is irrelevent" % q.question
+
+  q = Quiz.Question()
+  q.add_text("The answer is c... its always c.")
+  text = q.emit(q_emit)
+  assert text == "Question: 'The answer is c... its always c.'\nThe answer is irrelevent"
