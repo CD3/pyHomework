@@ -218,4 +218,22 @@ def test_question_with_mc_answer():
 
   assert text == 'MC\tThe answer is c... its always c.\tthis is not the answer you are looking for.\tincorrect\tnope.\tincorrect\tthis is it!\tcorrect\treally?\tincorrect'
 
+def test_question_with_ma_answer():
+  q = Quiz.Question()
+
+  q.add_text("The answer is c... its always c.")
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  this is not the answer you are looking for.
+  nope.
+  *this is it!
+  really?
+  *oh...this one too.
+  ''')
+  q.set_answer( a )
+
+  text = q.emit('bb')
+
+  assert text == 'MA\tThe answer is c... its always c.\tthis is not the answer you are looking for.\tincorrect\tnope.\tincorrect\tthis is it!\tcorrect\treally?\tincorrect\toh...this one too.\tcorrect'
+
 
