@@ -4,7 +4,6 @@ from pyHomework.Answer import *
 from pyErrorProp import *
 
 def test_numerical_answer_value():
-
   q = 1.23456789
   a = NumericalAnswer(q)
   assert a.quantity == '1.23E+00'
@@ -35,7 +34,6 @@ def test_numerical_answer_value():
 
 
 def test_numerical_answer_units():
-
   q = 1.23456789
   a = NumericalAnswer(q)
   assert a.units == ''
@@ -51,7 +49,6 @@ def test_numerical_answer_units():
   assert a.units == 'foot'
 
 def test_numerical_answer_uncertainty():
-
   q = 1.23456789
   a = NumericalAnswer(q)
   assert a.uncertainty == '1.23E-02'
@@ -67,7 +64,6 @@ def test_numerical_answer_uncertainty():
   assert a.uncertainty == '5.00E-01'
 
 def test_numerical_answer_bb_emitter():
-
   q = 1.23456789
   a = NumericalAnswer(q)
   bb = a.emit('bb')
@@ -86,7 +82,6 @@ def test_numerical_answer_bb_emitter():
   a = NumericalAnswer(q)
   bb = a.emit('bb')
   assert bb == '1.36E+00\t8.90E-01'
-
 
 def test_multiple_choice_answer():
   a = MultipleChoiceAnswer()
@@ -125,13 +120,11 @@ def test_multiple_choice_answer_bb_emitter():
 
   assert bb == 'one\tincorrect\ttwo\tcorrect\tthree\tincorrect\tfour\tcorrect'
 
-
 def test_written_answer():
   a = ShortAnswer('''Since A > B and B > C, A must also be > C.''')
 
   bb = a.emit('bb')
   assert bb == 'Since A > B and B > C, A must also be > C.'
-
 
 def test_latex_answer():
   pass
@@ -193,7 +186,7 @@ def test_question_set_instruction():
   assert q.question == "four"
 
 
-def test_question_with_answers():
+def test_question_with_numerical_answer():
   q = Quiz.Question()
 
   l = Q_(1.5,'m')
@@ -206,4 +199,23 @@ def test_question_with_answers():
   text = q.emit('bb')
 
   assert text == 'NUM\tWhat is the area of a 1.5 meter x 2.5 meter square?\t3.75E+00\t3.75E-02'
+
+
+def test_question_with_mc_answer():
+  q = Quiz.Question()
+
+  q.add_text("The answer is c... its always c.")
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  this is not the answer you are looking for.
+  nope.
+  *this is it!
+  really?
+  ''')
+  q.set_answer( a )
+
+  text = q.emit('bb')
+
+  assert text == 'MC\tThe answer is c... its always c.\tthis is not the answer you are looking for.\tincorrect\tnope.\tincorrect\tthis is it!\tcorrect\treally?\tincorrect'
+
 

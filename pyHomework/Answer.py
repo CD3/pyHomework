@@ -127,8 +127,8 @@ class MultipleChoiceAnswer(Answer):
   def type(self,emitter=None):
     if isinstance( emitter, (str,unicode) ):
       if emitter.lower() == 'bb':
-        types = bb_type.split('|')
-        return types[0] if len(self.correct > 1) else types[1]
+        types = self.bb_type.split('|')
+        return types[1] if len(self.correct) > 1 else types[0]
 
     return super(MultipleChoiceAnswer,self).type(emitter)
 
@@ -148,6 +148,7 @@ class MultipleChoiceAnswer(Answer):
 
   def add_choices( self, text ):
     for line in text.splitlines():
+      line = line.strip()
       if len(line) > 0:
         self.add_choice( line )
 
@@ -161,7 +162,6 @@ class MultipleChoiceAnswer(Answer):
     return len(self.correct)
 
   def emit(self,emitter = None):
-
     if isinstance( emitter, (str,unicode) ):
 
       if emitter.lower() == 'bbquiz':
