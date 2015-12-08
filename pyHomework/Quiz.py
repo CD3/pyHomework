@@ -9,6 +9,8 @@ class Quiz(object):
     self._order = []
     self.randomize = False
 
+    self.metadata = {}
+
   @property
   def questions(self):
     for i in self.order:
@@ -57,6 +59,22 @@ class Quiz(object):
         return '\n'.join(tokens)
 
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
+
+  def load(self,spec):
+    metadata = spec.get('configuration',{})
+
+    for q in spec['questions']:
+      self.add_question()
+      try:
+        self.add_text( q['text'] )
+      except:
+        raise RuntimeError("No text found in question: %s" % q)
+
+      if 'instructions' in q:
+        self.add_instruction( q['instructions'] )
+
+      self.add_answer( make_answer(q['answer']) )
+
 
   @property
   def question(self):

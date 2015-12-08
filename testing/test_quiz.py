@@ -1,5 +1,6 @@
 
 import pytest
+import yaml
 
 from pyHomework.Quiz import Quiz
 from pyHomework.Answer import *
@@ -523,3 +524,55 @@ def test_multiple_choice_answer_loading():
 
   assert str(a) == 'two, four'
   assert a.type('bb') == 'MA'
+
+def test_yaml_to_bb_quiz():
+  quiztext = '''
+configuration:
+  randomize:
+    questions: True
+    answers: False
+  special_chars:
+    correct_answer : '*'
+  remote:
+    web_root: 'http://scatcat.fhsu.edu/~cdclark/'
+    copy_root: 'ssh://cdclark@scatcat.fhsu.edu/~/public_html'
+    image_dir : 'images'
+
+questions:
+  -
+    text: "Q1"
+    answer:
+      choices:
+      - '*a1'
+      - 'a2'
+      - 'a3'
+
+  -
+    text: "Q2"
+    answer:
+      choices:
+      - '*a1'
+      - 'a2'
+      - '*a3'
+
+  -
+    text: "Q3"
+    answer:
+      value : 7
+  -
+    text: "Q4"
+    answer:
+      value : 7
+      uncertainty: 20%
+  -
+    text: "Q5"
+    answer:
+      logical: True
+  '''
+  quizdict = yaml.load( quiztext )
+
+  q = Quiz()
+  q.load( quizdict )
+
+  bbquiz = q.emit('bb')
+  assert bbquiz == 'MC\tQ1\ta1\tcorrect\ta2\tincorrect\ta3\tincorrect\nMA\tQ2\ta1\tcorrect\ta2\tincorrect\ta3\tcorrect\nNUM\tQ3\t7.00E+00\t7.00E-02\nNUM\tQ4\t7.00E+00\t1.40E+00\nTF\tQ5\ttrue'

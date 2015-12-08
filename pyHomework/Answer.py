@@ -5,13 +5,12 @@ from pyErrorProp import sigfig_round
 from pyErrorProp import units
 
 class Answer(object):
-  bb_type = 'ESS'
+  bb_type = 'NONE'
+  def emit(self,emitter):
+    if not emitter is None and hasattr(emitter,'__call__'):
+      return emitter(self)
 
-  def __init__(self, text=None):
-    self.text = text
-
-  def __str__(self):
-    return str(self.answer)
+    raise RuntimeError("Unknown emitter type '%s' given." % emitter)
 
   def type(self,emitter=None):
     '''Returns a type string for the given emitter.'''
@@ -21,25 +20,32 @@ class Answer(object):
 
     return self.__name__
 
-  def emit(self,emitter):
-    raise RuntimeError("Unknown emitter type '%s' given." % emitter)
+
+class EssayAnswer(object):
+  bb_type = 'ESS'
+
+  def __init__(self, text=None):
+    self.text = text
+
+  def __str__(self):
+    return str(self.answer)
 
   def load(self,spec):
     self.answer = spec['text']
 
 class LatexAnswer(Answer): pass
 
+
 class ShortAnswer(Answer):
   bb_type = 'SA'
+
+  def __init__(self, text=None):
+    self.text = text
 
   def emit(self, emitter = None):
     # default emitter
     if emitter is None or emitter == 'default':
-      return str(self.text)
-
-    # support for user-defined emitter functions
-    if not isinstance( emitter, (str,unicode) ):
-      return emitter( self )
+      emitter = 'bb'
 
     # emitters that we support
     if     isinstance( emitter, (str,unicode) ):
@@ -50,6 +56,7 @@ class ShortAnswer(Answer):
         return str(self.text)
 
     return super(ShortAnswer,self).emit(emitter)
+
 
 class NumericalAnswer(Answer):
   bb_type = 'NUM'
@@ -122,11 +129,7 @@ class NumericalAnswer(Answer):
   def emit(self, emitter = None):
     # default emitter
     if emitter is None or emitter == 'default':
-      return self.quantity
-
-    # support for user-defined emitter functions
-    if not isinstance( emitter, (str,unicode) ):
-      return emitter( self )
+      emitter = 'bb'
 
     # emitters that we support
     if     isinstance( emitter, (str,unicode) ):
@@ -224,19 +227,19 @@ class MultipleChoiceAnswer(Answer):
   def emit(self,emitter = None):
     # default emitter
     if emitter is None or emitter == 'default':
-      tokens = []
-      for (correct,choice) in self.choices:
-        if correct:
-          tokens.append( choice )
+      emitter = 'default'
 
-      return ', '.join(tokens)
-
-    # support for user-defined emitter functions
-    if not isinstance( emitter, (str,unicode) ):
-      return emitter( self )
 
     # emitters that we support
     if     isinstance( emitter, (str,unicode) ):
+      if emitter == 'default':
+        tokens = []
+        for (correct,choice) in self.choices:
+          if correct:
+            tokens.append( choice )
+
+        return ', '.join(tokens)
+
       if emitter.lower() == 'bbquiz':
         choices = []
         for (correct,choice) in self.choices:
@@ -268,10 +271,63 @@ class MultipleChoiceAnswer(Answer):
   def __str__(self):
     return self.emit()
 
+class OrderedAnswer(Answer):
+  bb_type = "ORD"
+  def __init__(self):
+    self._items = []
+    self._order = []
+
+  @property
+  def order(self):
+    for i in self._order:
+      yield i
+
+  @order.setter
+  def order(self,v):
+    self._order = v
+
+  def add_item( self, item ):
+    i = len( self._choices )
+    self._items.append( filtered_text )
+    self._order.append( i )
+
+  def add_items( self, text ):
+    for line in text.splitlines():
+      line = line.strip()
+      if len(line) > 0:
+        self.add_item( line )
+
+class TrueFalseAnswer(Answer):
+  bb_type = "TF"
+  def __init__(self):
+    self.answer = None
+
+  def emit(self,emitter = None):
+    # default emitter
+    if emitter is None or emitter == 'default':
+      emitter = 'default'
+
+    # emitters that we support
+    if     isinstance( emitter, (str,unicode) ):
+      if emitter == 'default':
+        if self.answer is None:
+          return "Unknown"
+        if self.answer:
+          return "True"
+        if self.answer:
+          return "False"
+
+      if emitter.lower() == 'bb':
+        return self.emit('default').lower()
+
+    return super(TrueFalseAnswer,self).emit(emitter)
+
+  def load(self,spec):
+    self.answer = spec['logical']
 
 def make_answer( spec ):
   for name,obj in inspect.getmembers(sys.modules[__name__]):
-    if issubclass( obj, Answer ):
+    if inspect.isclass(obj) and issubclass( obj, Answer ):
       try:
         a = obj()
         a.load( spec )
