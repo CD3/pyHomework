@@ -1,4 +1,20 @@
 #! /usr/bin/env python
+"""
+  BbQuiz: generate Blackboard quizzes from YAML spec files.
+
+  Usage:
+    BbQuiz.py [-l] [-c STR]... <quiz-file> ...
+    BbQuiz.py -m
+    BbQuiz.py -e FILE
+
+  Options:
+    -m, --manual                                print the manual
+    -e FILE, --example FILE                     write an example quiz file and exit
+    -c STR, --config-var STR, --override STR    specify a configuration override
+    -l, --list-config                           list configuration options (for debug)
+
+
+"""
 
 from pyHomework.QuizSpec import *
 import sys, os, re, random
@@ -116,7 +132,9 @@ class BbQuizSpec(QuizSpec):
 
 if __name__ == "__main__":
 
-  from argparse import ArgumentParser
+  from docopt import docopt
+  arguments = docopt(__doc__, version='0.1')
+
 
   manual = '''
   {prog} reads a description of a quiz stored in a YAML file and creates a txt file formatted such that they can be imported
@@ -129,49 +147,22 @@ if __name__ == "__main__":
   numerical answers can be automatically calculated, multiple choice answers can be randomized, and so on.
   
            '''
-  parser = ArgumentParser(description="A simple script for creating Blackboard quizzes from YAML files.")
-
-  parser.add_argument("quiz_files",
-                      nargs='*',
-                      action="store",
-                      help="The YAML quiz files." )
-
-  parser.add_argument('-m', '--manual',
-                      action="store_true",
-                      help="Print manual." )
-
-  parser.add_argument('-e', '--example',
-                      action="store",
-                      help="Write an example quiz file." )
-
-  parser.add_argument('-c', '--config-var',
-                      action="append",
-                      default=[],
-                      help="Override parameter in configuration file." )
-
-  parser.add_argument("-l", "--list-config",
-                      action='store_true',
-                      help="Show all configuration options." )
-
-
-
-  args = parser.parse_args()
-
-  if args.manual:
+  if arguments['--manual']:
     print manual.format( prog = 'BbQuiz.py' )
     sys.exit(0)
 
-  if args.example:
-    quiz = BbQuizSqec()
-    with open( args.example, 'w' ) as f:
+  if not arguments['--example'] is None:
+    quiz = BbQuizSpec()
+    with open( arguments['--example'], 'w' ) as f:
       f.write( quiz.dump_example() )
     sys.exit(0)
 
-  for arg in args.quiz_files:
+  for arg in arguments['<quiz-file>']:
     quiz = BbQuizSpec()
     quiz.load( arg )
-    quiz.override( args.config_var )
-    if args.list_config:
+
+    quiz.override( arguments['--override'] )
+    if arguments['--list-config']:
       print quiz.config
     quiz.write_questions(os.path.splitext(arg)[0]+".txt")
 
