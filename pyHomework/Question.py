@@ -6,7 +6,7 @@ class Question(object):
   A question contains text, instructions, and answers.
   """
   
-  def __init__(self):
+  def __init__(self, text = None):
     self._texts = []
     self._instructions = []
     self._answers = []
@@ -15,6 +15,9 @@ class Question(object):
     self.metadata = {}
     self.prepend_instructions = False
     self.join_str = ' '
+
+    if not text is None:
+      self.add_text( text )
 
   def join_X( self, X):
     j = self.join_str

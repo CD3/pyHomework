@@ -287,3 +287,50 @@ def test_question_emitter_exceptions():
   q.add_text("The answer is c... its always c.")
   text = q.emit(q_emit)
   assert text == "Question: 'The answer is c... its always c.'\nThe answer is irrelevent"
+
+def test_quiz_passthroughs():
+  q = Quiz()
+  q.add_question()
+  q.add_text( 'is question' )
+  q.add_text( 'This', prepend=True )
+  q.add_text( 'one.' )
+
+  assert q.question.emit() == 'This is question one.'
+
+  q.add_instruction('please.')
+  q.add_instruction('Follow these instructions', prepend=True)
+
+  assert q.question.emit() == 'This is question one. Follow these instructions please.'
+
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  one
+  *two
+  three
+  ''')
+
+  q.add_answer( a )
+
+  assert q.question.emit('bb') == 'MC\tThis is question one. Follow these instructions please.\tone\tincorrect\ttwo\tcorrect\tthree\tincorrect'
+
+  q.set_text( 'Different' )
+  q.add_text( 'question, same answer.' )
+
+  assert q.question.emit('bb') == 'MC\tDifferent question, same answer. Follow these instructions please.\tone\tincorrect\ttwo\tcorrect\tthree\tincorrect'
+
+  q.set_instruction( 'No special instructions.' )
+
+  assert q.question.emit('bb') == 'MC\tDifferent question, same answer. No special instructions.\tone\tincorrect\ttwo\tcorrect\tthree\tincorrect'
+
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  one
+  *two
+  *three
+  ''')
+
+  q.set_answer( a )
+
+  assert q.question.emit('bb') == 'MA\tDifferent question, same answer. No special instructions.\tone\tincorrect\ttwo\tcorrect\tthree\tcorrect'
+
+
