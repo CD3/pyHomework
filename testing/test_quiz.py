@@ -253,6 +253,24 @@ def test_question_with_mc_answer():
 
   assert text == 'MC\tThe answer is c... its always c.\tthis is not the answer you are looking for.\tincorrect\tnope.\tincorrect\tthis is it!\tcorrect\treally?\tincorrect'
 
+def test_question_mc_ordering():
+  q = Quiz.Question()
+
+  q.add_text("Question:")
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  a
+  b
+  *c
+  d
+  ''')
+  q.set_answer( a )
+  a.order = [1,0,3,2]
+
+  text = q.emit('bb')
+
+  assert text == 'MC\tQuestion:\tb\tincorrect\ta\tincorrect\td\tincorrect\tc\tcorrect'
+
 def test_question_with_ma_answer():
   q = Quiz.Question()
 

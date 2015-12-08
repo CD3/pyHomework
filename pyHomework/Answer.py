@@ -1,5 +1,6 @@
 import re
 import pint
+import random
 from pyErrorProp import sigfig_round
 
 class Answer(object):
@@ -156,7 +157,9 @@ class MultipleChoiceAnswer(Answer):
 
   def __init__(self):
     self.choices = []
+    self.order   = []
     self.correct = set()
+    self.randomize = False
 
   def filter( self, text ):
     filtered_text = re.sub('^\s*\*\s*','',text)
@@ -164,6 +167,7 @@ class MultipleChoiceAnswer(Answer):
     
   def add_choice( self, text ):
     correct,filtered_text = self.filter( text )
+    self.order.append( len( self.choices ) )
     self.choices.append( filtered_text )
     if correct:
       self.set_correct( len(self.choices)-1 )
@@ -210,7 +214,10 @@ class MultipleChoiceAnswer(Answer):
 
       if emitter.lower() == 'bb':
         tokens = []
-        for i in range( len( self.choices ) ):
+        order = self.order
+        if self.randomize:
+          random.shuffle(order)
+        for i in order:
           tokens.append( self.choices[i] )
           if i in self.correct:
             tokens.append('correct')
