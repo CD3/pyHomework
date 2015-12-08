@@ -5,15 +5,35 @@ class Quiz(object):
   Question = Question
 
   def __init__(self):
-    self.questions = []
-    pass
+    self._questions = []
+    self._order = []
+    self.randomize = False
+
+  @property
+  def questions(self):
+    for i in self.order:
+      yield self._questions[i]
+
+  @property
+  def order(self):
+    _order = self._order
+    if self.randomize:
+      random.shuffle( _order )
+    for i in _order:
+      yield i
+
+  @order.setter
+  def order(self,v):
+    self._order = v
 
   def add_question(self,text=None):
-    self.questions.append( Question(text) )
+    self._order.append( len(self._questions) )
+    self._questions.append( Question(text) )
 
   def get_last_question( self ):
-    if len( self.questions ) > 0:
-      return self.questions[-1]
+    if len( self._questions ) > 0:
+      i = self._order[-1]
+      return self._questions[i]
     else:
       return None
 

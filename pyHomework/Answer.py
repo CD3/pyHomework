@@ -151,15 +151,32 @@ class MultipleChoiceAnswer(Answer):
     if isinstance( emitter, (str,unicode) ):
       if emitter.lower() == 'bb':
         types = self.bb_type.split('|')
-        return types[1] if len(self.correct) > 1 else types[0]
+        return types[1] if self.num_correct() > 1 else types[0]
 
     return super(MultipleChoiceAnswer,self).type(emitter)
 
   def __init__(self):
-    self.choices = []
-    self.order   = []
-    self.correct = set()
+    self._choices = []
+    self._order   = []
+    self._correct = set()
     self.randomize = False
+
+  @property
+  def choices(self):
+    for i in self.order:
+      yield (i in self._correct,self._choices[i])
+
+  @property
+  def order(self):
+    _order = self._order
+    if self.randomize:
+      random.shuffle( _order )
+    for i in _order:
+      yield i
+
+  @order.setter
+  def order(self,v):
+    self._order = v
 
   def filter( self, text ):
     filtered_text = re.sub('^\s*\*\s*','',text)
@@ -167,10 +184,11 @@ class MultipleChoiceAnswer(Answer):
     
   def add_choice( self, text ):
     correct,filtered_text = self.filter( text )
-    self.order.append( len( self.choices ) )
-    self.choices.append( filtered_text )
+    i = len( self._choices )
+    self._choices.append( filtered_text )
+    self._order.append( i )
     if correct:
-      self.set_correct( len(self.choices)-1 )
+      self.set_correct( i )
 
   def add_choices( self, text ):
     for line in text.splitlines():
@@ -179,21 +197,21 @@ class MultipleChoiceAnswer(Answer):
         self.add_choice( line )
 
   def set_correct( self, i ):
-    self.correct.add( i )
+    self._correct.add( i )
 
   def clear_correct( self ):
-    self.correct.clear()
+    self._correct.clear()
 
   def num_correct( self ):
-    return len(self.correct)
+    return len(self._correct)
 
   def emit(self,emitter = None):
     # default emitter
     if emitter is None or emitter == 'default':
       tokens = []
-      for i in range( len( self.choices ) ):
-        if i in self.correct:
-          tokens.append( self.choices[i] )
+      for (correct,choice) in self.choices:
+        if correct:
+          tokens.append( choice )
 
       return ', '.join(tokens)
 
@@ -205,21 +223,18 @@ class MultipleChoiceAnswer(Answer):
     if     isinstance( emitter, (str,unicode) ):
       if emitter.lower() == 'bbquiz':
         choices = []
-        for i in range( len( self.choices ) ):
-          choices.append( self.choices[i] )
-          if i in self.correct:
+        for (correct,choice) in self.choices:
+          choices.append( choice )
+          if correct:
             choices[-1] = '*'+choices[-1]
 
         return {'choices' : choices }
 
       if emitter.lower() == 'bb':
         tokens = []
-        order = self.order
-        if self.randomize:
-          random.shuffle(order)
-        for i in order:
-          tokens.append( self.choices[i] )
-          if i in self.correct:
+        for (correct,choice) in self.choices:
+          tokens.append( choice )
+          if correct:
             tokens.append('correct')
           else:
             tokens.append('incorrect')

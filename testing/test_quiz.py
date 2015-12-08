@@ -107,7 +107,7 @@ def test_answer_custom_emitters():
   assert text == "Answer is: 1.23E+00"
 
   def mc_emit(a):
-    return "Answer is: '%s'" % a.choices[ a.correct.copy().pop() ]
+    return "Answer is: '%s'" % a._choices[ a._correct.copy().pop() ]
 
   a = MultipleChoiceAnswer()
   a.add_choices('''
@@ -385,3 +385,51 @@ def test_quiz_bb_emitter():
 
   assert text == 'MC\tone\ta\tincorrect\tb\tcorrect\nMC\ttwo\tc\tcorrect\td\tincorrect\nMA\tthree\te\tcorrect\tf\tcorrect'
 
+
+  q.order = [2,0,1]
+
+  text = q.emit('bb')
+
+  assert text == 'MA\tthree\te\tcorrect\tf\tcorrect\nMC\tone\ta\tincorrect\tb\tcorrect\nMC\ttwo\tc\tcorrect\td\tincorrect'
+
+
+def test_quiz_custom_emitter():
+  def quiz_emit(quiz):
+    tokens = []
+    for q in quiz.questions:
+      tokens.append( q.question )
+    return '\n'.join(tokens)
+
+  q = Quiz()
+
+  q.add_question()
+  q.add_text('one')
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  a
+  *b
+  ''')
+  q.add_answer(a)
+
+  q.add_question()
+  q.add_text('two')
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  *c
+  d
+  ''')
+  q.add_answer(a)
+
+  q.add_question()
+  q.add_text('three')
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  *e
+  *f
+  ''')
+  q.add_answer(a)
+
+
+  text = q.emit(quiz_emit)
+
+  assert text == 'one\ntwo\nthree'
