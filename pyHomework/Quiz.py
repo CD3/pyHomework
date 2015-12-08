@@ -17,6 +17,27 @@ class Quiz(object):
     else:
       return None
 
+  def emit(self,emitter=None):
+    # support for custom emitters
+    if emitter is None:
+      emitter = 'bb'
+
+    if hasattr( emitter, '__call__' ):
+      return emitter( self )
+
+    if isinstance( emitter, (str,unicode)):
+      if emitter == 'bbquiz':
+        pass
+
+      if emitter == 'bb':
+        tokens = []
+        for q in self.questions:
+          tokens.append( q.emit('bb') )
+
+        return '\n'.join(tokens)
+
+    raise RuntimeError("Unknown emitter type '%s' given." % emitter)
+
   @property
   def question(self):
     return self.get_last_question()

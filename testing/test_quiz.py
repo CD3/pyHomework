@@ -296,7 +296,6 @@ def test_question_emitter_exceptions():
     q.emit('undefined')
   assert str(e.value) == "Unknown emitter type 'undefined' given."
 
-
 def test_question_emitter_exceptions():
   def q_emit(q):
     return "Question: '%s'\nThe answer is irrelevent" % q.question
@@ -351,4 +350,38 @@ def test_quiz_passthroughs():
 
   assert q.question.emit('bb') == 'MA\tDifferent question, same answer. No special instructions.\tone\tincorrect\ttwo\tcorrect\tthree\tcorrect'
 
+def test_quiz_bb_emitter():
+  q = Quiz()
+
+  q.add_question()
+  q.add_text('one')
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  a
+  *b
+  ''')
+  q.add_answer(a)
+
+  q.add_question()
+  q.add_text('two')
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  *c
+  d
+  ''')
+  q.add_answer(a)
+
+  q.add_question()
+  q.add_text('three')
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  *e
+  *f
+  ''')
+  q.add_answer(a)
+
+
+  text = q.emit('bb')
+
+  assert text == 'MC\tone\ta\tincorrect\tb\tcorrect\nMC\ttwo\tc\tcorrect\td\tincorrect\nMA\tthree\te\tcorrect\tf\tcorrect'
 
