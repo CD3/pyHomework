@@ -3,107 +3,59 @@
   BbQuiz: generate Blackboard quizzes from YAML spec files.
 
   Usage:
-    BbQuiz.py [-l] [-c STR]... <quiz-file> ...
+    BbQuiz.py [-l] [-c STR]... [-o FILE]<quiz-file> ...
     BbQuiz.py -m
     BbQuiz.py -e FILE
 
   Options:
-    -m, --manual                                print the manual
-    -e FILE, --example FILE                     write an example quiz file and exit
-    -c STR, --config-var STR, --override STR    specify a configuration override
-    -l, --list-config                           list configuration options (for debug)
+    -e FILE, --example FILE                     write an example quiz file and exit.
+    -c STR, --config-var STR, --override STR    specify a configuration override.
+    -l, --list-config                           list configuration options (for debug).
+    -o, --output FILE                           write output to FILE. default is to replace extention of spec file with .txt
 
 
 """
 
-from pyHomework.QuizSpec import *
+from pyHomework.Quiz import *
 import sys, os, re, random
 import yaml
 from dpath import util
 import urlparse
 
-class BbQuizSpec(QuizSpec):
-    def build_MC_tokens(self, q):
-        entry = []
-        entry.append( "MC" )
-        entry.append( q.get("text") ) 
-        choices = q.get("answer").get("choices")
-        if self.config['randomize']['answers']:
-            random.shuffle(choices)
-        for answer in choices:
-            if( self.config['special_chars']['correct_answer'].find( answer[0] ) >= 0 ):
-                entry.append( answer[1:] )
-                entry.append( "correct" )
-            else:
-                entry.append( answer )
-                entry.append( "incorrect" )
+class BbQuiz(Quiz):
+    def __init__(self,*args,**kwargs):
+      super(BbQuiz,self).__init__(*args,**kwargs)
+      self.config = { 'files' :
+                         { 'view_url'  : 'http://example.com/files/{filename:s}'
+                         , 'push_url'  : 'ssh://example.com/files/{filename:s}'
+                         , 'local_url' : '/path/to/the/files/{filename:s}'
+                         }
+                    , 'randomize' :
+                        { 'questions' : False
+                        , 'answers'   : False
+                        }
+                    }
 
-        return entry
-
-    def build_MA_tokens(self, q):
-        entry = self.build_MC_tokens(q)
-        entry[0] = "MA"
-
-        return entry
-
-    def build_ORD_tokens(self, q):
-        entry = []
-        entry.append( "ORD" )
-        entry.append( q.get("text") ) 
-        for answer in q.get("answer").get("ordered"):
-            entry.append( answer )
-
-        return entry
-
-    def build_NUM_tokens(self, q):
-        entry = []
-        entry.append( "NUM" )
-        entry.append( q.get("text") )
-        entry.append( '{:.2E}'.format(float(q.get("answer").get("value") ) ) ) 
-
-        tol = q.get("answer").get("uncertainty", "1%")
-
-        if isinstance(tol, str):
-          if tol.find("%") >= 0:
-            tol = float(tol.replace("%",""))/100.
-            tol = tol*float(q.get("answer").get("value"))
-          else:
-            tol = float(tol)
-
-
-        tol = abs(tol)
-        entry.append( '{:.2E}'.format( tol ) )
-
-        return entry
-
-    def build_TF_tokens(self, q):
-        entry = []
-        entry.append( "TF" )
-        entry.append( q.get("text") ) 
-        if q.get("answer"):
-            entry.append( "true" )
-        else:
-            entry.append( "false" )
-
-        return entry
-
-
-    def write_questions(self, filename="/dev/stdout"):
+    def write_quiz(self, filename="/dev/stdout"):
       with open(filename, 'w') as f:
-        questions = self.quiz_data.get("questions")
-        if self.config['randomize']['questions']:
-          random.shuffle(questions)
-        for question in questions:
-          if question.get("enabled", True):
-            builder = getattr(self, "build_"+question.get("type")+"_tokens")
-            q = builder(question)
+        f.write( self.emit('bb') )
 
-            if question.get("image",None):
-              link = self.push_image( question.get("image"), self.config['remote'] )
-              # need to add the link to the question text, which is at q[1].
-              q[1] = "To answer this question, view the picture at %s by copying the link into your browser IN A NEW TAB (DO NOT USE THIS TAB). %s" %(link, q[1])
+    def override(self, overrides = {} ):
+      # if overrides is a list, it means that we have a list of 'key = val' strings that we need to parse
+      # first and pass to ourself.
+      if isinstance( overrides, list ):
+        tmp = dict()
+        for line in overrides:
+          key,val = re.split( "\s*=\s*", line )
+          val = eval(val)  # val is a string, which is not what we want
+          tmp[key] = val
 
-            f.write("\t".join(q)+"\n")
+        return self.override( tmp )
+
+
+      for key,val in overrides.items():
+        print "Overriding '%s' with '%s'. Was '%s'" % (key,val, dpath.util.search( self.config, key ))
+        dpath.util.new( self.config, key, val )
 
     def push_image(self, image_filename, remote_config):
         data = dict()
@@ -114,7 +66,6 @@ class BbQuizSpec(QuizSpec):
           return None
 
         if url.scheme == 'ssh':
-
           data['file']   = image_filename
           data['netloc'] = url.netloc
           data['path']   = url.path[1:]
@@ -127,6 +78,67 @@ class BbQuizSpec(QuizSpec):
         # correct link and return it.
         link = urlparse.urljoin( remote_config['web_root'], os.path.join(remote_config['image_dir'], os.path.basename(image_filename) ) )
         return link
+    def dump_example(self):
+      text = '''
+title : Quiz
+configuration:
+  make_key : True
+  randomize:
+    questions: True
+    answers: False
+  files:
+    view_url  : http://example.com/files/{filename:s}
+    push_url  : ssh://example.com/files/{filename:s}
+    local_url : /path/to/the/files/{filename:s}
+
+questions:
+  - 
+    text: "(Multiple Choice) What is the correct answer?"
+    answer:
+      choices:
+      - '*this is the correct answer'
+      - 'this is not the correct answer'
+      - 'this is also not the correct answer'
+
+  - 
+    text: "(Multiple Answers) What answers are correct?"
+    answer:
+      choices:
+      - '*this is a correct answer'
+      - 'this is not a correct answer'
+      - '*this is also a correct answer'
+
+  - 
+    text: "(Ordered) Put these items in the correct order"
+    answer:
+      ordered :
+      - 'first'
+      - 'second'
+      - 'third'
+  - 
+    text: "(Numerical Answer) What is the correct number?"
+    answer:
+      value : 7
+
+  - 
+    text: "(Numerical Answer) What is the correct number, plus or minus 20%?"
+    answer:
+      value : 7
+      uncertainty: 20%
+  - 
+    text: "(True/False) Is the answer True?"
+    answer: True
+  - 
+    text: "(Image Example) Can you see the picture?"
+    image: './picture.png'
+    answer:
+      choices:
+        - '*yes'
+        - 'no'
+
+      '''
+
+      return text
 
 
 
@@ -135,22 +147,6 @@ if __name__ == "__main__":
   from docopt import docopt
   arguments = docopt(__doc__, version='0.1')
 
-
-  manual = '''
-  {prog} reads a description of a quiz stored in a YAML file and creates a txt file formatted such that they can be imported
-  into Blackboard. Blackboard can import questions from text file,
-  but these files must have a specific format (https://help.blackboard.com/en-us/Learn/9.1_SP_10_and_SP_11/Instructor/070_Tests_Surveys_Pools/106_Uploading_Questions#file_format),
-  which is not easy to manage. YAML is a standard file format that provides a simple syntax to organize data. It is easier
-  to manage quizzes stored in YAML format.
-
-  In addition to simplifying quiz management, {prog} also has several features for simplifying quiz writing. For example, the 'tolorance' for
-  numerical answers can be automatically calculated, multiple choice answers can be randomized, and so on.
-  
-           '''
-  if arguments['--manual']:
-    print manual.format( prog = 'BbQuiz.py' )
-    sys.exit(0)
-
   if not arguments['--example'] is None:
     quiz = BbQuizSpec()
     with open( arguments['--example'], 'w' ) as f:
@@ -158,13 +154,19 @@ if __name__ == "__main__":
     sys.exit(0)
 
   for arg in arguments['<quiz-file>']:
-    quiz = BbQuizSpec()
-    quiz.load( arg )
+    quiz = BbQuiz()
 
+    with open(arg,'r') as f:
+      quiz.load( yaml.load(f) )
     quiz.override( arguments['--override'] )
+
     if arguments['--list-config']:
       print quiz.config
-    quiz.write_questions(os.path.splitext(arg)[0]+".txt")
+
+    outfile = os.path.splitext(arg)[0]+".txt"
+    if arguments['--output'] is not None:
+      outfile = arguments['--output']
+    quiz.write_quiz(outfile)
 
 
 

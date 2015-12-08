@@ -20,6 +20,10 @@ class Answer(object):
 
     return self.__name__
 
+  def __str__(self):
+    return self.emit()
+
+
 
 class EssayAnswer(object):
   bb_type = 'ESS'
@@ -27,11 +31,16 @@ class EssayAnswer(object):
   def __init__(self, text=None):
     self.text = text
 
-  def __str__(self):
-    return str(self.answer)
-
   def load(self,spec):
     self.answer = spec['text']
+
+  def emit(self,emitter=None):
+    # default emitter
+    if emitter is None or emitter == 'default':
+      return str(self.text)
+
+    return super(EssayAnswer,self).emit(emitter)
+
 
 class LatexAnswer(Answer): pass
 
@@ -42,16 +51,13 @@ class ShortAnswer(Answer):
   def __init__(self, text=None):
     self.text = text
 
-  def emit(self, emitter = None):
+  def emit(self,emitter=None):
     # default emitter
     if emitter is None or emitter == 'default':
       emitter = 'bb'
 
     # emitters that we support
     if     isinstance( emitter, (str,unicode) ):
-      if emitter.lower() == 'bbquiz':
-        return {'example': self.text}
-
       if emitter.lower() == 'bb':
         return str(self.text)
 
@@ -126,19 +132,13 @@ class NumericalAnswer(Answer):
   def units(self,v):
     self._quant.ito(v)
 
-  def emit(self, emitter = None):
+  def emit(self,emitter=None):
     # default emitter
     if emitter is None or emitter == 'default':
       emitter = 'bb'
 
     # emitters that we support
     if     isinstance( emitter, (str,unicode) ):
-      if emitter.lower() == 'bbquiz':
-        return {'raw':         self.quantity
-               ,'value':       self.value
-               ,'unit':        self.units
-               ,'uncertainty': self.uncertainty}
-
       if emitter.lower() == 'bb':
         tokens = []
         tokens.append( self.value )
@@ -152,9 +152,6 @@ class NumericalAnswer(Answer):
     self.quantity = units( str(spec['value']) )
     self.uncertainty = spec['uncertainty'] if 'uncertainty' in spec else '1%'
 
-
-  def __str__(self):
-    return self.emit()
 
 class MultipleChoiceAnswer(Answer):
   bb_type = 'MC|MA'
@@ -224,7 +221,7 @@ class MultipleChoiceAnswer(Answer):
   def num_correct( self ):
     return len(self._correct)
 
-  def emit(self,emitter = None):
+  def emit(self,emitter=None):
     # default emitter
     if emitter is None or emitter == 'default':
       emitter = 'default'
@@ -239,15 +236,6 @@ class MultipleChoiceAnswer(Answer):
             tokens.append( choice )
 
         return ', '.join(tokens)
-
-      if emitter.lower() == 'bbquiz':
-        choices = []
-        for (correct,choice) in self.choices:
-          choices.append( choice )
-          if correct:
-            choices[-1] = '*'+choices[-1]
-
-        return {'choices' : choices }
 
       if emitter.lower() == 'bb':
         tokens = []
@@ -268,28 +256,13 @@ class MultipleChoiceAnswer(Answer):
     for choice in spec['choices']:
       self.add_choice( choice )
 
-  def __str__(self):
-    return self.emit()
-
 class OrderedAnswer(Answer):
   bb_type = "ORD"
   def __init__(self):
-    self._items = []
-    self._order = []
-
-  @property
-  def order(self):
-    for i in self._order:
-      yield i
-
-  @order.setter
-  def order(self,v):
-    self._order = v
+    self.items = []
 
   def add_item( self, item ):
-    i = len( self._choices )
-    self._items.append( filtered_text )
-    self._order.append( i )
+    self.items.append( item )
 
   def add_items( self, text ):
     for line in text.splitlines():
@@ -297,12 +270,35 @@ class OrderedAnswer(Answer):
       if len(line) > 0:
         self.add_item( line )
 
+  def clear_items( self ):
+    self.items = []
+
+  def load(self,spec):
+    self.clear_items()
+    for item in spec['ordered']:
+      self.add_item( item )
+
+  def emit(self,emitter=None):
+    # default emitter
+    if emitter is None or emitter == 'default':
+      emitter = 'default'
+
+    # emitters that we support
+    if     isinstance( emitter, (str,unicode) ):
+      if emitter == 'default':
+        return ' -> '.join(self.items)
+
+      if emitter.lower() == 'bb':
+        return '\t'.join(self.items)
+
+    return super(OrderedAnswer,self).emit(emitter)
+
 class TrueFalseAnswer(Answer):
   bb_type = "TF"
   def __init__(self):
     self.answer = None
 
-  def emit(self,emitter = None):
+  def emit(self,emitter=None):
     # default emitter
     if emitter is None or emitter == 'default':
       emitter = 'default'

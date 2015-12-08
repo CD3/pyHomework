@@ -8,7 +8,6 @@ class Quiz(object):
     self._questions = []
     self._order = []
     self.randomize = False
-
     self.metadata = {}
 
   @property
@@ -61,7 +60,13 @@ class Quiz(object):
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
 
   def load(self,spec):
-    metadata = spec.get('configuration',{})
+    self.metadata = spec.get('configuration',{})
+
+    try:
+      self.randomize = self.metadata['randomize']['questions']
+    except:
+      pass
+
 
     for q in spec['questions']:
       self.add_question()

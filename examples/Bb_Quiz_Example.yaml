@@ -46,7 +46,8 @@ questions:
       uncertainty: 20%
   - 
     text: "Is the answer True?"
-    answer: True
+    answer:
+      logical: True
   - 
     text: "Can you see the picture?"
     image: './picture.png'

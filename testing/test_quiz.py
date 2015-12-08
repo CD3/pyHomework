@@ -139,6 +139,10 @@ def test_answer_factory():
   assert str(a) == 'two, three'
   assert a.type('bb') == 'MA'
 
+  spec = { 'ordered' : ['one', 'two', 'three'] }
+  a = make_answer( spec )
+  assert str(a) == 'one -> two -> three'
+
 def test_multiple_choice_answer():
   a = MultipleChoiceAnswer()
   a.add_choice('one')
@@ -152,20 +156,6 @@ def test_multiple_choice_answer():
 
   assert str(a) == 'two, four'
   assert a.type('bb') == 'MA'
-
-def test_multiple_choice_answer_bbquiz_emitter():
-  a = MultipleChoiceAnswer()
-  a.add_choice('one')
-  a.add_choice('*two')
-  a.add_choice('three')
-  a.add_choice('*four')
-
-  bbquiz = a.emit('bbquiz')
-  assert 'choices' in bbquiz
-  assert bbquiz['choices'][0] == 'one'
-  assert bbquiz['choices'][1] == '*two'
-  assert bbquiz['choices'][2] == 'three'
-  assert bbquiz['choices'][3] == '*four'
 
 def test_multiple_choice_answer_bb_emitter():
   a = MultipleChoiceAnswer()
@@ -529,7 +519,7 @@ def test_yaml_to_bb_quiz():
   quiztext = '''
 configuration:
   randomize:
-    questions: True
+    questions: False
     answers: False
   special_chars:
     correct_answer : '*'
