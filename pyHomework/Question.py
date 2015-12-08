@@ -10,7 +10,7 @@ class Question(object):
     self._texts = []
     self._instructions = []
     self._answers = []
-    self._images = []
+    self._files = {}
 
     self.metadata = {}
     self.prepend_instructions = False
@@ -79,6 +79,10 @@ class Question(object):
   def add_answer(self,v,prepend=False):
     return self.add_X(self._answers,v,prepend)
 
+  def add_file(self,filename,name=None):
+    name = name or filename
+    self._files[name] = filename
+
   def set_text(self,v):
     return self.set_X(self._texts,v)
 
@@ -87,6 +91,10 @@ class Question(object):
 
   def set_answer(self,v):
     return self.set_X(self._answers,v)
+
+  def set_file(self,*args,**kwargs):
+    self._files = {}
+    self.add_file(*args,**kwargs)
 
   def format_text(self, *args, **kwargs):
     return self.format_X(self._texts,*args,**kwargs)
@@ -101,7 +109,7 @@ class Question(object):
       return self.question
 
     # support for user-defined emitter functions
-    if not isinstance( emitter, (str,unicode) ):
+    if hasattr( emitter, '__call__' ):
       return emitter( self )
 
     # emitters that we support

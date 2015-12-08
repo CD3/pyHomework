@@ -2,12 +2,13 @@ import re
 import pint
 import random
 from pyErrorProp import sigfig_round
+from pyErrorProp import units
 
 class Answer(object):
   bb_type = 'ESS'
 
-  def __init__(self, answer=None):
-    self.answer = answer
+  def __init__(self, text=None):
+    self.text = text
 
   def __str__(self):
     return str(self.answer)
@@ -23,6 +24,8 @@ class Answer(object):
   def emit(self,emitter):
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
 
+  def load(self,spec):
+    self.answer = spec['text']
 
 class LatexAnswer(Answer): pass
 
@@ -32,7 +35,7 @@ class ShortAnswer(Answer):
   def emit(self, emitter = None):
     # default emitter
     if emitter is None or emitter == 'default':
-      return str(self.answer)
+      return str(self.text)
 
     # support for user-defined emitter functions
     if not isinstance( emitter, (str,unicode) ):
@@ -44,20 +47,16 @@ class ShortAnswer(Answer):
         return {'example': self.text}
 
       if emitter.lower() == 'bb':
-        return str(self.answer)
+        return str(self.text)
 
     return super(ShortAnswer,self).emit(emitter)
-
-
-
 
 
 class NumericalAnswer(Answer):
   bb_type = 'NUM'
 
-  def __init__(self, quantity, units = "", uncertainty = '1%', sigfigs = 3):
+  def __init__(self, quantity = None, units = "", uncertainty = '1%', sigfigs = 3):
     self._quant   = quantity
-    self._units   = units
     self._unc     = uncertainty
     self.sigfigs  = sigfigs
   
@@ -67,32 +66,40 @@ class NumericalAnswer(Answer):
 
   @quantity.setter
   def quantity(self,v):
-    self._quant = v
+    if isinstance(v,(str,unicode)):
+      self._quant = unit(v)
+    else:
+      self._quant = v
 
-  def _get_mag(self):
-    val = self._quant
-    if isinstance( self._quant, pint.measurement._Measurement ):
-      val = self._quant.value.magnitude
-    elif isinstance( self._quant, pint.quantity._Quantity):
-      val = self._quant.magnitude
+  def _get_mag(self,q):
+    val = q
+    if isinstance( q, pint.measurement._Measurement ):
+      val = q.value.magnitude
+    elif isinstance( q, pint.quantity._Quantity):
+      val = q.magnitude
 
     return val
 
   @property
   def value(self):
-    val = self._get_mag()
+    val = self._get_mag(self._quant)
     return '{{:.{:d}E}}'.format( self.sigfigs-1 ).format( val )
 
   @property
   def uncertainty(self):
-
     unc = self._unc
 
-    if isinstance( self._unc, (str,unicode) ) and '%' in self._unc:
-      unc = self._get_mag() * float( self._unc.replace('%','') ) / 100
+    if isinstance( self._unc, (str,unicode) ):
+      if '%' in self._unc:
+        unc = self._quant * float( self._unc.replace('%','') ) / 100
+      else:
+        unc = units(unc)
 
     if isinstance( self._quant, pint.measurement._Measurement ):
-      unc = self._quant.error.magnitude
+      unc = self._quant.error
+
+    if isinstance( unc, pint.quantity._Quantity):
+      unc = unc.to(self.units).magnitude
 
     return '{{:.{:d}E}}'.format( self.sigfigs-1 ).format( unc )
 
@@ -102,7 +109,7 @@ class NumericalAnswer(Answer):
 
   @property
   def units(self):
-    unit = self._units
+    unit = ""
     if isinstance( self._quant, pint.measurement._Measurement ):
       unit = self._quant.value.units
     elif isinstance( self._quant, pint.quantity._Quantity):
@@ -111,7 +118,7 @@ class NumericalAnswer(Answer):
 
   @units.setter
   def units(self,v):
-    self._units = v
+    self._quant.ito(v)
 
   def emit(self, emitter = None):
     # default emitter
@@ -139,6 +146,9 @@ class NumericalAnswer(Answer):
 
     return super(NumericalAnswer,self).emit(emitter)
 
+  def load(self,spec):
+    self.quantity = units( str(spec['value']) )
+    self.uncertainty = spec['uncertainty'] if 'uncertainty' in spec else '1%'
 
 
   def __str__(self):
@@ -199,8 +209,15 @@ class MultipleChoiceAnswer(Answer):
   def set_correct( self, i ):
     self._correct.add( i )
 
+  def clear_choices( self ):
+    self._order = []
+    self._choices = []
+
   def clear_correct( self ):
     self._correct.clear()
+
+  def num_choices( self ):
+    return len(self._choices)
 
   def num_correct( self ):
     return len(self._correct)
@@ -243,6 +260,11 @@ class MultipleChoiceAnswer(Answer):
 
     return super(MultipleChoiceAnswer,self).emit(emitter)
 
+  def load(self,spec):
+    self.clear_choices()
+    self.clear_correct()
+    for choice in spec['choices']:
+      self.add_choice( choice )
 
   def __str__(self):
     return self.emit()

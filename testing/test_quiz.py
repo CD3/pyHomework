@@ -44,10 +44,10 @@ def test_numerical_answer_units():
   assert a.units == 'meter'
 
   a.units = 'foot'
-  assert a.units == 'meter'
+  assert a.units == 'foot'
 
   a.quantity = 1.2
-  assert a.units == 'foot'
+  assert a.units == ''
 
 def test_numerical_answer_uncertainty():
   q = 1.23456789
@@ -125,10 +125,12 @@ def test_multiple_choice_answer():
   a.add_choice('three')
 
   assert str(a) == 'two'
+  assert a.type('bb') == 'MC'
 
   a.add_choice('*four')
 
   assert str(a) == 'two, four'
+  assert a.type('bb') == 'MA'
 
 def test_multiple_choice_answer_bbquiz_emitter():
   a = MultipleChoiceAnswer()
@@ -392,7 +394,6 @@ def test_quiz_bb_emitter():
 
   assert text == 'MA\tthree\te\tcorrect\tf\tcorrect\nMC\tone\ta\tincorrect\tb\tcorrect\nMC\ttwo\tc\tcorrect\td\tincorrect'
 
-
 def test_quiz_custom_emitter():
   def quiz_emit(quiz):
     tokens = []
@@ -433,3 +434,72 @@ def test_quiz_custom_emitter():
   text = q.emit(quiz_emit)
 
   assert text == 'one\ntwo\nthree'
+
+def test_numerical_answer_loading():
+  a = NumericalAnswer()
+
+
+  a.load( { 'value' : 1.23456789 } )
+  assert a.quantity == '1.23E+00'
+  assert a.value    == '1.23E+00'
+
+  a.load({ 'value' : 13.579 })
+  assert a.quantity == '1.36E+01'
+  assert a.value    == '1.36E+01'
+
+  a.load({ 'value' : '1.2345 m' })
+  assert a.quantity == '1.23E+00 meter'
+  assert a.value    == '1.23E+00'
+
+  a.load({ 'value' : '12.345 m/s' })
+  assert a.quantity == '1.23E+01 meter / second'
+  assert a.value    == '1.23E+01'
+
+  a.load({ 'value' : '1.3579 m/s^2' })
+  assert a.quantity == '1.36E+00 meter / second ** 2'
+  assert a.value    == '1.36E+00'
+  a.sigfigs = 4
+  assert a.quantity == '1.358E+00 meter / second ** 2'
+  assert a.value    == '1.358E+00'
+
+  a.sigfigs = 3
+
+  a.load({ 'value' : 1.23456789
+         , 'uncertainty' : '1%'})
+  assert a.uncertainty == '1.23E-02'
+
+  a.load({ 'value' : 1.23456789
+         , 'uncertainty' : '10%'})
+  assert a.uncertainty == '1.23E-01'
+
+  a.load({ 'value' : 1.23456789
+         , 'uncertainty' : 0.5})
+  assert a.uncertainty == '5.00E-01'
+
+  a.load({ 'value' : Q_(2,'m/s')
+         , 'uncertainty' : Q_(0.5,'m/s') })
+  assert a.uncertainty == '5.00E-01'
+
+  a.load({ 'value' : Q_(2,'m/s')
+         , 'uncertainty' : Q_(0.5,'mm/s') })
+  assert a.uncertainty == '5.00E-04'
+
+  a.load({ 'value' : Q_(2,'km/s')
+         , 'uncertainty' : Q_(0.5,'m/s') })
+  assert a.uncertainty == '5.00E-04'
+
+  # a.load({ 'value' :  '(2 +- 0.01) m/s' } )
+  # assert a.uncertainty == '1.00E-02'
+
+def test_multiple_choice_answer_loading():
+  a = MultipleChoiceAnswer()
+
+  a.load( {'choices' : [ 'one', '*two', 'three' ] } )
+
+  assert str(a) == 'two'
+  assert a.type('bb') == 'MC'
+
+  a.load( {'choices' : [ 'one', '*two', 'three', '*four' ] } )
+
+  assert str(a) == 'two, four'
+  assert a.type('bb') == 'MA'
