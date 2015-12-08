@@ -118,6 +118,26 @@ def test_answer_custom_emitters():
   text = a.emit(mc_emit)
   assert text == "Answer is: 'this one'"
 
+def test_answer_factory():
+  spec = { 'value' : 1.23456789 }
+  a = make_answer( spec )
+  assert a.quantity == '1.23E+00'
+  assert a.value    == '1.23E+00'
+
+  a = make_answer({ 'value' : '1.2345 m' })
+  assert a.quantity == '1.23E+00 meter'
+  assert a.value    == '1.23E+00'
+
+
+  a = make_answer( {'choices' : [ 'one', '*two', 'three' ] } )
+  assert str(a) == 'two'
+  assert a.type('bb') == 'MC'
+
+
+  a = make_answer( {'choices' : [ 'one', '*two', '*three' ] } )
+  assert str(a) == 'two, three'
+  assert a.type('bb') == 'MA'
+
 def test_multiple_choice_answer():
   a = MultipleChoiceAnswer()
   a.add_choice('one')

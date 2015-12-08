@@ -1,4 +1,4 @@
-import re
+import re,sys,inspect
 import pint
 import random
 from pyErrorProp import sigfig_round
@@ -50,7 +50,6 @@ class ShortAnswer(Answer):
         return str(self.text)
 
     return super(ShortAnswer,self).emit(emitter)
-
 
 class NumericalAnswer(Answer):
   bb_type = 'NUM'
@@ -269,3 +268,16 @@ class MultipleChoiceAnswer(Answer):
   def __str__(self):
     return self.emit()
 
+
+def make_answer( spec ):
+  for name,obj in inspect.getmembers(sys.modules[__name__]):
+    if issubclass( obj, Answer ):
+      try:
+        a = obj()
+        a.load( spec )
+        return a
+      except:
+        pass
+
+
+  raise RuntimeError("Could not build answer instance from spec '%s'."%spec)
