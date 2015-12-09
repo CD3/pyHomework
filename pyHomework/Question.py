@@ -12,7 +12,7 @@ class Question(object):
     self._texts = []
     self._instructions = []
     self._answers = []
-    self._questions = []
+    self._parts = []
     self._files = {}
 
     # regular members
@@ -90,6 +90,9 @@ class Question(object):
   def add_answer(self,v,prepend=False):
     return self.add_X(self._answers,v,prepend)
 
+  def add_part(self,v,prepend=False):
+    return self.add_X(self._parts,v,prepend)
+
   def add_file(self,filename,name=None):
     name = name or filename
     self._files[name] = filename
@@ -105,6 +108,9 @@ class Question(object):
   def set_answer(self,v):
     return self.set_X(self._answers,v)
 
+  def set_part(self,v):
+    return self.set_X(self._parts,v)
+
   def set_file(self,*args,**kwargs):
     self._files = {}
     self.add_file(*args,**kwargs)
@@ -115,8 +121,15 @@ class Question(object):
     return self.format_X(self._texts,*args,**kwargs)
   format_texts = format_text
 
+  def format_part(self, *args, **kwargs):
+    for p in self._parts:
+      p.format_text(*args,**kwargs)
+      p.format_instruction(*args,**kwargs)
+  format_parts = format_part
+
   def format_instruction(self, *args, **kwargs):
     return self.format_X(self._instructions,*args,**kwargs)
+  format_instructions = format_instruction
 
 
   # the emit function
@@ -143,11 +156,13 @@ class Question(object):
         return '\t'.join( tokens )
 
       if emitter.lower() == 'latex':
-        answer = self._answers[0]
 
         tokens = []
         tokens.append( '& '+self.question )
-        tokens.append( answer.emit('latex').replace( '& ', '&& ' ) )
+        for answer in self._answers:
+          tokens.append( answer.emit('latex').replace( '& ', '&& ' ) )
+        for part in self._parts:
+          tokens.append( part.emit('latex').replace( '& ', '&& ' ) )
 
         return '\n'.join( tokens )
 

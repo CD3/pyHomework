@@ -158,9 +158,43 @@ def test_latex_emitter():
   q.set_answer( a )
 
   text = q.emit('latex')
-
   assert text == '& Q1\n&& a1\n&& a2\n&& a3'
 
+  q.add_answer( a )
+
+  text = q.emit('latex')
+  assert text == '& Q1\n&& a1\n&& a2\n&& a3\n&& a1\n&& a2\n&& a3'
+
+
+
+
+
+  q = Quiz.Question()
+  qa = Quiz.Question()
+
+  q.add_text("Q1")
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  *a1
+  a2
+  a3
+  ''')
+  q.set_answer( a )
+
+  qa.add_text("Q1a")
+  aa = MultipleChoiceAnswer()
+  aa.add_choices('''
+  aa1
+  *aa2
+  aa3
+  ''')
+  qa.set_answer( aa )
+
+  q.add_part( qa )
+
+  text = q.emit('latex')
+
+  assert text == '& Q1\n&& a1\n&& a2\n&& a3\n&& Q1a\n&&& aa1\n&&& aa2\n&&& aa3'
 
 
 
