@@ -10,6 +10,9 @@ class Answer(object):
     if not emitter is None and hasattr(emitter,'__call__'):
       return emitter(self)
 
+    if isinstance( emitter, (str,unicode) ) and emitter.lower() == 'latex':
+      return ""
+
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
 
   def type(self,emitter=None):
@@ -245,6 +248,13 @@ class MultipleChoiceAnswer(Answer):
             tokens.append('incorrect')
 
         return '\t'.join(tokens)
+
+      if emitter.lower() == 'latex':
+        tokens = []
+        for (correct,choice) in self.choices:
+          tokens.append( '& '+choice )
+
+        return '\n'.join(tokens)
 
     return super(MultipleChoiceAnswer,self).emit(emitter)
 

@@ -12,6 +12,7 @@ class Question(object):
     self._texts = []
     self._instructions = []
     self._answers = []
+    self._questions = []
     self._files = {}
 
     # regular members
@@ -140,6 +141,15 @@ class Question(object):
         tokens.append( answer.emit('bb') )
 
         return '\t'.join( tokens )
+
+      if emitter.lower() == 'latex':
+        answer = self._answers[0]
+
+        tokens = []
+        tokens.append( '& '+self.question )
+        tokens.append( answer.emit('latex').replace( '& ', '&& ' ) )
+
+        return '\n'.join( tokens )
 
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
 
