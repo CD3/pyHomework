@@ -10,7 +10,7 @@ class Answer(object):
     if not emitter is None and hasattr(emitter,'__call__'):
       return emitter(self)
 
-    if isinstance( emitter, (str,unicode) ) and emitter.lower() == 'latex':
+    if isinstance( emitter, (str,unicode) ) and emitter.lower().startswith('latex'):
       return ""
 
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
@@ -227,6 +227,8 @@ class MultipleChoiceAnswer(Answer):
     if emitter is None or emitter == 'default':
       emitter = 'default'
 
+    if emitter == 'latex':
+      emitter = 'latex-easylist'
 
     # emitters that we support
     if     isinstance( emitter, (str,unicode) ):
@@ -249,10 +251,20 @@ class MultipleChoiceAnswer(Answer):
 
         return '\t'.join(tokens)
 
-      if emitter.lower() == 'latex':
+      if emitter.lower() == 'latex-easylist':
         tokens = []
         for (correct,choice) in self.choices:
           tokens.append( '& '+choice )
+
+        return '\n'.join(tokens)
+
+
+      if emitter.lower() == 'latex-compactenum':
+        tokens = []
+        tokens.append( r'\begin{compactenum}' )
+        for (correct,choice) in self.choices:
+          tokens.append( r'\item '+choice )
+        tokens.append( r'\end{compactenum}' )
 
         return '\n'.join(tokens)
 

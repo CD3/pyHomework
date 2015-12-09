@@ -255,6 +255,7 @@ def test_latex_emitter():
   ''')
 
   text = a.emit('latex')
+  assert text == '& a1\n& a2\n& a3'
 
   a = MultipleChoiceAnswer()
   a.add_choices('''
@@ -264,7 +265,6 @@ def test_latex_emitter():
   ''')
 
   text = a.emit('latex')
-
   assert text == '& a1\n& a2\n& a3'
 
   q = 1.23456789
@@ -274,3 +274,30 @@ def test_latex_emitter():
 
   assert text == ''
 
+def test_latex_compactenum_emitter():
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  *a1
+  a2
+  a3
+  ''')
+
+  text = a.emit('latex-compactenum')
+  assert text == '\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\\end{compactenum}'
+
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  *a1
+  *a2
+  a3
+  ''')
+
+  text = a.emit('latex-compactenum')
+  assert text == '\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\\end{compactenum}'
+
+  q = 1.23456789
+  a = NumericalAnswer(q)
+
+  text = a.emit('latex')
+
+  assert text == ''

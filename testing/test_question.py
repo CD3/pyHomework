@@ -196,6 +196,55 @@ def test_latex_emitter():
 
   assert text == '& Q1\n&& a1\n&& a2\n&& a3\n&& Q1a\n&&& aa1\n&&& aa2\n&&& aa3'
 
+def test_latex_compactenum_emitter():
+  q = Quiz.Question()
+
+  q.add_text("Q1")
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  *a1
+  a2
+  a3
+  ''')
+  q.set_answer( a )
+
+  text = q.emit('latex-compactenum')
+  assert text == '\\begin{compactenum}\n\\item Q1\n\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\end{compactenum}\n\\end{compactenum}'
+
+  q.add_answer( a )
+
+  text = q.emit('latex-compactenum')
+  assert text == '\\begin{compactenum}\n\\item Q1\n\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\end{compactenum}\n\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\end{compactenum}\n\\end{compactenum}'
+
+
+
+
+
+  q = Quiz.Question()
+  qa = Quiz.Question()
+
+  q.add_text("Q1")
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  *a1
+  a2
+  a3
+  ''')
+  q.set_answer( a )
+
+  qa.add_text("Q1a")
+  aa = MultipleChoiceAnswer()
+  aa.add_choices('''
+  aa1
+  *aa2
+  aa3
+  ''')
+  qa.set_answer( aa )
+
+  q.add_part( qa )
+
+  text = q.emit('latex-compactenum')
+  assert text == '\\begin{compactenum}\n\\item Q1\n\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\end{compactenum}\n\\begin{compactenum}\n\\item Q1a\n\\begin{compactenum}\n\\item aa1\n\\item aa2\n\\item aa3\n\\end{compactenum}\n\\end{compactenum}\n\\end{compactenum}'
 
 
 

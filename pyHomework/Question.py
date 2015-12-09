@@ -139,6 +139,9 @@ class Question(object):
     if emitter is None or emitter == 'default':
       return self.question
 
+    if emitter == 'latex':
+      emitter = 'latex-easylist'
+
     # support for user-defined emitter functions
     if hasattr( emitter, '__call__' ):
       return emitter( self )
@@ -155,7 +158,7 @@ class Question(object):
 
         return '\t'.join( tokens )
 
-      if emitter.lower() == 'latex':
+      if emitter.lower() == 'latex-easylist':
 
         tokens = []
         tokens.append( '& '+self.question )
@@ -163,6 +166,20 @@ class Question(object):
           tokens.append( answer.emit('latex').replace( '& ', '&& ' ) )
         for part in self._parts:
           tokens.append( part.emit('latex').replace( '& ', '&& ' ) )
+
+        return '\n'.join( tokens )
+
+
+      if emitter.lower() == 'latex-compactenum':
+
+        tokens = []
+        tokens.append( r'\begin{compactenum}' )
+        tokens.append( r'\item '+self.question )
+        for answer in self._answers:
+          tokens.append( answer.emit('latex-compactenum') )
+        for part in self._parts:
+          tokens.append( part.emit('latex-compactenum') )
+        tokens.append( r'\end{compactenum}' )
 
         return '\n'.join( tokens )
 
