@@ -19,13 +19,13 @@
 from pyHomework.Quiz import *
 import sys, os, re, random
 import yaml
-from dpath import util
+import dpath.util
 import urlparse
 
 class BbQuiz(Quiz):
     def __init__(self,*args,**kwargs):
       super(BbQuiz,self).__init__(*args,**kwargs)
-      self.config = { 'files' :
+      self._config = { 'files' :
                          { 'view_url'  : 'http://example.com/files/{filename:s}'
                          , 'push_url'  : 'ssh://example.com/files/{filename:s}'
                          , 'local_url' : '/path/to/the/files/{filename:s}'
@@ -54,8 +54,8 @@ class BbQuiz(Quiz):
 
 
       for key,val in overrides.items():
-        print "Overriding '%s' with '%s'. Was '%s'" % (key,val, dpath.util.search( self.config, key ))
-        dpath.util.new( self.config, key, val )
+        print "Overriding '%s' with '%s'. Was '%s'" % (key,val, dpath.util.search( self._config, key ))
+        self.config(key,value=val)
 
     def push_image(self, image_filename, remote_config):
         data = dict()

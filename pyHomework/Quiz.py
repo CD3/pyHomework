@@ -1,5 +1,6 @@
 from .Question import *
 from .Answer import *
+import dpath.util
 
 class Quiz(object):
   Question = Question
@@ -7,8 +8,16 @@ class Quiz(object):
   def __init__(self):
     self._questions = []
     self._order = []
-    self.randomize = False
-    self.metadata = {}
+    self._config = {}
+
+  def config(self,key,default=None,value=None):
+    if value is None:
+      try:
+        return dpath.util.get(self._config,key)
+      except:
+        return default
+    else:
+      dpath.util.new(self._config,key,value)
 
   @property
   def questions(self):
@@ -18,7 +27,8 @@ class Quiz(object):
   @property
   def order(self):
     _order = self._order
-    if self.randomize:
+
+    if self.config('/randomize/questions',False):
       random.shuffle( _order )
     for i in _order:
       yield i
@@ -43,6 +53,13 @@ class Quiz(object):
     if emitter is None:
       emitter = 'bb'
 
+
+    if self.config('randomize/answers', False):
+      for q in self._questions:
+        for a in q._answers:
+          a.randomize = True
+
+
     if hasattr( emitter, '__call__' ):
       return emitter( self )
 
@@ -60,14 +77,7 @@ class Quiz(object):
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
 
   def load(self,spec):
-    self.metadata = spec.get('configuration',{})
-
-    try:
-      self.randomize = self.metadata['randomize']['questions']
-    except:
-      pass
-
-
+    self._config = spec.get('configuration',{})
     for q in spec['questions']:
       self.add_question()
       try:

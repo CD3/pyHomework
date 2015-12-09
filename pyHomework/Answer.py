@@ -24,7 +24,6 @@ class Answer(object):
     return self.emit()
 
 
-
 class EssayAnswer(object):
   bb_type = 'ESS'
 
@@ -41,9 +40,7 @@ class EssayAnswer(object):
 
     return super(EssayAnswer,self).emit(emitter)
 
-
 class LatexAnswer(Answer): pass
-
 
 class ShortAnswer(Answer):
   bb_type = 'SA'
@@ -62,7 +59,6 @@ class ShortAnswer(Answer):
         return str(self.text)
 
     return super(ShortAnswer,self).emit(emitter)
-
 
 class NumericalAnswer(Answer):
   bb_type = 'NUM'
@@ -152,7 +148,6 @@ class NumericalAnswer(Answer):
     self.quantity = units( str(spec['value']) )
     self.uncertainty = spec['uncertainty'] if 'uncertainty' in spec else '1%'
 
-
 class MultipleChoiceAnswer(Answer):
   bb_type = 'MC|MA'
 
@@ -165,9 +160,12 @@ class MultipleChoiceAnswer(Answer):
     return super(MultipleChoiceAnswer,self).type(emitter)
 
   def __init__(self):
+    # controlled access members
     self._choices = []
     self._order   = []
     self._correct = set()
+
+    # regular members
     self.randomize = False
 
   @property

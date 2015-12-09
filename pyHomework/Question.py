@@ -1,4 +1,5 @@
 from .Utils import format_text
+import dpath.util
 
 class Question(object):
   """A class representing a question.
@@ -7,17 +8,20 @@ class Question(object):
   """
   
   def __init__(self, text = None):
+    # controlled access members
     self._texts = []
     self._instructions = []
     self._answers = []
     self._files = {}
 
-    self.metadata = {}
+    # regular members
     self.prepend_instructions = False
     self.join_str = ' '
 
     if not text is None:
       self.add_text( text )
+
+  # common operations for different members
 
   def join_X( self, X):
     j = self.join_str
@@ -52,6 +56,9 @@ class Question(object):
 
 
 
+
+  # properties: getters that return processed versions of the member data
+
   @property
   def text(self):
     return self.join_X(self._texts)
@@ -70,6 +77,9 @@ class Question(object):
 
     return self.join_X( tmp )
 
+
+  # add operations
+
   def add_text(self,v,prepend=False):
     return self.add_X(self._texts,v,prepend)
 
@@ -82,6 +92,8 @@ class Question(object):
   def add_file(self,filename,name=None):
     name = name or filename
     self._files[name] = filename
+
+  # set operations
 
   def set_text(self,v):
     return self.set_X(self._texts,v)
@@ -96,12 +108,17 @@ class Question(object):
     self._files = {}
     self.add_file(*args,**kwargs)
 
+  # format operations
+
   def format_text(self, *args, **kwargs):
     return self.format_X(self._texts,*args,**kwargs)
   format_texts = format_text
 
   def format_instruction(self, *args, **kwargs):
     return self.format_X(self._instructions,*args,**kwargs)
+
+
+  # the emit function
 
   def emit(self,emitter=None):
     # default emitter
