@@ -5,72 +5,36 @@ from pyErrorProp import sigfig_round
 from pyErrorProp import units
 
 class Answer(object):
-  bb_type = 'NONE'
-  def emit(self,emitter):
+  DefaultEmitter = None
+  def emit(self,emitter=None):
+    if emitter == None:
+      emitter = self.DefaultEmitter
+    
+    if inspect.isclass( emitter ):
+      return self.emit( emitter() )
+
     if not emitter is None and hasattr(emitter,'__call__'):
       return emitter(self)
 
-    if isinstance( emitter, (str,unicode) ) and emitter.lower().startswith('latex'):
-      return ""
-
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
 
-  def type(self,emitter=None):
-    '''Returns a type string for the given emitter.'''
-    if isinstance( emitter, (str,unicode) ):
-      if emitter.lower() == 'bb':
-        return self.bb_type
-
-    return self.__name__
-
-  def __str__(self):
-    return self.emit()
-
-
-class EssayAnswer(object):
-  bb_type = 'ESS'
-
+class EssayAnswer(Answer):
   def __init__(self, text=None):
     self.text = text
 
   def load(self,spec):
     self.answer = spec['text']
 
-  def emit(self,emitter=None):
-    # default emitter
-    if emitter is None or emitter == 'default':
-      return str(self.text)
-
-    return super(EssayAnswer,self).emit(emitter)
-
-class LatexAnswer(Answer): pass
-
 class ShortAnswer(Answer):
-  bb_type = 'SA'
-
   def __init__(self, text=None):
     self.text = text
 
-  def emit(self,emitter=None):
-    # default emitter
-    if emitter is None or emitter == 'default':
-      emitter = 'bb'
-
-    # emitters that we support
-    if     isinstance( emitter, (str,unicode) ):
-      if emitter.lower() == 'bb':
-        return str(self.text)
-
-    return super(ShortAnswer,self).emit(emitter)
-
 class NumericalAnswer(Answer):
-  bb_type = 'NUM'
-
   def __init__(self, quantity = None, units = "", uncertainty = '1%', sigfigs = 3):
     self._quant   = quantity
     self._unc     = uncertainty
     self.sigfigs  = sigfigs
-  
+
   @property
   def quantity(self):
     return '{{:.{:d}E}}'.format( self.sigfigs-1 ).format( self._quant )
@@ -131,37 +95,11 @@ class NumericalAnswer(Answer):
   def units(self,v):
     self._quant.ito(v)
 
-  def emit(self,emitter=None):
-    # default emitter
-    if emitter is None or emitter == 'default':
-      emitter = 'bb'
-
-    # emitters that we support
-    if     isinstance( emitter, (str,unicode) ):
-      if emitter.lower() == 'bb':
-        tokens = []
-        tokens.append( self.value )
-        tokens.append( self.uncertainty )
-
-        return '\t'.join(tokens)
-
-    return super(NumericalAnswer,self).emit(emitter)
-
   def load(self,spec):
     self.quantity = units( str(spec['value']) )
     self.uncertainty = spec['uncertainty'] if 'uncertainty' in spec else '1%'
 
 class MultipleChoiceAnswer(Answer):
-  bb_type = 'MC|MA'
-
-  def type(self,emitter=None):
-    if isinstance( emitter, (str,unicode) ):
-      if emitter.lower() == 'bb':
-        types = self.bb_type.split('|')
-        return types[1] if self.num_correct() > 1 else types[0]
-
-    return super(MultipleChoiceAnswer,self).type(emitter)
-
   def __init__(self):
     # controlled access members
     self._choices = []
@@ -222,54 +160,6 @@ class MultipleChoiceAnswer(Answer):
   def num_correct( self ):
     return len(self._correct)
 
-  def emit(self,emitter=None):
-    # default emitter
-    if emitter is None or emitter == 'default':
-      emitter = 'default'
-
-    if emitter == 'latex':
-      emitter = 'latex-easylist'
-
-    # emitters that we support
-    if     isinstance( emitter, (str,unicode) ):
-      if emitter == 'default':
-        tokens = []
-        for (correct,choice) in self.choices:
-          if correct:
-            tokens.append( choice )
-
-        return ', '.join(tokens)
-
-      if emitter.lower() == 'bb':
-        tokens = []
-        for (correct,choice) in self.choices:
-          tokens.append( choice )
-          if correct:
-            tokens.append('correct')
-          else:
-            tokens.append('incorrect')
-
-        return '\t'.join(tokens)
-
-      if emitter.lower() == 'latex-easylist':
-        tokens = []
-        for (correct,choice) in self.choices:
-          tokens.append( '& '+choice )
-
-        return '\n'.join(tokens)
-
-
-      if emitter.lower() == 'latex-compactenum':
-        tokens = []
-        tokens.append( r'\begin{compactenum}' )
-        for (correct,choice) in self.choices:
-          tokens.append( r'\item '+choice )
-        tokens.append( r'\end{compactenum}' )
-
-        return '\n'.join(tokens)
-
-    return super(MultipleChoiceAnswer,self).emit(emitter)
-
   def load(self,spec):
     self.clear_choices()
     self.clear_correct()
@@ -277,7 +167,6 @@ class MultipleChoiceAnswer(Answer):
       self.add_choice( choice )
 
 class OrderedAnswer(Answer):
-  bb_type = "ORD"
   def __init__(self):
     self.items = []
 
@@ -298,45 +187,9 @@ class OrderedAnswer(Answer):
     for item in spec['ordered']:
       self.add_item( item )
 
-  def emit(self,emitter=None):
-    # default emitter
-    if emitter is None or emitter == 'default':
-      emitter = 'default'
-
-    # emitters that we support
-    if     isinstance( emitter, (str,unicode) ):
-      if emitter == 'default':
-        return ' -> '.join(self.items)
-
-      if emitter.lower() == 'bb':
-        return '\t'.join(self.items)
-
-    return super(OrderedAnswer,self).emit(emitter)
-
 class TrueFalseAnswer(Answer):
-  bb_type = "TF"
   def __init__(self):
     self.answer = None
-
-  def emit(self,emitter=None):
-    # default emitter
-    if emitter is None or emitter == 'default':
-      emitter = 'default'
-
-    # emitters that we support
-    if     isinstance( emitter, (str,unicode) ):
-      if emitter == 'default':
-        if self.answer is None:
-          return "Unknown"
-        if self.answer:
-          return "True"
-        if self.answer:
-          return "False"
-
-      if emitter.lower() == 'bb':
-        return self.emit('default').lower()
-
-    return super(TrueFalseAnswer,self).emit(emitter)
 
   def load(self,spec):
     self.answer = spec['logical']

@@ -1,3 +1,4 @@
+import inspect
 from .Utils import format_text
 import dpath.util
 
@@ -6,6 +7,7 @@ class Question(object):
 
   A question contains text, instructions, and answers.
   """
+  DefaultEmitter = None
   
   def __init__(self, text = None):
     # controlled access members
@@ -133,57 +135,18 @@ class Question(object):
 
 
   # the emit function
-
   def emit(self,emitter=None):
-    # default emitter
-    if emitter is None or emitter == 'default':
-      return self.question
+    if emitter == None:
+      emitter = self.DefaultEmitter
 
-    if emitter == 'latex':
-      emitter = 'latex-easylist'
+    if inspect.isclass( emitter ):
+      return self.emit( emitter() )
 
-    # support for user-defined emitter functions
-    if hasattr( emitter, '__call__' ):
-      return emitter( self )
-
-    # emitters that we support
-    if     isinstance( emitter, (str,unicode) ):
-      if emitter.lower() == 'bb':
-        answer = self._answers[0]
-
-        tokens = []
-        tokens.append( answer.type('bb') )
-        tokens.append( self.question )
-        tokens.append( answer.emit('bb') )
-
-        return '\t'.join( tokens )
-
-      if emitter.lower() == 'latex-easylist':
-
-        tokens = []
-        tokens.append( '& '+self.question )
-        for answer in self._answers:
-          tokens.append( answer.emit('latex').replace( '& ', '&& ' ) )
-        for part in self._parts:
-          tokens.append( part.emit('latex').replace( '& ', '&& ' ) )
-
-        return '\n'.join( tokens )
-
-
-      if emitter.lower() == 'latex-compactenum':
-
-        tokens = []
-        tokens.append( r'\begin{compactenum}' )
-        tokens.append( r'\item '+self.question )
-        for answer in self._answers:
-          tokens.append( answer.emit('latex-compactenum') )
-        for part in self._parts:
-          tokens.append( part.emit('latex-compactenum') )
-        tokens.append( r'\end{compactenum}' )
-
-        return '\n'.join( tokens )
+    if not emitter is None and hasattr(emitter,'__call__'):
+      return emitter(self)
 
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
+
 
 class PlainTextQuestion(Question):
   pass

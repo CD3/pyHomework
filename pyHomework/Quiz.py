@@ -4,11 +4,13 @@ import dpath.util
 
 class Quiz(object):
   Question = Question
+  DefaultEmitter = None
 
   def __init__(self):
     self._questions = []
     self._order = []
     self._config = {}
+
 
   def config(self,key,default=None,value=None):
     if value is None:
@@ -49,30 +51,18 @@ class Quiz(object):
       return None
 
   def emit(self,emitter=None):
-    # support for custom emitters
-    if emitter is None:
-      emitter = 'bb'
-
-
+    if emitter == None:
+      emitter = self.DefaultEmitter
     if self.config('randomize/answers', False):
       for q in self._questions:
         for a in q._answers:
           a.randomize = True
 
+    if inspect.isclass( emitter ):
+      return self.emit( emitter() )
 
-    if hasattr( emitter, '__call__' ):
-      return emitter( self )
-
-    if isinstance( emitter, (str,unicode)):
-      if emitter == 'bbquiz':
-        pass
-
-      if emitter == 'bb':
-        tokens = []
-        for q in self.questions:
-          tokens.append( q.emit('bb') )
-
-        return '\n'.join(tokens)
+    if not emitter is None and hasattr(emitter,'__call__'):
+      return emitter(self)
 
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
 

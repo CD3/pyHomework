@@ -1,5 +1,5 @@
-
 configuration:
+  title : 'Example Quiz'
   randomize:
     questions: True
     answers: False

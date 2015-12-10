@@ -4,6 +4,7 @@ import yaml
 
 from pyHomework.Quiz import Quiz
 from pyHomework.Answer import *
+from pyHomework.Emitter import *
 from pyErrorProp import *
 
 def test_numerical_answer_value():
@@ -68,21 +69,21 @@ def test_numerical_answer_uncertainty():
 def test_numerical_answer_bb_emitter():
   q = 1.23456789
   a = NumericalAnswer(q)
-  bb = a.emit('bb')
+  bb = a.emit(BbEmitter)
   assert bb == '1.23E+00\t1.23E-02'
 
   q = Q_(1.3579,'m/s^2')
   a = NumericalAnswer(q)
-  bb = a.emit('bb')
+  bb = a.emit(BbEmitter)
   assert bb == '1.36E+00\t1.36E-02'
   a.sigfigs = 4
-  bb = a.emit('bb')
+  bb = a.emit(BbEmitter)
   assert bb == '1.358E+00\t1.358E-02'
 
 
   q = UQ_(1.3579, 0.89, 'm/s^2')
   a = NumericalAnswer(q)
-  bb = a.emit('bb')
+  bb = a.emit(BbEmitter)
   assert bb == '1.36E+00\t8.90E-01'
 
 def test_emitter_exceptions():
@@ -131,17 +132,15 @@ def test_factory():
 
 
   a = make_answer( {'choices' : [ 'one', '*two', 'three' ] } )
-  assert str(a) == 'two'
-  assert a.type('bb') == 'MC'
+  assert a.emit() == 'two'
 
 
   a = make_answer( {'choices' : [ 'one', '*two', '*three' ] } )
-  assert str(a) == 'two, three'
-  assert a.type('bb') == 'MA'
+  assert a.emit() == 'two, three'
 
   spec = { 'ordered' : ['one', 'two', 'three'] }
   a = make_answer( spec )
-  assert str(a) == 'one -> two -> three'
+  assert a.emit() == 'one -> two -> three'
 
 def test_multiple_choice_answer():
   a = MultipleChoiceAnswer()
@@ -149,13 +148,11 @@ def test_multiple_choice_answer():
   a.add_choice('*two')
   a.add_choice('three')
 
-  assert str(a) == 'two'
-  assert a.type('bb') == 'MC'
+  assert a.emit() == 'two'
 
   a.add_choice('*four')
 
-  assert str(a) == 'two, four'
-  assert a.type('bb') == 'MA'
+  assert a.emit() == 'two, four'
 
 def test_multiple_choice_answer_bb_emitter():
   a = MultipleChoiceAnswer()
@@ -164,14 +161,14 @@ def test_multiple_choice_answer_bb_emitter():
   a.add_choice('three')
   a.add_choice('*four')
 
-  bb = a.emit('bb')
+  bb = a.emit(BbEmitter)
 
   assert bb == 'one\tincorrect\ttwo\tcorrect\tthree\tincorrect\tfour\tcorrect'
 
 def test_written_answer():
   a = ShortAnswer('''Since A > B and B > C, A must also be > C.''')
 
-  bb = a.emit('bb')
+  bb = a.emit(BbEmitter)
   assert bb == 'Since A > B and B > C, A must also be > C.'
 
 def test_latex_answer():
@@ -238,13 +235,11 @@ def test_multiple_choice_answer_loading():
 
   a.load( {'choices' : [ 'one', '*two', 'three' ] } )
 
-  assert str(a) == 'two'
-  assert a.type('bb') == 'MC'
+  assert a.emit() == 'two'
 
   a.load( {'choices' : [ 'one', '*two', 'three', '*four' ] } )
 
-  assert str(a) == 'two, four'
-  assert a.type('bb') == 'MA'
+  assert a.emit() == 'two, four'
 
 def test_latex_emitter():
   a = MultipleChoiceAnswer()
@@ -254,7 +249,7 @@ def test_latex_emitter():
   a3
   ''')
 
-  text = a.emit('latex')
+  text = a.emit(LatexEmitter)
   assert text == '& a1\n& a2\n& a3'
 
   a = MultipleChoiceAnswer()
@@ -264,13 +259,13 @@ def test_latex_emitter():
   a3
   ''')
 
-  text = a.emit('latex')
+  text = a.emit(LatexEmitter)
   assert text == '& a1\n& a2\n& a3'
 
   q = 1.23456789
   a = NumericalAnswer(q)
 
-  text = a.emit('latex')
+  text = a.emit(LatexEmitter)
 
   assert text == ''
 
@@ -282,7 +277,7 @@ def test_latex_compactenum_emitter():
   a3
   ''')
 
-  text = a.emit('latex-compactenum')
+  text = a.emit(LatexEmitter('compactenum'))
   assert text == '\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\\end{compactenum}'
 
   a = MultipleChoiceAnswer()
@@ -292,12 +287,12 @@ def test_latex_compactenum_emitter():
   a3
   ''')
 
-  text = a.emit('latex-compactenum')
+  text = a.emit(LatexEmitter('compactenum'))
   assert text == '\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\\end{compactenum}'
 
   q = 1.23456789
   a = NumericalAnswer(q)
 
-  text = a.emit('latex')
+  text = a.emit(LatexEmitter)
 
   assert text == ''

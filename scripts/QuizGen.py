@@ -3,7 +3,7 @@
   BbQuiz: generate Blackboard quizzes from YAML spec files.
 
   Usage:
-    BbQuiz.py [-l] [-c STR]... [-o FILE]<quiz-file> ...
+    BbQuiz.py [-l] [-c STR]... [-t TYPE] [-o FILE] <quiz-file> ...
     BbQuiz.py -m
     BbQuiz.py -e FILE
 
@@ -12,15 +12,18 @@
     -c STR, --config-var STR, --override STR    specify a configuration override.
     -l, --list-config                           list configuration options (for debug).
     -o, --output FILE                           write output to FILE. default is to replace extention of spec file with .txt
+    -t TYPE, --type TYPE                        output type
 
 
 """
 
 from pyHomework.Quiz import *
 import sys, os, re, random
+from subprocess import call
 import yaml
 import dpath.util
 import urlparse
+import tempita
 
 
 def make_overrides( override ):
@@ -33,6 +36,17 @@ def make_overrides( override ):
       tmp.update( make_overrides(o) )
     return tmp
   return {}
+
+def get_fn( inputfn, type ):
+  basename = os.path.splitext(inputfn)[0]
+  if type.lower() == 'bb':
+    return basename + '.txt'
+  if type.lower() == 'latex':
+    return basename + '.tex'
+  if type.lower() == 'pdf':
+    return basename + '.pdf'
+
+  return basename + '.' + type
 
 example_spec = '''
 title : Quiz
@@ -109,10 +123,6 @@ class BbQuiz(Quiz):
                         }
                     }
 
-    def write_quiz(self, filename="/dev/stdout"):
-      with open(filename, 'w') as f:
-        f.write( self.emit('bb') )
-
     def push_image(self, image_filename, remote_config):
         data = dict()
 
@@ -135,121 +145,66 @@ class BbQuiz(Quiz):
         link = urlparse.urljoin( remote_config['web_root'], os.path.join(remote_config['image_dir'], os.path.basename(image_filename) ) )
         return link
 
+    def write_quiz(self, filename="/dev/stdout"):
+      with open(filename, 'w') as f:
+        f.write( self.emit('bb') )
+
+
 class LatexQuiz(Quiz):
     def __init__(self,*args,**kwargs):
-      super(BbQuiz,self).__init__(*args,**kwargs)
-      self._config = { 'make_key' : False
-                     , 'randomize' :
-                        { 'questions' : False
-                        , 'answers'   : False
-                        }
-                    }
+      super(LatexQuiz,self).__init__(*args,**kwargs)
+      self._default_config = { 'make_key' : False
+                             , 'randomize' :
+                               { 'questions' : False
+                               , 'answers'   : False
+                               } }
+      self._config = self._default_config.copy()
 
-      template = r'''
-<%!
-    import random
-    import collections
-
-    answers = collections.OrderedDict()
-%>
-
-<%
-    def mca( text ):
-      if isAns( text ):
-        text = text[1:]
-      return text
-
-    def isAns( text ):
-      return special_chars['correct_answer'].find( text[0] ) >= 0
-%>
-
-
-
+      self.template = r'''
 \documentclass[letterpaper,10pt]{article}
 \usepackage{amsmath}
-\usepackage{amsfonts}
 \usepackage{amssymb}
-\usepackage{graphicx}
 \usepackage{siunitx}
 \usepackage{paralist}
 \usepackage[left=0.5in,right=0.5in,top=0.5in,bottom=0.5in]{geometry}
 
-
 \begin{document}
 \begin{center}
-{\Large ${title}}
+{\Large {{title}}}
 \end{center}
 
-%if not instructions is UNDEFINED:
 Special Instructions:
-\begin{itemize}
-  %for instruction in instructions:
-    \item ${instruction}
-  %endfor
-\end{itemize}
+{{instructions}}
 \vspace{10pt}
 Questions:
 \vspace{10pt}
-%endif
 
-\begin{compactenum} <% i = 0 %>
-%for question in questions:
-<%
-  i += 1
-  qlbl = '\label{%d}' % i
-  qref = qlbl.replace("label", "ref")
-  answers[qref] = []
-%>\begin{minipage}{\linewidth}
-    \item ${qlbl} ${question['text']}
-    %if question['type'] == "MC" or question['type'] == "MA":
-    \begin{compactenum} <% j = 0 %>
-        %for choice in question['answer']['choices']:
-        <% 
-          j += 1
-          plbl = '\label{%d%d}' % (i,j)
-          pref = plbl.replace("label", "ref")
-          if isAns( choice ):
-            answers[qref].append( pref )
-        %>\item ${plbl} ${choice|mca}
-        %endfor
-    \end{compactenum}
-    %endif
-    %if question['type'] == "TF":
-
-        True \hskip 1cm False
-    %endif
-    <%
-      if question['type'] == "NUM":
-        answers[qref].append( str( question['answer']['value'] ) )
-        answers[qref][-1] +=  str( question['answer'].get('unit', "") )
-
-      if question['type'] == "TF":
-        answers[qref].append( "True" if question['answer'] else "False" )
-    %>
-    \end{minipage}
-
-    \vspace{10pt}
-
-%endfor
-\end{compactenum}
-
-%if make_key:
-\clearpage
-Key - Quiz Answers:
-\begin{itemize}
-  %for k in answers:
-      \item ${k}.
-    %for v in answers[k]:
-            ${v} 
-    %endfor
-  %endfor
-
-\end{itemize}
-%endif
+{{questions}}
 
 \end{document}
 '''
 
+    def write_quiz(self, filename="/dev/stdout"):
+      engine = tempita.Template(self.template)
+      render_data = { 'title' : "Untitled"
+                    , 'instructions' : "None"
+                    , 'questions' : self.emit('latex-compactenum')
+                    , 'answers' : "None" }
+      render_data.update( self._config )
+      text = engine.substitute( **render_data )
+
+      if filename.endswith('.pdf'):
+        texfile = get_fn( filename, 'tex' )
+      else:
+        texfile = filename
+
+      with open(texfile, 'w') as f:
+        f.write( text )
+
+      if filename.endswith( '.pdf' ):
+        call( ['latexmk', '-pdf', texfile ] )
+        call( ['latexmk', '-c', texfile ] )
+        
 
 
 
@@ -288,7 +243,15 @@ if __name__ == "__main__":
     sys.exit(0)
 
   for arg in arguments['<quiz-file>']:
-    quiz = BbQuiz()
+    if arguments['--type'].lower() == 'bb':
+      quiz = BbQuiz()
+    elif arguments['--type'].lower() == 'latex':
+      quiz = LatexQuiz()
+    elif arguments['--type'].lower() == 'pdf':
+      quiz = LatexQuiz()
+    else:
+      quiz = BbQuiz()
+
 
     with open(arg,'r') as f:
       quiz.load( yaml.load(f) )
@@ -302,7 +265,7 @@ if __name__ == "__main__":
     if arguments['--list-config']:
       print quiz._config
 
-    outfile = os.path.splitext(arg)[0]+".txt"
+    outfile = get_fn( arg, arguments['--type'] )
     if arguments['--output'] is not None:
       outfile = arguments['--output']
     quiz.write_quiz(outfile)

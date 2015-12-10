@@ -4,6 +4,7 @@ import yaml
 
 from pyHomework.Quiz import Quiz
 from pyHomework.Answer import *
+from pyHomework.Emitter import *
 from pyErrorProp import *
 
 def test_add_text():
@@ -72,7 +73,7 @@ def test_question_with_numerical_answer():
   q.format_text( l=l, w=w, formatter='format' )
   q.set_answer( NumericalAnswer( l*w ) )
 
-  text = q.emit('bb')
+  text = q.emit(BbEmitter)
 
   assert text == 'NUM\tWhat is the area of a 1.5 meter x 2.5 meter square?\t3.75E+00\t3.75E-02'
 
@@ -89,7 +90,7 @@ def test_question_with_mc_answer():
   ''')
   q.set_answer( a )
 
-  text = q.emit('bb')
+  text = q.emit(BbEmitter)
 
   assert text == 'MC\tThe answer is c... its always c.\tthis is not the answer you are looking for.\tincorrect\tnope.\tincorrect\tthis is it!\tcorrect\treally?\tincorrect'
 
@@ -107,7 +108,7 @@ def test_mc_ordering():
   q.set_answer( a )
   a.order = [1,0,3,2]
 
-  text = q.emit('bb')
+  text = q.emit(BbEmitter)
 
   assert text == 'MC\tQuestion:\tb\tincorrect\ta\tincorrect\td\tincorrect\tc\tcorrect'
 
@@ -125,7 +126,7 @@ def test_question_with_ma_answer():
   ''')
   q.set_answer( a )
 
-  text = q.emit('bb')
+  text = q.emit(BbEmitter)
 
   assert text == 'MA\tThe answer is c... its always c.\tthis is not the answer you are looking for.\tincorrect\tnope.\tincorrect\tthis is it!\tcorrect\treally?\tincorrect\toh...this one too.\tcorrect'
 
@@ -157,12 +158,12 @@ def test_latex_emitter():
   ''')
   q.set_answer( a )
 
-  text = q.emit('latex')
+  text = q.emit(LatexEmitter)
   assert text == '& Q1\n&& a1\n&& a2\n&& a3'
 
   q.add_answer( a )
 
-  text = q.emit('latex')
+  text = q.emit(LatexEmitter)
   assert text == '& Q1\n&& a1\n&& a2\n&& a3\n&& a1\n&& a2\n&& a3'
 
 
@@ -192,7 +193,7 @@ def test_latex_emitter():
 
   q.add_part( qa )
 
-  text = q.emit('latex')
+  text = q.emit(LatexEmitter)
 
   assert text == '& Q1\n&& a1\n&& a2\n&& a3\n&& Q1a\n&&& aa1\n&&& aa2\n&&& aa3'
 
@@ -208,13 +209,13 @@ def test_latex_compactenum_emitter():
   ''')
   q.set_answer( a )
 
-  text = q.emit('latex-compactenum')
-  assert text == '\\begin{compactenum}\n\\item Q1\n\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\end{compactenum}\n\\end{compactenum}'
+  text = q.emit(LatexEmitter('compactenum'))
+  assert text == '\\item Q1\n\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\end{compactenum}'
 
   q.add_answer( a )
 
-  text = q.emit('latex-compactenum')
-  assert text == '\\begin{compactenum}\n\\item Q1\n\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\end{compactenum}\n\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\end{compactenum}\n\\end{compactenum}'
+  text = q.emit(LatexEmitter('compactenum'))
+  assert text == '\\item Q1\n\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\end{compactenum}\n\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\end{compactenum}'
 
 
 
@@ -243,8 +244,8 @@ def test_latex_compactenum_emitter():
 
   q.add_part( qa )
 
-  text = q.emit('latex-compactenum')
-  assert text == '\\begin{compactenum}\n\\item Q1\n\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\end{compactenum}\n\\begin{compactenum}\n\\item Q1a\n\\begin{compactenum}\n\\item aa1\n\\item aa2\n\\item aa3\n\\end{compactenum}\n\\end{compactenum}\n\\end{compactenum}'
+  text = q.emit(LatexEmitter('compactenum'))
+  assert text == '\\item Q1\n\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\end{compactenum}\n\\begin{compactenum}\n\\item Q1a\n\\begin{compactenum}\n\\item aa1\n\\item aa2\n\\item aa3\n\\end{compactenum}\n\\end{compactenum}'
 
 
 
