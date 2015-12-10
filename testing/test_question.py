@@ -197,6 +197,37 @@ def test_latex_emitter():
 
   assert text == '& Q1\n&& a1\n&& a2\n&& a3\n&& Q1a\n&&& aa1\n&&& aa2\n&&& aa3'
 
+def test_latex_labels_emitter():
+  q = Quiz.Question()
+
+  q.add_text("Q1")
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  *a1
+  a2
+  a3
+  ''')
+  q.set_answer( a )
+  lbls = []
+  lbls.append(id(q))
+  lbls += [id(c) for c in q._answers[0]._choices]
+
+  text = q.emit(LatexEmitter(labels=True))
+  assert text == '& \\label{%s}Q1\n&& \\label{%s}a1\n&& \\label{%s}a2\n&& \\label{%s}a3' % tuple(lbls)
+
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  *a1
+  a2
+  a3
+  ''')
+  q.set_answer( a )
+
+  text = q.emit(LatexEmitter(labels=True))
+  assert text != '& \\label{%s}Q1\n&& \\label{%s}a1\n&& \\label{%s}a2\n&& \\label{%s}a3' % tuple(lbls)
+
+
+
 def test_latex_compactenum_emitter():
   q = Quiz.Question()
 

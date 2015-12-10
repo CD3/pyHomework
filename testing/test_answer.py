@@ -269,6 +269,29 @@ def test_latex_emitter():
 
   assert text == ''
 
+def test_latex_labels_emitter():
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+  *a1
+  a2
+  a3
+  ''')
+  lbls = [ id(c) for (cc,c) in a.choices ]
+
+  text = a.emit(LatexEmitter(labels=True))
+  assert text == '& \\label{%s}a1\n& \\label{%s}a2\n& \\label{%s}a3' % tuple(lbls)
+
+  a.add_choices('''
+  *a1
+  *a2
+  a3
+  ''')
+
+  lbls += [ id(c) for c in a._choices[3:] ]
+
+  text = a.emit(LatexEmitter(labels=True))
+  assert text == '& \\label{%s}a1\n& \\label{%s}a2\n& \\label{%s}a3\n& \\label{%s}a1\n& \\label{%s}a2\n& \\label{%s}a3' % tuple(lbls)
+
 def test_latex_compactenum_emitter():
   a = MultipleChoiceAnswer()
   a.add_choices('''

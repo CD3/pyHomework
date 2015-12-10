@@ -116,25 +116,38 @@ class BbEmitter(Emitter):
 
 
 class LatexEmitter(Emitter):
-  def __init__(self, listtype = 'easylist'):
+  def __init__(self, listtype = 'easylist', labels = False):
     self.listtype = listtype
+    self.labels = labels
 
-  def wrap_in_environment(self, tokens, env ):
+  @staticmethod
+  def wrap_in_environment(tokens, env):
     tokens.insert(0, r'\begin{'+env+r'}' )
     tokens.append( r'\end{'+env+'}' )
+
+  @staticmethod
+  def make_label(obj):
+    return r'\label{'+str(id(obj))+r'}'
+
+  @staticmethod
+  def make_ref(obj):
+    return r'\ref{'+str(id(obj))+r'}'
 
   def MultipleChoiceAnswer(self,obj):
     tokens = []
 
-    if self.listtype.lower() == 'easylist':
-      for (correct,choice) in obj.choices:
-        tokens.append( '& '+choice )
+    for (correct,choice) in obj.choices:
+      lbl = ""
+      if self.labels == True:
+        lbl = LatexEmitter.make_label(choice)
 
-    else:
-      for (correct,choice) in obj.choices:
+      if self.listtype.lower() == 'easylist':
+        tokens.append( '& '+lbl+choice )
+      else:
         tokens.append( r'\item '+choice )
 
-      self.wrap_in_environment( tokens, self.listtype.lower() )
+    if self.listtype.lower() != 'easylist':
+      LatexEmitter.wrap_in_environment( tokens, self.listtype.lower() )
 
     return '\n'.join(tokens)
 
@@ -142,20 +155,24 @@ class LatexEmitter(Emitter):
   def Question(self,obj):
     tokens = []
 
+    lbl = ""
+    if self.labels == True:
+      lbl = LatexEmitter.make_label(obj)
+
     if self.listtype.lower() == 'easylist':
-      tokens.append( '& '+obj.question )
+      tokens.append( '& '+lbl+obj.question )
       for answer in obj._answers:
         tokens.append( answer.emit(self).replace( '& ', '&& ' ) )
       for part in obj._parts:
         tokens.append( part.emit(self).replace( '& ', '&& ' ) )
     else:
-      tokens.append( r'\item '+obj.question )
+      tokens.append( r'\item '+lbl+obj.question )
       for answer in obj._answers:
         tokens.append( answer.emit(self) )
       for part in obj._parts:
         t = []
         t.append( part.emit(self) )
-        self.wrap_in_environment( t, self.listtype.lower() )
+        LatexEmitter.wrap_in_environment( t, self.listtype.lower() )
         tokens += t
 
     return '\n'.join( tokens )
@@ -166,7 +183,7 @@ class LatexEmitter(Emitter):
       for q in self.questions:
         tokens.append( q.emit(emitter) )
 
-      self.wrap_in_environment( tokens, self.listtype )
+      LatexEmitter.wrap_in_environment( tokens, self.listtype )
 
       return '\n'.join(tokens)
 
