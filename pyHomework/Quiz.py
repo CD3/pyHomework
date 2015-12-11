@@ -11,7 +11,6 @@ class Quiz(object):
     self._order = []
     self._config = {}
 
-
   def config(self,key,default=None,value=None):
     if value is None:
       try:
@@ -53,6 +52,7 @@ class Quiz(object):
   def emit(self,emitter=None):
     if emitter == None:
       emitter = self.DefaultEmitter
+
     if self.config('randomize/answers', False):
       for q in self._questions:
         for a in q._answers:
@@ -79,6 +79,14 @@ class Quiz(object):
         self.add_instruction( q['instructions'] )
 
       self.add_answer( make_answer(q['answer']) )
+
+  def find(self,pattern):
+    '''Find and return a question matching a search string.'''
+    for q in self.questions:
+      if pattern in q.question:
+        return q
+
+    return None
 
 
   @property

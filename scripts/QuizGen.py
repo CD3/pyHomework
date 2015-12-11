@@ -12,12 +12,13 @@
     -c STR, --config-var STR, --override STR    specify a configuration override.
     -l, --list-config                           list configuration options (for debug).
     -o, --output FILE                           write output to FILE. default is to replace extention of spec file with .txt
-    -t TYPE, --type TYPE                        output type
+    -t TYPE, --type TYPE                        output type [default: bb]
 
 
 """
 
 from pyHomework.Quiz import *
+from pyHomework.Emitter import *
 import sys, os, re, random
 from subprocess import call
 import yaml
@@ -147,7 +148,7 @@ class BbQuiz(Quiz):
 
     def write_quiz(self, filename="/dev/stdout"):
       with open(filename, 'w') as f:
-        f.write( self.emit('bb') )
+        f.write( self.emit(BbEmitter) )
 
 
 class LatexQuiz(Quiz):
@@ -161,6 +162,8 @@ class LatexQuiz(Quiz):
       self._config = self._default_config.copy()
 
       self.template = r'''
+{{default instructions = 'UNDEFINED'}}
+{{default make_key = False}}
 \documentclass[letterpaper,10pt]{article}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -173,23 +176,31 @@ class LatexQuiz(Quiz):
 {\Large {{title}}}
 \end{center}
 
+{{if instructions != 'UNDEFINED'}}
 Special Instructions:
 {{instructions}}
 \vspace{10pt}
 Questions:
 \vspace{10pt}
+{{endif}}
 
 {{questions}}
+
+{{if make_key}}
+\clearpage
+Answers:
+
+{{key}}
+
+{{endif}}
 
 \end{document}
 '''
 
     def write_quiz(self, filename="/dev/stdout"):
       engine = tempita.Template(self.template)
-      render_data = { 'title' : "Untitled"
-                    , 'instructions' : "None"
-                    , 'questions' : self.emit('latex-compactenum')
-                    , 'answers' : "None" }
+      render_data = { 'questions'    : self.emit(LatexEmitter('compactenum',labels=True))
+                    , 'key'          : self.emit(LatexKeyEmitter()) }
       render_data.update( self._config )
       text = engine.substitute( **render_data )
 

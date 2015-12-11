@@ -1,8 +1,7 @@
 import re,sys,inspect
 import pint
 import random
-from pyErrorProp import sigfig_round
-from pyErrorProp import units
+from pyErrorProp import sigfig_round, units, Q_, UQ_
 
 class Answer(object):
   DefaultEmitter = None
@@ -39,6 +38,28 @@ class NumericalAnswer(Answer):
   def quantity(self):
     return '{{:.{:d}E}}'.format( self.sigfigs-1 ).format( self._quant )
 
+  @property
+  def latex(self):
+    val = self.value
+    unc = self.uncertainty
+    uni = self.units
+
+    if unc == 0:
+      q = Q_(val,uni)
+      return '{{:.{:d}eLx}}'.format( self.sigfigs-1 ).format( q )
+    else:
+      q = UQ_(val,unc,uni)
+      # this siunitx package will choke if there is a period in the uncertainty
+      # so we need to remove it
+      s = '{{:.{:d}ueLx}}'.format( self.sigfigs-1 ).format( q )
+      uncbeg = s.find( '(' )
+      uncend = s.find( ')',uncbeg )
+      uncper = s.find( '.',uncbeg)
+      if uncbeg < uncper and uncper < uncend:
+        s = s[:uncper] + s[uncper+1:]
+
+      return s
+
   @quantity.setter
   def quantity(self,v):
     if isinstance(v,(str,unicode)):
@@ -63,6 +84,9 @@ class NumericalAnswer(Answer):
   @property
   def uncertainty(self):
     unc = self._unc
+
+    if unc is None:
+      return 0
 
     if isinstance( self._unc, (str,unicode) ):
       if '%' in self._unc:

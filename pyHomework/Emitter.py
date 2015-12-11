@@ -1,11 +1,29 @@
 from .Answer import *
 from .Question import *
 from .Quiz import *
+import inspect
+
+def get_bases( cls ):
+  if not inspect.isclass( cls ):
+    cls = cls.__class__
+
+  for b in cls.__bases__:
+    if len(b.__bases__) > 0:
+      for bb in get_bases( b ):
+        yield bb
+    yield b
 
 class Emitter(object):
+
   def __call__( self,obj):
     if hasattr( self, obj.__class__.__name__ ):
       return getattr(self, obj.__class__.__name__)(obj)
+
+    bases = list( get_bases( obj ) )
+    bases.reverse()
+    for b in bases:
+      if hasattr( self, b.__name__ ):
+        return getattr(self, b.__name__)(obj)
 
     return getattr(self, 'Default')(obj)
 
@@ -106,12 +124,11 @@ class BbEmitter(Emitter):
     return '\t'.join( tokens )
 
   def Quiz(self,obj):
+    tokens = []
+    for q in obj.questions:
+      tokens.append( q.emit(self) )
 
-      tokens = []
-      for q in obj.questions:
-        tokens.append( q.emit(self) )
-
-      return '\n'.join(tokens)
+    return '\n'.join(tokens)
 
 
 
@@ -144,7 +161,7 @@ class LatexEmitter(Emitter):
       if self.listtype.lower() == 'easylist':
         tokens.append( '& '+lbl+choice )
       else:
-        tokens.append( r'\item '+choice )
+        tokens.append( r'\item '+lbl+choice )
 
     if self.listtype.lower() != 'easylist':
       LatexEmitter.wrap_in_environment( tokens, self.listtype.lower() )
@@ -178,14 +195,46 @@ class LatexEmitter(Emitter):
     return '\n'.join( tokens )
 
   def Quiz(self,obj):
+    tokens = []
+    for q in obj.questions:
+      tokens.append( q.emit(self) )
 
-      tokens = []
-      for q in self.questions:
-        tokens.append( q.emit(emitter) )
+    LatexEmitter.wrap_in_environment( tokens, self.listtype )
 
-      LatexEmitter.wrap_in_environment( tokens, self.listtype )
+    return '\n'.join(tokens)
 
-      return '\n'.join(tokens)
+
+class LatexKeyEmitter(LatexEmitter):
+
+  def MultipleChoiceAnswer(self,obj):
+    tokens = []
+    for cc,c in obj.choices:
+      if cc:
+        tokens.append( self.make_ref( c ) )
+
+    return ', '.join(tokens)
+
+  def NumericalAnswer(self,obj):
+    tokens = []
+    tokens.append( obj.latex )
+
+    return ' '.join(tokens)
+
+  def Question(self,obj):
+    tokens = []
+    tokens.append( self.make_ref( obj ) )
+    t = []
+    for a in obj._answers:
+      t.append( a.emit(self) )
+    tokens.append( ", ".join(t) )
+    return " ".join(tokens)
+
+  def Quiz(self,obj):
+    tokens = []
+    for q in obj.questions:
+      tokens.append( q.emit(self) )
+
+    return '\n\n'.join(tokens)
 
 Answer.DefaultEmitter = PlainEmitter
 Question.DefaultEmitter = PlainEmitter
