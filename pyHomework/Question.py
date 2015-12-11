@@ -15,7 +15,6 @@ class Question(object):
     self._instructions = []
     self._answers = []
     self._parts = []
-    self._files = {}
 
     # regular members
     self.prepend_instructions = False
@@ -57,9 +56,6 @@ class Question(object):
     for i in range(len(X)):
       X[i] = format_text( X[i], *args, **kwargs )
 
-
-
-
   # properties: getters that return processed versions of the member data
 
   @property
@@ -80,6 +76,13 @@ class Question(object):
 
     return self.join_X( tmp )
 
+  @property
+  def last_part(self):
+    if len( self._parts ) > 0:
+      i = -1
+      return self._parts[i]
+    else:
+      return None
 
   # add operations
 
@@ -92,30 +95,24 @@ class Question(object):
   def add_answer(self,v,prepend=False):
     return self.add_X(self._answers,v,prepend)
 
-  def add_part(self,v,prepend=False):
+  def add_part(self,v=None,prepend=False):
+    if not isinstance(v, Question):
+      v = Question(v)
     return self.add_X(self._parts,v,prepend)
-
-  def add_file(self,filename,name=None):
-    name = name or filename
-    self._files[name] = filename
 
   # set operations
 
-  def set_text(self,v):
+  def set_text(self,v=None):
     return self.set_X(self._texts,v)
 
-  def set_instruction(self,v):
+  def set_instruction(self,v=None):
     return self.set_X(self._instructions,v)
 
-  def set_answer(self,v):
+  def set_answer(self,v=None):
     return self.set_X(self._answers,v)
 
-  def set_part(self,v):
+  def set_part(self,v=None):
     return self.set_X(self._parts,v)
-
-  def set_file(self,*args,**kwargs):
-    self._files = {}
-    self.add_file(*args,**kwargs)
 
   # format operations
 

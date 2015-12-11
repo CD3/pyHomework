@@ -7,9 +7,12 @@ class Quiz(object):
   DefaultEmitter = None
 
   def __init__(self):
+    self._config = {}
+
     self._questions = []
     self._order = []
-    self._config = {}
+    self._file = []
+
 
   def config(self,key,default=None,value=None):
     if value is None:
@@ -38,16 +41,33 @@ class Quiz(object):
   def order(self,v):
     self._order = v
 
-  def add_question(self,text=None):
-    self._order.append( len(self._questions) )
-    self._questions.append( Question(text) )
-
-  def get_last_question( self ):
+  @property
+  def last_question(self):
     if len( self._questions ) > 0:
       i = self._order[-1]
       return self._questions[i]
     else:
       return None
+
+  @property
+  def question(self):
+    return self.last_question
+
+
+  def add_question(self,text=None):
+    self._order.append( len(self._questions) )
+    self._questions.append( Question(text) )
+
+  def add_file(self,filename,name=None):
+    name = name or filename
+    self._files[name] = filename
+
+  def set_file(self,*args,**kwargs):
+    self._files = {}
+    self.add_file(*args,**kwargs)
+
+
+
 
   def emit(self,emitter=None):
     if emitter == None:
@@ -83,19 +103,15 @@ class Quiz(object):
   def find(self,pattern):
     '''Find and return a question matching a search string.'''
     for q in self.questions:
-      if pattern in q.question:
+      if pattern in q:
         return q
 
     return None
 
 
-  @property
-  def question(self):
-    return self.get_last_question()
-
 def passthrough_fn( fn_name ):
   def func(self, *args, **kwargs):
-    return getattr(self.question,fn_name)(*args,**kwargs)
+    return getattr(self.last_question,fn_name)(*args,**kwargs)
   setattr(Quiz,fn_name, func)
 passthroughs = ['add_text'
                ,'add_instruction'

@@ -1,5 +1,5 @@
-from pyHomework import *
-from pyHomework.Answer import *
+from pyHomework.HomeworkAssignment import *
+from pyHomework.Emitter import *
 import pytest
 
 def Close( a, b, tol = 0.001 ):
@@ -9,8 +9,22 @@ def Close( a, b, tol = 0.001 ):
         b = float(b)
     return (a - b)**2 / (a**2 + b**2) < 4*tol*tol
 
-
 needsporting = pytest.mark.skipif(True, reason="Need to port to new Answer/Question/Quiz classes")
+
+def test_interface():
+  ass = HomeworkAssignment()
+
+  ass.add_question()
+  ass.add_text("Q1")
+  
+  ass.last_question.add_part()
+  ass.last_question.last_part.add_text("Q1a")
+
+  ass.last_question.last_part.add_part()
+  ass.last_question.last_part.last_part.add_text("Q1aa")
+
+
+  print ass.emit( LatexEmitter )
 
 @needsporting
 def test_quiz():
