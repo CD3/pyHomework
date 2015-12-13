@@ -123,10 +123,9 @@ def test_quiz():
 
   ass.add_quiz_question()
   ass.quiz_add_text("What is the answer?")
-  Answer = UQ_(123456789,40,'N')
+  Answer = UQ_(123456789,40,'dimensionless')
   ass.quiz_set_answer( NumericalAnswer( Answer ) )
 
-  ass.write_latex('test.tex')
-  ass.write_quiz('test-quiz.txt')
   ass.build_PDF('test.pdf')
+  ass.write_quiz('test-quiz.txt')
 

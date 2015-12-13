@@ -84,9 +84,13 @@ class Quiz(object):
 
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
 
-  def write(self, filename="/dev/stdout"):
-    with open(filename, 'w') as f:
-      f.write( self.emit() )
+  def write(self, stream="/dev/stdout"):
+    if isinstance(stream,(str,unicode)):
+      with open(stream, 'w') as f:
+        return self.write(f)
+    
+    stream.write( self.emit() )
+
 
   def load(self,spec):
     self._config = spec.get('configuration',{})

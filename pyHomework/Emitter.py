@@ -244,5 +244,3 @@ class LatexKeyEmitter(LatexEmitter):
 
     return '\n\n'.join(tokens)
 
-# Quiz.DefaultEmitter = PlainEmitter
-# BbQuiz.DefaultEmitter = BbEmitter

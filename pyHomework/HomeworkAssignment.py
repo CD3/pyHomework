@@ -1,10 +1,11 @@
 #! /usr/bin/env python
 
-import os
+import os, StringIO
 from subprocess import call
 
 from .Quiz import *
 from .Emitter import *
+from .Utils import *
 from pyErrorProp import *
 
 import tempita
@@ -95,7 +96,18 @@ class Package(object):
   def latex(self):
     return tempita.sub( self.latex_template, name=self.name, opts = ','.join(self.opts) )
     
+Question_question = Question.question
+@property
+def my_question(self):
+    tmp = [self.text]
 
+    if self.prepend_instructions:
+      tmp.insert(0,self.instructions)
+    else:
+      tmp.append(self.instructions)
+
+    return self.join_X( tmp )
+# Question.question = my_question
 
 
 
@@ -142,6 +154,8 @@ class HomeworkAssignment(Quiz):
     self._quizzes = {}
     self._figures = {}
     self._header = []
+
+    self.latex_refs = {}
     
     
     self.add_package('amsmath')
@@ -288,6 +302,8 @@ class HomeworkAssignment(Quiz):
       return basename + '.tex'
     if type.lower() == 'tex':
       return basename + '.tex'
+    if type.lower() == 'aux':
+      return basename + '.aux'
     if type.lower() == 'pdf':
       return basename + '.pdf'
 
@@ -314,6 +330,7 @@ class HomeworkAssignment(Quiz):
 
     if filename.endswith( '.pdf' ):
       call( ['latexmk', '-silent', '-pdf', texfile ] )
+      self.latex_refs.update( parse_aux( self.get_fn( texfile, 'aux' ) ) )
       call( ['latexmk', '-c', texfile ] )
         
   # legacy interface
@@ -332,11 +349,16 @@ class HomeworkAssignment(Quiz):
 
     self._quizzes['default'].add_question()
 
+    self.quiz_add_text( "For problem #{{refs['%s']}}:" % id(self.last_question_or_part) )
+
   def quiz_add_text(self, text, prepend=False ):
     self.get_quiz('default').add_text(text,prepend)
 
   def quiz_set_answer(self, answer):
     self.get_quiz('default').set_answer(answer)
+    if isinstance( answer, NumericalAnswer ):
+      if answer.units != 'dimensionless':
+        self.get_quiz('default').add_instruction('Give your answer in %s.' % answer.units,prepend=True)
     
   def format_text(self,*args,**kwargs):
     self.last_question_or_part.format_text(*args,**kwargs)
@@ -352,5 +374,11 @@ class HomeworkAssignment(Quiz):
     self.write(filename)
 
   def write_quiz(self,filename,name='default'):
-    self.get_quiz(name).write(filename)
+    # we need to replace references before we write to file
+    stream = StringIO.StringIO()
+    self.get_quiz(name).write(stream)
+    context = {'refs' : self.latex_refs}
+    text = tempita.sub(stream.getvalue(), **context)
+    with open(filename,'w') as f:
+      f.write(text)
 
