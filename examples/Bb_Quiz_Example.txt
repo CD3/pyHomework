@@ -1,7 +1,0 @@
-NUM	What is the correct numer, plus or minus 20%?	7.00E+00	1.40E+00
-MC	To answer this question, view the picture at http://scatcat.fhsu.edu/~cdclark/images/picture.png by copying the link into your browser IN A NEW TAB (DO NOT USE THIS TAB). Can you see the picture?	yes	correct	no	incorrect
-MC	What is the correct answer?	this is the correct answer	correct	this is not the correct answer	incorrect	this is also not the correct answer	incorrect
-MA	What answers are correct?	this is a correct answer	correct	this is not a correct answer	incorrect	this is also a correct answer	correct
-NUM	What is the correct numer?	7.00E+00	7.00E-02
-ORD	Put these items in the correct order	first	second	third
-TF	Is the answer True?	true

@@ -1,5 +1,5 @@
-
 configuration:
+  title : 'Example Quiz'
   randomize:
     questions: True
     answers: False
@@ -37,16 +37,18 @@ questions:
   - 
     text: "What is the correct numer?"
     answer:
-      value : 7
+      value : '7 m'
+      uncertainty : 0
 
   - 
     text: "What is the correct numer, plus or minus 20%?"
     answer:
-      value : 7
-      uncertainty: 20%
+      value : '7 m/s^2'
+      uncertainty: 3
   - 
     text: "Is the answer True?"
-    answer: True
+    answer:
+      logical: True
   - 
     text: "Can you see the picture?"
     image: './picture.png'

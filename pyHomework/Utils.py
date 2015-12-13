@@ -1,6 +1,20 @@
 #! /usr/bin/env python
 
 import datetime
+import string
+
+class FormatterDict(dict):
+  def __missing__(self,key):
+    return '{'+key+'}'
+
+def format_text(text, formatter, *args, **kwargs):
+  if formatter == 'format':
+    return string.Formatter().vformat( text, args, FormatterDict( kwargs ) )
+  elif formatter == 'template':
+    return string.Template( text ).safe_substitute( **kwargs )
+  else:
+    return text
+
 
 def toBool( v ):
     if isinstance(v,str):
@@ -19,33 +33,6 @@ def toBool( v ):
 
 def isBool(v):
   return str(v).lower() in ('true', 'yes','false','no','0','1')
-
-def FindPairs( s, beg_str, end_str):
-    curr = 0
-
-    pairs = list()
-    run = True
-    while run:
-        opair = None
-        curr = s.find( beg_str, curr )
-        beg = curr
-        curr = s.find( end_str, curr )
-        end = curr
-        if beg >= 0 and end > 0:
-            opair = [beg,end]
-
-        if opair:
-            ipair = [
-            opair[0] + len(beg_str)
-           ,opair[1] - len(end_str)
-            ]
-
-            pairs.append( [opair,ipair] )
-
-        else:
-            run = False
-
-    return pairs
 
 def dict2list( d ):
     l = [None]*len( d )
@@ -84,3 +71,53 @@ def generate_latex_image( filename, text, extra_opts = [], config = {} ):
   packages = 'circuitikz/siunitx/amsmath/amsfonts/amssymb'
 
   call( ['l2p', '-p', packages, '-t', '-B', '10x10'] + extra_opts + ['-o', image_filename, latex_filename] )
+
+def get_pairs( s, beg_str, end_str ):
+  '''Return list containing index positions of beg/end strings. Only returns positions for outside pairs.'''
+  pairs = list()
+  beg_n = len(beg_str)
+  end_n = len(end_str)
+  depth = 0
+  for i in range(len(s)):
+    if s[i:i+beg_n] == beg_str:
+      depth += 1
+      if depth == 1:
+        beg_i = i
+    if s[i:i+end_n] == end_str:
+      depth -= 1
+      if depth == 0:
+        end_i = i+end_n
+        pairs.append( [beg_i, end_i] )
+
+  return pairs
+
+def extract( s, beg_str, end_str ):
+    pairs = get_pairs( s, beg_str, end_str )
+    substrings = list()
+    for pair in pairs:
+      substrings.append( s[pair[0]+len(beg_str): pair[1]-len(end_str)] )
+
+    return substrings
+
+  
+
+
+def parse_aux(filename):
+  aux_lines = []
+  with open(filename,'r') as f:
+    aux_lines = f.read().split('\n')
+
+  entries = dict()
+  for line in aux_lines:
+    if line.startswith('\\newlabel'):
+      lbl,ref = extract( line, '{', '}' )
+      ref = extract( ref, '{', '}' )[0]
+      ref = ref.replace( r'\bgroup', '' )
+      ref = ref.replace( r'\egroup', '' )
+      ref = ref.replace( r' ', '' )
+      ref = ref.replace( r'.', '' )
+      entries[lbl] = ref
+      
+  return entries
+
+
