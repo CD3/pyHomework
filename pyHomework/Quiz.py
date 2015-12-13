@@ -66,9 +66,6 @@ class Quiz(object):
     self._files = {}
     self.add_file(*args,**kwargs)
 
-
-
-
   def emit(self,emitter=None):
     if emitter == None:
       emitter = self.DefaultEmitter
@@ -85,6 +82,10 @@ class Quiz(object):
       return emitter(self)
 
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
+
+  def write(self, filename="/dev/stdout"):
+    with open(filename, 'w') as f:
+      f.write( self.emit() )
 
   def load(self,spec):
     self._config = spec.get('configuration',{})
@@ -126,3 +127,40 @@ passthroughs = ['add_text'
 for p in passthroughs:
   passthrough_fn(p)
 
+
+
+class BbQuiz(Quiz):
+    def __init__(self,*args,**kwargs):
+      super(BbQuiz,self).__init__(*args,**kwargs)
+      self._config = { 'files' :
+                         { 'view_url'  : 'http://example.com/files/{filename:s}'
+                         , 'push_url'  : 'ssh://example.com/files/{filename:s}'
+                         , 'local_url' : '/path/to/the/files/{filename:s}'
+                         }
+                    , 'randomize' :
+                        { 'questions' : False
+                        , 'answers'   : False
+                        }
+                    }
+
+    def push_image(self, image_filename, remote_config):
+        data = dict()
+
+        if 'copy_root' in remote_config:
+          url = urlparse.urlparse( os.path.join( remote_config['copy_root'], remote_config['image_dir'] ) )
+        else:
+          return None
+
+        if url.scheme == 'ssh':
+          data['file']   = image_filename
+          data['netloc'] = url.netloc
+          data['path']   = url.path[1:]
+
+          cmd = 'scp "%(file)s" "%(netloc)s:%(path)s" > /dev/null' % data
+          print "found file/link pair. copying file to server with '%s'." % cmd
+          os.system( cmd )
+        
+        # the link that points to the image may not be the same as the url we copied it too, so we want to construct the
+        # correct link and return it.
+        link = urlparse.urljoin( remote_config['web_root'], os.path.join(remote_config['image_dir'], os.path.basename(image_filename) ) )
+        return link

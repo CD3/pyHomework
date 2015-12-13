@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 """
-  BbQuiz: generate Blackboard quizzes from YAML spec files.
+  QuizGen: generate Blackboard quizzes from YAML spec files.
 
   Usage:
-    BbQuiz.py [-l] [-c STR]... [-t TYPE] [-o FILE] <quiz-file> ...
-    BbQuiz.py -m
-    BbQuiz.py -e FILE
+    QuizGen.py [-l] [-c STR]... [-t TYPE] [-o FILE] <quiz-file> ...
+    QuizGen.py -m
+    QuizGen.py -e FILE
 
   Options:
     -e FILE, --example FILE                     write an example quiz file and exit.
@@ -110,46 +110,6 @@ questions:
 
 
 
-class BbQuiz(Quiz):
-    def __init__(self,*args,**kwargs):
-      super(BbQuiz,self).__init__(*args,**kwargs)
-      self._config = { 'files' :
-                         { 'view_url'  : 'http://example.com/files/{filename:s}'
-                         , 'push_url'  : 'ssh://example.com/files/{filename:s}'
-                         , 'local_url' : '/path/to/the/files/{filename:s}'
-                         }
-                    , 'randomize' :
-                        { 'questions' : False
-                        , 'answers'   : False
-                        }
-                    }
-
-    def push_image(self, image_filename, remote_config):
-        data = dict()
-
-        if 'copy_root' in remote_config:
-          url = urlparse.urlparse( os.path.join( remote_config['copy_root'], remote_config['image_dir'] ) )
-        else:
-          return None
-
-        if url.scheme == 'ssh':
-          data['file']   = image_filename
-          data['netloc'] = url.netloc
-          data['path']   = url.path[1:]
-
-          cmd = 'scp "%(file)s" "%(netloc)s:%(path)s" > /dev/null' % data
-          print "found file/link pair. copying file to server with '%s'." % cmd
-          os.system( cmd )
-        
-        # the link that points to the image may not be the same as the url we copied it too, so we want to construct the
-        # correct link and return it.
-        link = urlparse.urljoin( remote_config['web_root'], os.path.join(remote_config['image_dir'], os.path.basename(image_filename) ) )
-        return link
-
-    def write_quiz(self, filename="/dev/stdout"):
-      with open(filename, 'w') as f:
-        f.write( self.emit(BbEmitter) )
-
 
 class LatexQuiz(Quiz):
     def __init__(self,*args,**kwargs):
@@ -197,7 +157,7 @@ Answers:
 \end{document}
 '''
 
-    def write_quiz(self, filename="/dev/stdout"):
+    def write(self, filename="/dev/stdout"):
       engine = tempita.Template(self.template)
       render_data = { 'questions'    : self.emit(LatexEmitter('compactenum',labels=True))
                     , 'key'          : self.emit(LatexKeyEmitter()) }
@@ -279,7 +239,7 @@ if __name__ == "__main__":
     outfile = get_fn( arg, arguments['--type'] )
     if arguments['--output'] is not None:
       outfile = arguments['--output']
-    quiz.write_quiz(outfile)
+    quiz.write(outfile)
 
 
 

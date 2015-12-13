@@ -1,7 +1,8 @@
 from .Answer import *
 from .Question import *
 from .Quiz import *
-import inspect
+from .Signal import *
+import inspect, operator, functools
 
 def get_bases( cls ):
   if not inspect.isclass( cls ):
@@ -14,8 +15,10 @@ def get_bases( cls ):
     yield b
 
 class Emitter(object):
+  sig_pre_question  = Signal()
+  sig_post_question = Signal()
 
-  def __call__( self,obj):
+  def __call__(self,obj):
     if hasattr( self, obj.__class__.__name__ ):
       return getattr(self, obj.__class__.__name__)(obj)
 
@@ -196,8 +199,15 @@ class LatexEmitter(Emitter):
 
   def Quiz(self,obj):
     tokens = []
+    i = 0
+    tokens += filter( functools.partial(operator.is_not, None), self.sig_post_question(i=i,question=None) )
     for q in obj.questions:
+      i += 1
+      tokens += filter( functools.partial(operator.is_not, None), self.sig_pre_question(i=i,question=q) )
       tokens.append( q.emit(self) )
+      tokens += filter( functools.partial(operator.is_not, None), self.sig_post_question(i=i,question=q) )
+    i += 1
+    tokens += filter( functools.partial(operator.is_not, None), self.sig_pre_question(i=i,question=None) )
 
     LatexEmitter.wrap_in_environment( tokens, self.listtype )
 
@@ -239,3 +249,4 @@ class LatexKeyEmitter(LatexEmitter):
 Answer.DefaultEmitter = PlainEmitter
 Question.DefaultEmitter = PlainEmitter
 Quiz.DefaultEmitter = PlainEmitter
+BbQuiz.DefaultEmitter = BbEmitter

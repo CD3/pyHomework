@@ -1,32 +1,129 @@
 #! /usr/bin/env python
 
+import os
+from subprocess import call
+
 from .Quiz import *
+from .Emitter import *
 from pyErrorProp import *
+
+import tempita
 
 # ELEMENT CLASSES
 
 class Figure(object):
-  def __init__(self):
-    self.filename = ""
-    self.label = ""
-    self.caption  = ""
-    self.options = ""
+  latex_template=r'''
+\begin{figure}
+\includegraphics[{{options}}]{{begb}}{{filename}}{{endb}}
+\caption{ \label{{begb}}{{label}}{{endb}} {{caption}} }
+\end{figure}
+'''
 
+  def __init__(self,filename=""):
+    self._filename = filename
+    self._label = []
+    self._caption  = []
+    self._options = []
+
+  def set_filename(self,fn):
+    self._filename = fn
+
+  def add_label(self,lbl,prepend=False):
+    if prepend:
+      self._label.insert(0,lbl)
+    else:
+      self._label.append(lbl)
+
+  def set_label(self,lbl):
+    self._label = []
+    self.add_label(lbl)
+
+  def add_option(self,opt):
+    self._options.append(opt)
+
+  def set_option(self,opt):
+    self._options = []
+    self._options.append(opt)
+  
+  def add_caption(self, cap, prepend=False):
+    if prepend:
+      self._caption.insert(0,cap)
+    else:
+      self._caption.append(cap)
+
+  def set_caption(self, cap):
+    self._caption = []
+    self._caption.append(cap)
+
+  @property
+  def latex(self):
+    context = { 'filename' : self._filename
+              , 'options'  : ','.join(self._options)
+              , 'caption'  : ' '.join(self._caption)
+              , 'label'    : ''.join(self._label)
+              , 'begb'    : '{'
+              , 'endb'    : '}'
+              }
+    return tempita.sub( self.latex_template, **context )
+  
 class Paragraph(object):
   def __init__(self, text = ""):
-    self.text = text
+    self._texts = []
+    self.set_text( text )
 
   def add_text(self, text):
-    self.text += text + " "
+    self._texts.append(text)
+
+  def set_text(self, text):
+    self._texts = []
+    self._texts.append(text)
+
+  @property
+  def latex(self):
+    return ' '.join(self._texts)
+
+class Package(object):
+  latex_template = r'\usepackage[{{opts}}]{ {{name}} }'
+  def __init__(self, name = "", opts = ""):
+    self.name = name
+    self.opts = opts.split(',')
+
+  def add_opt(self, opt):
+    self.opts.append( opt )
+
+  @property
+  def latex(self):
+    return tempita.sub( self.latex_template, name=self.name, opts = ','.join(self.opts) )
+    
 
 
 
-# ANSWER CLASSES
 
-
-# ASSIGNMENT CLASSES
+# HOMEWORK ASSIGNMENT CLASS
 
 class HomeworkAssignment(Quiz):
+  latex_template= r'''
+{{default author = ''}}
+{{default date = ''}}
+\documentclass[letterpaper,10pt]{article}
+
+{{preamble}}
+
+{{header}}
+
+\title{ {{title}} }
+\author{ {{author}} }
+\date{ {{date}} }
+
+\begin{document}
+\maketitle
+
+{{body}}
+
+{{figures}}
+
+\end{document}
+'''
 
   def __init__(self):
     super( HomeworkAssignment,self ).__init__()
@@ -39,200 +136,221 @@ class HomeworkAssignment(Quiz):
                    , 'RF' : r"powered by \LaTeX"
                    }
 
-    self.quizzes = []
-    self.figures = []
-
-    self.latex_template= r'''
-\documentclass[letterpaper,10pt]{article}
-\usepackage{amsmath}
-\usepackage{amsfonts}
-\usepackage{amssymb}
-\usepackage{graphicx}
-\usepackage{siunitx}
-\usepackage{fancyhdr}
-\usepackage[ampersand]{easylist}
-\ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)
-\usepackage{hyperref}
-\usepackage[left=1in,right=1in,top=1in,bottom=1in]{geometry}
-
-\sisetup{per-mode=symbol}
-\DeclareSIUnit \mile {mi}
-\DeclareSIUnit \inch {in}
-\DeclareSIUnit \foot {ft}
-\DeclareSIUnit \yard {yd}
-\DeclareSIUnit \acre {acre}
-\DeclareSIUnit \lightyear {ly}
-\DeclareSIUnit \parcec {pc}
-\DeclareSIUnit \teaspoon {tsp.}
-\DeclareSIUnit \tablespoon {tbsp.}
-\DeclareSIUnit \gallon {gal}
-\DeclareSIUnit \fluidounce{fl oz}
-\DeclareSIUnit \ounce{oz}
-\DeclareSIUnit \pound{lb}
-\DeclareSIUnit \hour{hr}
-
-
-\setlength{\headheight}{0.5in}
-\pagestyle{fancyplain}
-\fancyhead[L]{${config['LH']}}
-\fancyhead[C]{${config['CH']}}
-\fancyhead[R]{${config['RH']}}
-\fancyfoot[L]{${config['LF']}}
-\fancyfoot[C]{${config['CF']}}
-\fancyfoot[R]{${config['RF']}}
-\renewcommand{\headrulewidth}{0pt}
-
-\setlength{\parindent}{0cm}
-
-\title{${config['title']}}
-\author{}
-\date{}
-
-%for line in config['preamble']:
-${line}
-%endfor
-
-\begin{document}
-\maketitle
-
-%for item in config['stack']:
-%if config['isQuestion']( item ):
-\begin{minipage}{\linewidth}
-  \begin{easylist}
-  & ${'*' if item.starred else ''} \label{${item.label}} ${item.text}
-  %for p in item.parts:
-    && ${'*' if p.starred else ''} \label{${p.label}} ${p.text}
-  %endfor
-  \end{easylist}
-\end{minipage}
-%endif
-%if config['isFigure']( item ):
-\begin{figure}
-\includegraphics[${item.options}]{${item.filename}}
-\caption{ \label{${item.label}} ${item.caption}}
-\end{figure}
-%endif
-%if config['isParagraph']( item ):
-
-${item.text}
-
-%endif
-%endfor
-
-\clearpage
-
-%if config.get('make_key',False):
-\textbf{Answers:} \\\
-
-%for item in config['stack']:
-%if config['isQuestion']( item ):
-%if not item.answer is None:
-  \ref{${item.label}} ${str(item.answer)} \\\
-%endif
-%for p in item.parts:
-%if not p.answer is None:
-  \ref{${p.label}} ${str(p.answer)} \\\
-%endif
-%endfor
-%endif
-%endfor
-%endif
-
-\end{document}
-'''
-
-
-  # def write_latex(self, stream=None):
-    # if stream is None:
-        # stream = "/dev/stdout"
-
-    # if isinstance(stream,(str,unicode)):
-      # basename = os.path.splitext( os.path.basename(stream))[0]
-      # self.config['latex_aux'] = basename+'.aux'
-      # with open(stream, 'w') as f:
-        # self.write_latex( f )
-      # return
-
-    # stream.write( self.template_engine.render( config=self.config ) )
-
-  # def write_quiz(self, stream="quiz.yaml"):
-    # if stream is None:
-        # stream = "/dev/stdout"
-
-    # if isinstance(stream,(str,unicode)):
-      # with open(stream, 'w') as f:
-        # self.write_quiz( f )
-      # return
-
-    # # this will write a yaml file that can be processed by BbQuiz
-    # tree = {'questions' : [] }
-    # for item in self.stack:
-      # if self.config['isQuizQuestion'](item):
-        # tree['questions'].append( item.dict() )
-
-    # if not self.config['latex_aux'] is None:
-      # tree.update({ 'latex' : {'aux' : self.config['latex_aux']}})
+    self._packages = []
+    self._preamble = []
+    self._paragraphs = {}
+    self._quizzes = {}
+    self._figures = {}
+    self._header = []
     
-    # if not self.config['quiz_config'] is None:
-      # tree.update( {'configuration' : self.config['quiz_config'] } )
+    
+    self.add_package('amsmath')
+    self.add_package('amsfonts')
+    self.add_package('amssymb')
+    self.add_package('graphicx')
+    self.add_package('grffile')
+    self.add_package('siunitx')
+    self.add_package('fancyhdr')
+    self.add_package('easylist', 'ampersand')
+    self.add_package('hyperref')
+    self.add_package('geometry', 'left=1in,right=1in,top=1in,bottom=1in')
 
-    # stream.write( yaml.dump(tree, default_flow_style=False) )
+    self.add_preamble(r'\ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)')
+    self.add_preamble(r'\setlength{\parindent}{0cm}')
+    self.add_preamble(r'\sisetup{per-mode=symbol}')
+    self.add_preamble(r'\DeclareSIUnit \mile {mi}')
+    self.add_preamble(r'\DeclareSIUnit \inch {in}')
+    self.add_preamble(r'\DeclareSIUnit \foot {ft}')
+    self.add_preamble(r'\DeclareSIUnit \yard {yd}')
+    self.add_preamble(r'\DeclareSIUnit \acre {acre}')
+    self.add_preamble(r'\DeclareSIUnit \lightyear {ly}')
+    self.add_preamble(r'\DeclareSIUnit \parcec {pc}')
+    self.add_preamble(r'\DeclareSIUnit \teaspoon {tsp.}')
+    self.add_preamble(r'\DeclareSIUnit \tablespoon {tbsp.}')
+    self.add_preamble(r'\DeclareSIUnit \gallon {gal}')
+    self.add_preamble(r'\DeclareSIUnit \fluidounce{fl oz}')
+    self.add_preamble(r'\DeclareSIUnit \ounce{oz}')
+    self.add_preamble(r'\DeclareSIUnit \pound{lb}')
+    self.add_preamble(r'\DeclareSIUnit \hour{hr}')
 
-  # def build_PDF( self, basename="main"):
-    # basename = os.path.splitext(basename)[0]
-    # scratch = tempfile.mkdtemp()
+    self.add_header(r'\setlength{\headheight}{0.5in}')
+    self.add_header(r'\pagestyle{fancyplain}')
+    self.add_header(r'\fancyhead[L]{ {{LH}} }')
+    self.add_header(r'\fancyhead[C]{ {{CH}} }')
+    self.add_header(r'\fancyhead[R]{ {{RH}} }')
+    self.add_header(r'\fancyfoot[L]{ {{LF}} }')
+    self.add_header(r'\fancyfoot[C]{ {{CF}} }')
+    self.add_header(r'\fancyfoot[R]{ {{RF}} }')
+    self.add_header(r'\renewcommand{\headrulewidth}{0pt}')
 
-    # self.write_latex(os.path.join(scratch,basename+".tex") )
+  @property
+  def body_latex(self):
+    def insert_paragraph( i, question, **kwargs ):
+      if i in self._paragraphs:
+        tokens = []
+        tokens.append(r'\end{easylist}')
+        tokens.append('')
+        for p in self._paragraphs[i]:
+          tokens.append( p.latex )
+        tokens.append('')
+        tokens.append(r'\begin{easylist}')
+        return '\n'.join(tokens)
 
-    # # copy dependencies
-    # for item in self.config['extra_files']:
-      # fr  = item
-      # to  = os.path.join(scratch, os.path.basename( item ))
-      # print "Copying %s to %s" % (fr,to)
-      # shutil.copy( fr, to )
+      return None
+
+    emitter = LatexEmitter(labels=True)
+    emitter.sig_post_question.connect( insert_paragraph )
+    text = self.emit(LatexEmitter(labels=True))
+    emitter.sig_post_question.disconnect( insert_paragraph )
+    return text
+
+  @property
+  def preamble_latex(self):
+    tokens = []
+    for p in self._packages:
+      tokens.append( p.latex )
+    tokens.append('')
+    for p in self._preamble:
+      tokens.append( p )
+
+    return '\n'.join( tokens )
+
+  @property
+  def header_latex(self):
+    context = self._config
+    return tempita.sub( '\n'.join(self._header), **context )
+
+  @property
+  def figures_latex(self):
+    tokens = []
+    for f in self._figures:
+      tokens.append( f.latex )
+
+    return '\n'.join( tokens )
+
+  @property
+  def last_ref(self):
+    qp = self.last_question_or_part
+
+    if qp is not None:
+      return str(id(qp))
+
+    return str("UNDEFINED")
+
+  @property
+  def last_question_or_part(self):
+    q = self.last_question
+    if q is not None:
+      p = q.last_part
+      if p is not None:
+        return p
+      return q
+    return None
+
+  def add_paragraph(self,p,i=None):
+    # the position at which the paragraph should be inserted.
+    if i is None:
+      i = len(self._questions)
+    if isinstance(p,(str,unicode)):
+      p = Paragraph(p)
+
+    if not i in self._paragraphs:
+      self._paragraphs[i] = []
+    self._paragraphs[i].append(p)
+
+  def add_space(self,s):
+    self.add_paragraph( r'\vspace{'+s+r'}' )
+
+  def add_preamble(self,p):
+    self._preamble.append( p )
+
+  def add_package(self,p,o=""):
+    self._packages.append( Package(p,o) )
+
+  def add_header(self,h):
+    self._header.append( h )
+
+  def add_figure(self,filename,name=None):
+    if name == None:
+      name = filename
+    self._figures[name] = Figure(filename)
+
+  def add_quiz(self,name='default'):
+    if not name in self._quizzes:
+      self._quizzes[name] = BbQuiz()
+
+  def get_quiz(self,name='default'):
+    return self._quizzes[name]
+
+  def get_fn(self, inputfn, type ):
+    basename = os.path.splitext(inputfn)[0]
+    if type.lower() == 'latex':
+      return basename + '.tex'
+    if type.lower() == 'tex':
+      return basename + '.tex'
+    if type.lower() == 'pdf':
+      return basename + '.pdf'
+
+    return basename + '.' + type
 
 
-    # p = subprocess.Popen(shlex.split( 'latexmk -interaction=nonstopmode -f -pdf '+basename), cwd=scratch, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # stdout,stderr = pHomeworkAssignment .communicate()
-    # ret = p.returncode # if ret != 0:
-      # print "ERROR: LaTeX code failed to compile. Dumping output"
-      # print "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
-      # print stderr
-      # print stdout
-      # print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+  def write(self, filename="/dev/stdout"):
+    engine = tempita.Template(self.latex_template)
+    context = { 'preamble'    : self.preamble_latex
+              , 'header'      : self.header_latex
+              , 'body'        : self.body_latex
+              , 'figures'     : self.figures_latex
+              }
+    context.update( self._config )
+    text = engine.substitute( **context )
 
-    # for ext in ("pdf", "aux", "tex"):
-      # filename = "%s.%s"%(basename,ext)
-      # shutil.copy( os.path.join(scratch,filename), filename)
+    if filename.endswith('.pdf'):
+      texfile = self.get_fn( filename, 'tex' )
+    else:
+      texfile = filename
 
-  # def build_quiz(self, basename="quiz"):
-    # basename = os.path.splitext(basename)[0]
+    with open(texfile, 'w') as f:
+      f.write( text )
 
-    # self.write_quiz(basename+".yaml")
+    if filename.endswith( '.pdf' ):
+      call( ['latexmk', '-silent', '-pdf', texfile ] )
+      call( ['latexmk', '-c', texfile ] )
+        
+  # legacy interface
 
-    # with open("/dev/stdout",'w') as FNULL: # ret = subprocess.call(shlex.split( 'BbQuiz.py '+basename+".yaml"), stdout=sys.stdout, stderr=subprocess.STDOUT)
-
-  def add_paragraph(self,para):
-    self.stack.append( para )
-
-  def add_preamble(self,line):
-    self.preamble.append( line )
+  def get_last_ref(self):
+    return self.last_ref
 
   def add_part(self):
-    pass
+    q = self.last_question
+    if q is not None:
+      q.add_part()
 
-  def add_figure(self,filename=""):
-    self.stack.append( Figure() )
-    self.get_last_figure().filename = filename
+  def add_quiz_question(self):
+    if len(self._quizzes) < 1:
+      self.add_quiz()
 
-    self.add_extra_file( os.path.join(self.config['image_dir'],filename) )
+    self._quizzes['default'].add_question()
 
-  def figure_set_data(self,data,text=""):
-    f = self.get_last_figure()
-    if f:
-      setattr( f, data, text )
+  def quiz_add_text(self, text, prepend=False ):
+    self.get_quiz('default').add_text(text,prepend)
 
-  def add_extra_file(self,filename):
-    self.config['extra_files'].append( filename )
+  def quiz_set_answer(self, answer):
+    self.get_quiz('default').set_answer(answer)
+    
+  def format_text(self,*args,**kwargs):
+    self.last_question_or_part.format_text(*args,**kwargs)
 
+  def write_latex(self,filename):
+    if not filename.endswith('.tex'):
+      filename = filename + '.tex'
+    self.write(filename)
+
+  def build_PDF(self,filename):
+    if not filename.endswith('.pdf'):
+      filename = filename + '.pdf'
+    self.write(filename)
+
+  def write_quiz(self,filename,name='default'):
+    self.get_quiz(name).write(filename)
 
