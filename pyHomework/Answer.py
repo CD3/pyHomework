@@ -1,10 +1,11 @@
 import re,sys,inspect
 import pint
 import random
+from .Emitter import *
 from pyErrorProp import sigfig_round, units, Q_, UQ_
 
 class Answer(object):
-  DefaultEmitter = None
+  DefaultEmitter = PlainEmitter
   def emit(self,emitter=None):
     if emitter == None:
       emitter = self.DefaultEmitter

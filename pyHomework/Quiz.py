@@ -1,10 +1,11 @@
 from .Question import *
 from .Answer import *
+from .Emitter import *
 import dpath.util
 
 class Quiz(object):
   Question = Question
-  DefaultEmitter = None
+  DefaultEmitter = PlainEmitter
 
   def __init__(self):
     self._config = {}
@@ -130,6 +131,7 @@ for p in passthroughs:
 
 
 class BbQuiz(Quiz):
+    DefaultEmitter = BbEmitter
     def __init__(self,*args,**kwargs):
       super(BbQuiz,self).__init__(*args,**kwargs)
       self._config = { 'files' :

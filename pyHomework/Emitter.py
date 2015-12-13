@@ -1,6 +1,3 @@
-from .Answer import *
-from .Question import *
-from .Quiz import *
 from .Signal import *
 import inspect, operator, functools
 
@@ -65,20 +62,21 @@ class BbEmitter(Emitter):
     pass
 
   def get_question_type(self,obj):
-    if isinstance( obj, NumericalAnswer ):
+    t = obj.__class__.__name__
+    if t == 'NumericalAnswer':
       return 'NUM'
-    if isinstance( obj, MultipleChoiceAnswer ):
+    if t == 'MultipleChoiceAnswer':
       if obj.num_correct() > 1:
         return 'MA'
       else:
         return 'MC'
-    if isinstance( obj, TrueFalseAnswer ):
+    if t == 'TrueFalseAnswer':
       return 'TF'
-    if isinstance( obj, OrderedAnswer ):
+    if t == 'OrderedAnswer':
       return 'ORD'
-    if isinstance( obj, EssayAnswer ):
+    if t == 'EssayAnswer':
       return 'ESS'
-    if isinstance( obj, ShortAnswer ):
+    if t == 'ShortAnswer':
       return 'SA'
 
   def EssayAnswer(self,obj):
@@ -246,7 +244,5 @@ class LatexKeyEmitter(LatexEmitter):
 
     return '\n\n'.join(tokens)
 
-Answer.DefaultEmitter = PlainEmitter
-Question.DefaultEmitter = PlainEmitter
-Quiz.DefaultEmitter = PlainEmitter
-BbQuiz.DefaultEmitter = BbEmitter
+# Quiz.DefaultEmitter = PlainEmitter
+# BbQuiz.DefaultEmitter = BbEmitter

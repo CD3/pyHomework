@@ -1,5 +1,6 @@
 import inspect
 from .Utils import format_text
+from .Emitter import *
 import dpath.util
 
 class Question(object):
@@ -7,7 +8,7 @@ class Question(object):
 
   A question contains text, instructions, and answers.
   """
-  DefaultEmitter = None
+  DefaultEmitter = PlainEmitter
   
   def __init__(self, text = None):
     # controlled access members
