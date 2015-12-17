@@ -16,6 +16,9 @@ class Quiz(object):
 
 
   def config(self,key,default=None,value=None):
+    if isinstance(key,dict):
+      for k in key:
+        self.config(k, value=key[k])
     if value is None:
       try:
         return dpath.util.get(self._config,key)
@@ -58,6 +61,7 @@ class Quiz(object):
   def add_question(self,text=None):
     self._order.append( len(self._questions) )
     self._questions.append( Question(text) )
+    return self.last_question
 
   def add_file(self,filename,name=None):
     name = name or filename

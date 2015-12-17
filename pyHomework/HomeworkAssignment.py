@@ -343,6 +343,13 @@ class HomeworkAssignment(Quiz):
     if q is not None:
       q.add_part()
 
+  def add_text(self,text,prepend=False):
+    self.last_question_or_part.add_text(text,prepend)
+
+  def format_text(self,*args,**kwargs):
+    self.last_question_or_part.format_text(*args,**kwargs)
+
+
   def add_quiz_question(self):
     if len(self._quizzes) < 1:
       self.add_quiz()
@@ -354,15 +361,15 @@ class HomeworkAssignment(Quiz):
   def quiz_add_text(self, text, prepend=False ):
     self.get_quiz('default').add_text(text,prepend)
 
+  def quiz_add_instruction(self, text, prepend=False ):
+    self.get_quiz('default').add_instruction(text,prepend)
+
   def quiz_set_answer(self, answer):
     self.get_quiz('default').set_answer(answer)
     if isinstance( answer, NumericalAnswer ):
       if answer.units != 'dimensionless':
         self.get_quiz('default').add_instruction('Give your answer in %s.' % answer.units,prepend=True)
     
-  def format_text(self,*args,**kwargs):
-    self.last_question_or_part.format_text(*args,**kwargs)
-
   def write_latex(self,filename):
     if not filename.endswith('.tex'):
       filename = filename + '.tex'

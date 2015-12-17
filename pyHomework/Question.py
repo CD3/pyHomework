@@ -21,6 +21,8 @@ class Question(object):
     self.prepend_instructions = False
     self.join_str = ' '
 
+    self.clean_text = True
+
     if not text is None:
       self.add_text( text )
 
@@ -41,8 +43,11 @@ class Question(object):
       return
     if prepend:
       X.insert(0,val)
+      return X[0]
     else:
       X.append(val)
+      return X[-1]
+
 
   def clear_X(self,X):
     del X[:]
@@ -88,10 +93,10 @@ class Question(object):
   # add operations
 
   def add_text(self,v,prepend=False):
-    return self.add_X(self._texts,v,prepend)
+    return self.add_X(self._texts,v.strip(),prepend)
 
   def add_instruction(self,v,prepend=False):
-    return self.add_X(self._instructions,v,prepend)
+    return self.add_X(self._instructions,v.strip(),prepend)
 
   def add_answer(self,v,prepend=False):
     return self.add_X(self._answers,v,prepend)
