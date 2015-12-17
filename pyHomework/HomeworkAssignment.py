@@ -96,19 +96,6 @@ class Package(object):
   def latex(self):
     return tempita.sub( self.latex_template, name=self.name, opts = ','.join(self.opts) )
     
-Question_question = Question.question
-@property
-def my_question(self):
-    tmp = [self.text]
-
-    if self.prepend_instructions:
-      tmp.insert(0,self.instructions)
-    else:
-      tmp.append(self.instructions)
-
-    return self.join_X( tmp )
-# Question.question = my_question
-
 
 
 # HOMEWORK ASSIGNMENT CLASS

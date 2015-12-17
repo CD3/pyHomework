@@ -48,13 +48,9 @@ class Question(object):
       X.append(val)
       return X[-1]
 
-
-  def clear_X(self,X):
-    del X[:]
-
   def set_X(self, X, val):
-    self.clear_X(X)
-    self.add_X(X,val)
+    del X[:]
+    return self.add_X(X,val)
 
   def format_X(self,X,*args,**kwargs):
     if not 'formatter' in kwargs:
@@ -65,20 +61,20 @@ class Question(object):
   # properties: getters that return processed versions of the member data
 
   @property
-  def text(self):
+  def text_str(self):
     return self.join_X(self._texts)
 
   @property
-  def instructions(self):
+  def instructions_str(self):
     return self.join_X(self._instructions)
   
   @property
-  def question(self):
-    tmp = [self.text]
+  def question_str(self):
+    tmp = [self.text_str]
     if self.prepend_instructions:
-      tmp.insert(0,self.instructions)
+      tmp.insert(0,self.instructions_str)
     else:
-      tmp.append(self.instructions)
+      tmp.append(self.instructions_str)
 
     return self.join_X( tmp )
 
