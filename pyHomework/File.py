@@ -1,4 +1,8 @@
 
 class File(object):
   def __init__(self,filename = ""):
-    self.filename = filename
+    self._filename = filename
+
+  @property
+  def filename(self):
+    return self._filename
