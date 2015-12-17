@@ -1,7 +1,8 @@
 from .Question import *
 from .Answer import *
 from .Emitter import *
-import dpath.util
+from .File import *
+import dpath.util, contextlib
 
 class Quiz(object):
   Question = Question
@@ -53,23 +54,41 @@ class Quiz(object):
     else:
       return None
 
-  @property
-  def question(self):
-    return self.last_question
 
 
-  def add_question(self,text=None):
+  @contextlib.contextmanager
+  def _add_question(self,v=None):
+    if not isinstance(v, Question):
+      v = Question(v)
+
+    yield v
+
     self._order.append( len(self._questions) )
-    self._questions.append( Question(text) )
-    return self.last_question
+    self._questions.append( v )
 
-  def add_file(self,filename,name=None):
-    name = name or filename
-    self._files[name] = filename
+  def add_question(self,*args,**kwargs):
+    with self._add_question(*args,**kwargs):
+      pass
+
+
+  @contextlib.contextmanager
+  def _add_file(self,v,name=None):
+    if not isinstance(v, File):
+      v = File(v)
+
+    name = name or v.filename
+    self._files[name] = v
+  
+  def add_file(self,*args,**kwargs):
+    with self._add_file(*args,**kwargs):
+      pass
 
   def set_file(self,*args,**kwargs):
     self._files = {}
-    self.add_file(*args,**kwargs)
+    return self._add_file(*args,**kwargs)
+
+
+
 
   def emit(self,emitter=None):
     if emitter == None:
@@ -94,7 +113,6 @@ class Quiz(object):
         return self.write(f)
     
     stream.write( self.emit() )
-
 
   def load(self,spec):
     self._config = spec.get('configuration',{})
