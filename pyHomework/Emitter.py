@@ -55,7 +55,7 @@ class PlainEmitter(Emitter):
     return "False"
 
   def Question(self,obj):
-    return obj.question
+    return obj.question_str
 
 class BbEmitter(Emitter):
   def __init__( self ):
@@ -119,7 +119,7 @@ class BbEmitter(Emitter):
 
     tokens = []
     tokens.append( self.get_question_type( answer ) )
-    tokens.append( obj.question )
+    tokens.append( obj.question_str )
     tokens.append( answer.emit(self) )
 
     return '\t'.join( tokens )
@@ -178,13 +178,13 @@ class LatexEmitter(Emitter):
       lbl = LatexEmitter.make_label(obj)
 
     if self.listtype.lower() == 'easylist':
-      tokens.append( '& '+lbl+obj.question )
+      tokens.append( '& '+lbl+obj.question_str )
       for answer in obj._answers:
         tokens.append( answer.emit(self).replace( '& ', '&& ' ) )
       for part in obj._parts:
         tokens.append( part.emit(self).replace( '& ', '&& ' ) )
     else:
-      tokens.append( r'\item '+lbl+obj.question )
+      tokens.append( r'\item '+lbl+obj.question_str )
       for answer in obj._answers:
         tokens.append( answer.emit(self) )
       for part in obj._parts:

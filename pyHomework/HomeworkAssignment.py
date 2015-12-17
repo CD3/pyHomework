@@ -1,10 +1,12 @@
 #! /usr/bin/env python
 
-import os, StringIO
+import os, StringIO, contextlib
 from subprocess import call
+from collections import OrderedDict
 
 from .Quiz import *
 from .Emitter import *
+from .File import *
 from .Utils import *
 from pyErrorProp import *
 
@@ -21,13 +23,17 @@ class Figure(object):
 '''
 
   def __init__(self,filename=""):
-    self._filename = filename
+    self._file = File(filename)
     self._label = []
     self._caption  = []
     self._options = []
+  
+  @property
+  def filename(self):
+    return self._file.filename
 
   def set_filename(self,fn):
-    self._filename = fn
+    self._file._filename = fn
 
   def add_label(self,lbl,prepend=False):
     if prepend:
@@ -35,30 +41,18 @@ class Figure(object):
     else:
       self._label.append(lbl)
 
-  def set_label(self,lbl):
-    self._label = []
-    self.add_label(lbl)
-
   def add_option(self,opt):
     self._options.append(opt)
 
-  def set_option(self,opt):
-    self._options = []
-    self._options.append(opt)
-  
   def add_caption(self, cap, prepend=False):
     if prepend:
       self._caption.insert(0,cap)
     else:
       self._caption.append(cap)
 
-  def set_caption(self, cap):
-    self._caption = []
-    self._caption.append(cap)
-
   @property
   def latex(self):
-    context = { 'filename' : self._filename
+    context = { 'filename' : self._file._filename
               , 'options'  : ','.join(self._options)
               , 'caption'  : ' '.join(self._caption)
               , 'label'    : ''.join(self._label)
@@ -70,13 +64,9 @@ class Figure(object):
 class Paragraph(object):
   def __init__(self, text = ""):
     self._texts = []
-    self.set_text( text )
+    self.add_text( text )
 
   def add_text(self, text):
-    self._texts.append(text)
-
-  def set_text(self, text):
-    self._texts = []
     self._texts.append(text)
 
   @property
@@ -89,26 +79,13 @@ class Package(object):
     self.name = name
     self.opts = opts.split(',')
 
-  def add_opt(self, opt):
+  def add_option(self, opt):
     self.opts.append( opt )
 
   @property
   def latex(self):
     return tempita.sub( self.latex_template, name=self.name, opts = ','.join(self.opts) )
     
-Question_question = Question.question
-@property
-def my_question(self):
-    tmp = [self.text]
-
-    if self.prepend_instructions:
-      tmp.insert(0,self.instructions)
-    else:
-      tmp.append(self.instructions)
-
-    return self.join_X( tmp )
-# Question.question = my_question
-
 
 
 # HOMEWORK ASSIGNMENT CLASS
@@ -150,12 +127,13 @@ class HomeworkAssignment(Quiz):
 
     self._packages = []
     self._preamble = []
-    self._paragraphs = {}
-    self._quizzes = {}
-    self._figures = {}
+
     self._header = []
 
-    self.latex_refs = {}
+    self._paragraphs = OrderedDict()
+    self._quizzes = OrderedDict()
+    self._figures = OrderedDict()
+    self.latex_refs = OrderedDict()
     
     
     self.add_package('amsmath')
@@ -237,7 +215,8 @@ class HomeworkAssignment(Quiz):
   @property
   def figures_latex(self):
     tokens = []
-    for f in self._figures:
+    for k in self._figures:
+      f = self._figures[k]
       tokens.append( f.latex )
 
     return '\n'.join( tokens )
@@ -261,16 +240,71 @@ class HomeworkAssignment(Quiz):
       return q
     return None
 
-  def add_paragraph(self,p,i=None):
+  @contextlib.contextmanager
+  def _add_paragraph(self,p,i=None):
+    if not isinstance(p,Paragraph):
+      p = Paragraph(p)
+
+    yield p
+
     # the position at which the paragraph should be inserted.
     if i is None:
       i = len(self._questions)
-    if isinstance(p,(str,unicode)):
-      p = Paragraph(p)
 
     if not i in self._paragraphs:
       self._paragraphs[i] = []
+
     self._paragraphs[i].append(p)
+
+  def add_paragraph(self,*args,**kwargs):
+    with self._add_paragraph(*args,**kwargs):
+      pass
+
+  @contextlib.contextmanager
+  def _add_package(self,p,o=""):
+    if not isinstance(p,Package):
+      p = Package( p )
+    p.add_option(o)
+
+    yield p
+
+    self._packages.append( p )
+
+  def add_package(self,*args,**kwargs):
+    with self._add_package(*args,**kwargs):
+      pass
+
+  @contextlib.contextmanager
+  def _add_figure(self,f,name=None):
+    if not isinstance(f,Figure):
+      f = Figure(f)
+
+    if name == None:
+      name = f.filename
+
+    yield f
+
+    self._figures[name] = f
+
+  def add_figure(self,*args,**kwargs):
+    with self._add_figure(*args,**kwargs):
+      pass
+
+
+  @contextlib.contextmanager
+  def _add_quiz(self,q = None, name='default'):
+    if q is None:
+      q = BbQuiz()
+
+    yield q
+
+    if not name in self._quizzes:
+      self._quizzes[name] = q
+
+  def add_quiz(self,*args,**kwargs):
+    with self._add_quiz(*args,**kwargs):
+      pass
+
 
   def add_space(self,s):
     self.add_paragraph( r'\vspace{'+s+r'}' )
@@ -278,20 +312,8 @@ class HomeworkAssignment(Quiz):
   def add_preamble(self,p):
     self._preamble.append( p )
 
-  def add_package(self,p,o=""):
-    self._packages.append( Package(p,o) )
-
   def add_header(self,h):
     self._header.append( h )
-
-  def add_figure(self,filename,name=None):
-    if name == None:
-      name = filename
-    self._figures[name] = Figure(filename)
-
-  def add_quiz(self,name='default'):
-    if not name in self._quizzes:
-      self._quizzes[name] = BbQuiz()
 
   def get_quiz(self,name='default'):
     return self._quizzes[name]
@@ -333,7 +355,9 @@ class HomeworkAssignment(Quiz):
       self.latex_refs.update( parse_aux( self.get_fn( texfile, 'aux' ) ) )
       call( ['latexmk', '-c', texfile ] )
         
-  # legacy interface
+
+
+  # LEGACY Interface
 
   def get_last_ref(self):
     return self.last_ref

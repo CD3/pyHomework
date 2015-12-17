@@ -2,13 +2,13 @@
 import pytest
 import yaml
 
-from pyHomework.Quiz import Quiz
+from pyHomework.Question import *
 from pyHomework.Answer import *
 from pyHomework.Emitter import *
 from pyErrorProp import *
 
 def test_add_text():
-  q = Quiz.Question()
+  q = Question()
 
   q.add_text( "Second sentence." )
   q.add_text( "Third")
@@ -19,30 +19,30 @@ def test_add_text():
   q.format_text( x = "Fifth sentence." )
   q.format_text( x = "Fourth sentence.", formatter='format' )
 
-  assert q.text == "First sentence. Second sentence. Third sentence. Fourth sentence. Fifth sentence."
+  assert q.text_str == "First sentence. Second sentence. Third sentence. Fourth sentence. Fifth sentence."
 
 def test_add_instruction():
-  q = Quiz.Question()
+  q = Question()
   q.add_instruction("text.")
   q.add_instruction("Instruction", prepend=True)
 
-  assert q.instructions == "Instruction text."
+  assert q.instructions_str == "Instruction text."
 
 def test_add_text_and_instruction():
-  q = Quiz.Question()
+  q = Question()
   q.add_text("Question text.")
   q.add_instruction("Instruction text.")
 
-  assert q.question == "Question text. Instruction text."
+  assert q.question_str == "Question text. Instruction text."
 
   q.prepend_instructions = True
-  assert q.question == "Instruction text. Question text."
+  assert q.question_str == "Instruction text. Question text."
 
   q.prepend_instructions = False
-  assert q.question == "Question text. Instruction text."
+  assert q.question_str == "Question text. Instruction text."
 
 def test_set_text():
-  q = Quiz.Question()
+  q = Question()
 
   q.add_text( "one" )
   q.add_text( "two")
@@ -50,10 +50,10 @@ def test_set_text():
 
   q.set_text( "four" )
 
-  assert q.question == "four"
+  assert q.question_str == "four"
 
 def test_set_instruction():
-  q = Quiz.Question()
+  q = Question()
 
   q.add_instruction( "one" )
   q.add_instruction( "two")
@@ -61,10 +61,10 @@ def test_set_instruction():
 
   q.set_instruction( "four" )
 
-  assert q.question == "four"
+  assert q.question_str == "four"
 
 def test_question_with_numerical_answer():
-  q = Quiz.Question()
+  q = Question()
 
   l = Q_(1.5,'m')
   w = Q_(2.5,'m')
@@ -78,7 +78,7 @@ def test_question_with_numerical_answer():
   assert text == 'NUM\tWhat is the area of a 1.5 meter x 2.5 meter square?\t3.75E+00\t3.75E-02'
 
 def test_question_with_mc_answer():
-  q = Quiz.Question()
+  q = Question()
 
   q.add_text("The answer is c... its always c.")
   a = MultipleChoiceAnswer()
@@ -95,7 +95,7 @@ def test_question_with_mc_answer():
   assert text == 'MC\tThe answer is c... its always c.\tthis is not the answer you are looking for.\tincorrect\tnope.\tincorrect\tthis is it!\tcorrect\treally?\tincorrect'
 
 def test_mc_ordering():
-  q = Quiz.Question()
+  q = Question()
 
   q.add_text("Question:")
   a = MultipleChoiceAnswer()
@@ -113,7 +113,7 @@ def test_mc_ordering():
   assert text == 'MC\tQuestion:\tb\tincorrect\ta\tincorrect\td\tincorrect\tc\tcorrect'
 
 def test_question_with_ma_answer():
-  q = Quiz.Question()
+  q = Question()
 
   q.add_text("The answer is c... its always c.")
   a = MultipleChoiceAnswer()
@@ -131,7 +131,7 @@ def test_question_with_ma_answer():
   assert text == 'MA\tThe answer is c... its always c.\tthis is not the answer you are looking for.\tincorrect\tnope.\tincorrect\tthis is it!\tcorrect\treally?\tincorrect\toh...this one too.\tcorrect'
 
 def test_emitter_exceptions():
-  q = Quiz.Question()
+  q = Question()
   q.add_text("The answer is c... its always c.")
   with pytest.raises(RuntimeError) as e:
     q.emit('undefined')
@@ -139,15 +139,15 @@ def test_emitter_exceptions():
 
 def test_emitter_exceptions():
   def q_emit(q):
-    return "Question: '%s'\nThe answer is irrelevent" % q.question
+    return "Question: '%s'\nThe answer is irrelevent" % q.question_str
 
-  q = Quiz.Question()
+  q = Question()
   q.add_text("The answer is c... its always c.")
   text = q.emit(q_emit)
   assert text == "Question: 'The answer is c... its always c.'\nThe answer is irrelevent"
 
 def test_latex_emitter():
-  q = Quiz.Question()
+  q = Question()
 
   q.add_text("Q1")
   a = MultipleChoiceAnswer()
@@ -170,8 +170,8 @@ def test_latex_emitter():
 
 
 
-  q = Quiz.Question()
-  qa = Quiz.Question()
+  q = Question()
+  qa = Question()
 
   q.add_text("Q1")
   a = MultipleChoiceAnswer()
@@ -194,11 +194,13 @@ def test_latex_emitter():
   q.add_part( qa )
 
   text = q.emit(LatexEmitter)
-
   assert text == '& Q1\n&& a1\n&& a2\n&& a3\n&& Q1a\n&&& aa1\n&&& aa2\n&&& aa3'
 
+  text = q.last_part.emit(LatexEmitter)
+  assert text == '& Q1a\n&& aa1\n&& aa2\n&& aa3'
+
 def test_latex_labels_emitter():
-  q = Quiz.Question()
+  q = Question()
 
   q.add_text("Q1")
   a = MultipleChoiceAnswer()
@@ -226,10 +228,8 @@ def test_latex_labels_emitter():
   text = q.emit(LatexEmitter(labels=True))
   assert text != '& \\label{%s}Q1\n&& \\label{%s}a1\n&& \\label{%s}a2\n&& \\label{%s}a3' % tuple(lbls)
 
-
-
 def test_latex_compactenum_emitter():
-  q = Quiz.Question()
+  q = Question()
 
   q.add_text("Q1")
   a = MultipleChoiceAnswer()
@@ -252,8 +252,8 @@ def test_latex_compactenum_emitter():
 
 
 
-  q = Quiz.Question()
-  qa = Quiz.Question()
+  q = Question()
+  qa = Question()
 
   q.add_text("Q1")
   a = MultipleChoiceAnswer()
@@ -278,7 +278,112 @@ def test_latex_compactenum_emitter():
   text = q.emit(LatexEmitter('compactenum'))
   assert text == '\\item Q1\n\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\end{compactenum}\n\\begin{compactenum}\n\\item Q1a\n\\begin{compactenum}\n\\item aa1\n\\item aa2\n\\item aa3\n\\end{compactenum}\n\\end{compactenum}'
 
+def test_with_interface():
+
+  q = Question()
+
+  q.add_text("Q1")
+
+  with q._add_part() as p:
+    p.add_text("Q1a")
+
+    with p._add_part() as pp:
+      pp.add_text("Q1aa")
+
+      with pp._add_answer( MultipleChoiceAnswer() ) as a:
+        a.add_choices(r'''
+          *a
+           b
+           c
+        ''')
+
+
+  text = q.emit(LatexEmitter)
+  assert text == '& Q1\n&& Q1a\n&&& Q1aa\n&&&& a\n&&&& b\n&&&& c'
+
+  text = q.last_part.emit(LatexEmitter)
+  assert text == '& Q1a\n&& Q1aa\n&&& a\n&&& b\n&&& c'
+
+  text = q.last_part.last_part.emit(LatexEmitter)
+  assert text == '& Q1aa\n&& a\n&& b\n&& c'
+
+
+  with q._set_part() as p:
+    p.add_text("q1a")
+
+    with p._add_part() as pp:
+      pp.add_text("q1aa")
+
+
+  text = q.emit(LatexEmitter)
+  assert text == '& Q1\n&& q1a\n&&& q1aa'
+
+  text = q.last_part.emit(LatexEmitter)
+  assert text == '& q1a\n&& q1aa'
+
+  text = q.last_part.last_part.emit(LatexEmitter)
+  assert text == '& q1aa'
 
 
 
+def test_with_interface_replace():
+  # swap  '_' prefixed versions with non-prefixed versions
+  Question_add_part = Question.add_part
+  Question_set_part = Question.set_part
+  Question.add_part = Question._add_part
+  Question.set_part = Question._set_part
 
+  Question_add_answer = Question.add_answer
+  Question_set_answer = Question.set_answer
+  Question.add_answer = Question._add_answer
+  Question.set_answer = Question._set_answer
+
+  q = Question()
+
+  q.add_text("Q1")
+
+  with q.add_part() as p:
+    p.add_text("Q1a")
+
+    with p.add_part() as pp:
+      pp.add_text("Q1aa")
+
+      with pp.add_answer( MultipleChoiceAnswer() ) as a:
+        a.add_choices(r'''
+          *a
+           b
+           c
+        ''')
+
+
+  text = q.emit(LatexEmitter)
+  assert text == '& Q1\n&& Q1a\n&&& Q1aa\n&&&& a\n&&&& b\n&&&& c'
+
+  text = q.last_part.emit(LatexEmitter)
+  assert text == '& Q1a\n&& Q1aa\n&&& a\n&&& b\n&&& c'
+
+  text = q.last_part.last_part.emit(LatexEmitter)
+  assert text == '& Q1aa\n&& a\n&& b\n&& c'
+
+  Question.add_part = Question_add_part
+  Question.set_part = Question_set_part
+  Question.add_answer = Question_add_answer
+  Question.set_answer = Question_set_answer
+
+def test_with_interface_restore():
+  # check that we can still use non-contextmanager interface
+  q = Question()
+  q.add_text("Q1")
+  q.add_part()
+  q.last_part.add_text("Q1a")
+  q.last_part.add_part()
+  q.last_part.last_part.add_text("Q1aa")
+
+  text = q.emit(LatexEmitter)
+  assert text == '& Q1\n&& Q1a\n&&& Q1aa'
+
+  text = q.last_part.emit(LatexEmitter)
+  assert text == '& Q1a\n&& Q1aa'
+
+  text = q.last_part.last_part.emit(LatexEmitter)
+  assert text == '& Q1aa'

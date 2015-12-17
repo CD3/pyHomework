@@ -1,4 +1,4 @@
-import inspect
+import inspect, contextlib
 from .Utils import format_text
 from .Emitter import *
 import dpath.util
@@ -14,6 +14,8 @@ class Question(object):
     # controlled access members
     self._texts = []
     self._instructions = []
+
+
     self._answers = []
     self._parts = []
 
@@ -39,6 +41,8 @@ class Question(object):
     return s
 
   def add_X(self, X, val, prepend=False):
+    '''Adds val to list X. If prepend is True, val is inserted to the
+    beginning of the list.'''
     if val is None:
       return
     if prepend:
@@ -48,13 +52,9 @@ class Question(object):
       X.append(val)
       return X[-1]
 
-
-  def clear_X(self,X):
-    del X[:]
-
   def set_X(self, X, val):
-    self.clear_X(X)
-    self.add_X(X,val)
+    del X[:]
+    return self.add_X(X,val)
 
   def format_X(self,X,*args,**kwargs):
     if not 'formatter' in kwargs:
@@ -62,23 +62,51 @@ class Question(object):
     for i in range(len(X)):
       X[i] = format_text( X[i], *args, **kwargs )
 
-  # properties: getters that return processed versions of the member data
+
+  def add_text(self,v,prepend=False):
+    return self.add_X(self._texts,v.strip(),prepend)
+
+  def set_text(self,v=None):
+    return self.set_X(self._texts,v)
+
+  def format_text(self, *args, **kwargs):
+    return self.format_X(self._texts,*args,**kwargs)
+  format_texts = format_text
+
+
+  def add_instruction(self,v,prepend=False):
+    return self.add_X(self._instructions,v.strip(),prepend)
+
+  def set_instruction(self,v=None):
+    return self.set_X(self._instructions,v)
+
+  def format_instruction(self, *args, **kwargs):
+    return self.format_X(self._instructions,*args,**kwargs)
+  format_instructions = format_instruction
+
+
+  def format_question(self, *args, **kwargs):
+    self.format_text(*args,**kwargs)
+    self.format_instruction(*args,**kwargs)
+
+
+  # properties: allow attribute style access to processed data
 
   @property
-  def text(self):
+  def text_str(self):
     return self.join_X(self._texts)
 
   @property
-  def instructions(self):
+  def instructions_str(self):
     return self.join_X(self._instructions)
   
   @property
-  def question(self):
-    tmp = [self.text]
+  def question_str(self):
+    tmp = [self.text_str]
     if self.prepend_instructions:
-      tmp.insert(0,self.instructions)
+      tmp.insert(0,self.instructions_str)
     else:
-      tmp.append(self.instructions)
+      tmp.append(self.instructions_str)
 
     return self.join_X( tmp )
 
@@ -90,51 +118,57 @@ class Question(object):
     else:
       return None
 
-  # add operations
 
-  def add_text(self,v,prepend=False):
-    return self.add_X(self._texts,v.strip(),prepend)
+  # sub-data: lists/dicts of class instances
 
-  def add_instruction(self,v,prepend=False):
-    return self.add_X(self._instructions,v.strip(),prepend)
+  @contextlib.contextmanager
+  def _add_answer(self,v,prepend=False):
+    # the "magic"
+    yield v
 
-  def add_answer(self,v,prepend=False):
-    return self.add_X(self._answers,v,prepend)
+    self.add_X(self._answers,v,prepend)
 
-  def add_part(self,v=None,prepend=False):
+  def add_answer(self,*args,**kwargs):
+    with self._add_answer(*args,**kwargs):
+      pass
+
+  def _set_answer(self,*args,**kwargs):
+    del self._answers[:]
+    return self._add_answer(*args,**kwargs)
+
+  def set_answer(self,*args,**kwargs):
+    with self._set_answer(*args,**kwargs):
+      pass
+
+
+  @contextlib.contextmanager
+  def _add_part(self,v=None,prepend=False):
     if not isinstance(v, Question):
       v = Question(v)
-    return self.add_X(self._parts,v,prepend)
 
-  # set operations
+    # the "magic"
+    yield v
 
-  def set_text(self,v=None):
-    return self.set_X(self._texts,v)
+    self.add_X(self._parts,v,prepend)
 
-  def set_instruction(self,v=None):
-    return self.set_X(self._instructions,v)
+  def add_part(self,*args,**kwargs):
+    with self._add_part(*args,**kwargs):
+      pass
 
-  def set_answer(self,v=None):
-    return self.set_X(self._answers,v)
+  def _set_part(self,*args,**kwargs):
+    del self._parts[:]
+    return self._add_part(*args,**kwargs)
 
-  def set_part(self,v=None):
-    return self.set_X(self._parts,v)
+  def set_part(self,*args,**kwargs):
+    with self._set_part(*args,**kwargs):
+      pass
 
-  # format operations
-
-  def format_text(self, *args, **kwargs):
-    return self.format_X(self._texts,*args,**kwargs)
-  format_texts = format_text
 
   def format_part(self, *args, **kwargs):
     for p in self._parts:
       p.format_text(*args,**kwargs)
       p.format_instruction(*args,**kwargs)
   format_parts = format_part
-
-  def format_instruction(self, *args, **kwargs):
-    return self.format_X(self._instructions,*args,**kwargs)
-  format_instructions = format_instruction
 
 
   # the emit function
