@@ -71,10 +71,10 @@ def test_question_with_numerical_answer():
   # print l*w
   q.add_text("What is the area of a {l} x {w} square?")
   q.format_text( l=l, w=w, formatter='format' )
+  q.auto_answer_instructions = False
   q.set_answer( NumericalAnswer( l*w ) )
 
   text = q.emit(BbEmitter)
-
   assert text == 'NUM\tWhat is the area of a 1.5 meter x 2.5 meter square?\t3.75E+00\t3.75E-02'
 
 def test_question_with_mc_answer():

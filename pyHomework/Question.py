@@ -47,6 +47,9 @@ class Question(object):
     return s
 
   def add_X(self, X, val, prepend=False):
+    if isinstance( val , (str,unicode) ) and self.clean_text:
+      val = ' '.join( val.split() )
+      
     '''Adds val to list X. If prepend is True, val is inserted to the
     beginning of the list.'''
     if val is None:
@@ -70,7 +73,7 @@ class Question(object):
 
 
   def add_text(self,v,prepend=False):
-    return self.add_X(self._texts,v.strip(),prepend)
+    return self.add_X(self._texts,v,prepend)
 
   def set_text(self,v=None):
     return self.set_X(self._texts,v)
@@ -135,7 +138,7 @@ class Question(object):
     # add special instructions for different answer types.
     if self.auto_answer_instructions:
       if isinstance( v, NumericalAnswer ):
-        if v.units != 'dimensionless':
+        if v.units != 'dimensionless' and v.units != '':
           self.add_instruction('Give your answer in %s.' % v.units,prepend=True)
 
     self.add_X(self._answers,v,prepend)
