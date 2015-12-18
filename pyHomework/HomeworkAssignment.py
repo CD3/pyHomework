@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import os, StringIO, contextlib
+import os, StringIO, contextlib, types
 from subprocess import call
 from collections import OrderedDict
 
@@ -129,6 +129,8 @@ class HomeworkAssignment(Quiz):
     self._preamble = []
 
     self._header = []
+
+    self.refstack = []  # reference stack
 
     self._paragraphs = OrderedDict()
     self._quizzes = OrderedDict()
@@ -289,13 +291,33 @@ class HomeworkAssignment(Quiz):
     if name == None:
       name = f.filename
 
+    # add id to refs stack
+    self.refstack.append(id(f))
     yield f
+    self.refstack.pop()
 
     self._figures[name] = f
 
   def add_figure(self,*args,**kwargs):
     with self._add_figure(*args,**kwargs):
       pass
+
+  # perhaps there is a way to use the parent classes
+  @contextlib.contextmanager
+  def _add_question(self,q=None):
+    refstack = self.refstack
+    if not isinstance(q, Question):
+      q = Question(q)
+
+    # replace the questions _add_part method
+    q._add_part = types.MethodType( self._custom_question_add_part, q )
+
+    refstack.append(id(q))
+    yield q
+    refstack.pop()
+
+    self._order.append( len(self._questions) )
+    self._questions.append( q )
 
 
   @contextlib.contextmanager
@@ -304,6 +326,13 @@ class HomeworkAssignment(Quiz):
       q = BbQuiz()
 
     yield q
+
+    def Quiz_add_question(self,q=None):
+      cm = self._add_question_cm(q)
+      return cm
+
+    q._add_question = types.MethodType( self._custom_quiz_add_question, q )
+
 
     if not name in self._quizzes:
       self._quizzes[name] = q
@@ -427,3 +456,47 @@ class HomeworkAssignment(Quiz):
     with open(filename,'w') as f:
       self.write_quiz(f,name)
 
+
+  ###################
+  # MONKEY PATCHING #
+  ###################
+
+  # when a part is added to a question, we need to push the part's
+  # reference onto the refstack
+  @property
+  def _custom_question_add_part(self):
+    # again, can we just wrap the function want to replace?
+    refstack = self.refstack
+    @contextlib.contextmanager
+    def _add_part(self,p=None,prepend=False):
+      if not isinstance(p, Question):
+        p = Question(p)
+
+      refstack.append(id(p))
+      yield p
+      refstack.pop()
+
+      self.add_X(self._parts,p,prepend)
+
+    return _add_part
+
+
+  # when a quiz adds a question, it needs to add a sentence identifying the thing (question, part, figure, etc.)
+  # it is refering to.
+  @property
+  def _custom_quiz_add_question(self):
+    refstack = self.refstack
+    @contextlib.contextmanager
+    def _add_question(self,q=None):
+      if not isinstance(q, Question):
+        q = Question(q)
+
+      yield q
+
+      if len(refstack) > 0:
+        q.add_text("For problem #{{refs['%s']}}:" % refstack[-1], prepend=True )
+
+      self._order.append( len(self._questions) )
+      self._questions.append( q )
+
+    return _add_question

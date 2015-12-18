@@ -57,14 +57,14 @@ class Quiz(object):
 
 
   @contextlib.contextmanager
-  def _add_question(self,v=None):
-    if not isinstance(v, Question):
-      v = Question(v)
+  def _add_question(self,q=None):
+    if not isinstance(q, Question):
+      q = Question(q)
 
-    yield v
+    yield q
 
     self._order.append( len(self._questions) )
-    self._questions.append( v )
+    self._questions.append( q )
 
   def add_question(self,*args,**kwargs):
     with self._add_question(*args,**kwargs):
@@ -106,7 +106,6 @@ class Quiz(object):
       return emitter(self)
 
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
-
   def write(self, stream="/dev/stdout"):
     if isinstance(stream,(str,unicode)):
       with open(stream, 'w') as f:

@@ -7,7 +7,12 @@ import dpath.util
 class Question(object):
   """A class representing a question.
 
-  A question contains text, instructions, and answers.
+  A can question contain:
+  
+  - text : the actual question itself
+  - instructions : extra information needed to answer the question
+  - answers : one or more answers to the question
+  - parts : one or parts to the questions (sub-questions). these are also questions.
   """
   DefaultEmitter = PlainEmitter
   
@@ -15,20 +20,19 @@ class Question(object):
     # controlled access members
     self._texts = []
     self._instructions = []
-
-
     self._answers = []
     self._parts = []
+
+    if not text is None:
+      self.add_text( text )
 
     # regular members
     self.prepend_instructions = False
     self.join_str = ' '
 
+    # config options
     self.clean_text = True
     self.auto_answer_instructions = True
-
-    if not text is None:
-      self.add_text( text )
 
   # common operations for different members
 
@@ -147,7 +151,6 @@ class Question(object):
   def set_answer(self,*args,**kwargs):
     with self._set_answer(*args,**kwargs):
       pass
-
 
   @contextlib.contextmanager
   def _add_part(self,v=None,prepend=False):

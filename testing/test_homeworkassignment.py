@@ -11,8 +11,6 @@ def Close( a, b, tol = 0.001 ):
         b = float(b)
     return (a - b)**2 / (a**2 + b**2) < 4*tol*tol
 
-needsporting = pytest.mark.skipif(True, reason="Need to port to new Answer/Question/Quiz classes")
-
 def test_interface():
   ass = HomeworkAssignment()
 
@@ -131,7 +129,7 @@ def test_quiz():
   ass.build_PDF('test.pdf')
   ass.write_quiz_file('test-quiz.txt')
 
-def test_with_interface_ouput():
+def test_with_interface_output():
 
   refs = {}
 
@@ -145,20 +143,27 @@ def test_with_interface_ouput():
   with ass._add_question() as q:
     q.add_text('q1')
     refs['q1'] = id(q)
+    assert ass.refstack[-1] == refs['q1']
 
   with ass._add_question() as q:
     q.add_text('q2')
     refs['q2'] = id(q)
+    assert ass.refstack[-1] == refs['q2']
 
     with q._add_part() as p:
       p.add_text('q2a')
       refs['q2a'] = id(p)
+      assert ass.refstack[-1] == refs['q2a']
+
+    assert ass.refstack[-1] == refs['q2']
 
   with ass._add_question() as q:
     q.add_text('q3')
     refs['q3'] = id(q)
+    assert ass.refstack[-1] == refs['q3']
 
     with ass.quiz._add_question() as qq:
+      assert ass.refstack[-1] == refs['q3']
       qq.add_text('q3_q1')
       with qq._set_answer( MultipleChoiceAnswer() ) as a:
         a.add_choices('''
@@ -166,6 +171,7 @@ def test_with_interface_ouput():
           *b
         ''')
     with ass.quiz._add_question() as qq:
+      assert ass.refstack[-1] == refs['q3']
       qq.add_text('q3_q2')
       with qq._set_answer( MultipleChoiceAnswer() ) as a:
         a.add_choices('''
@@ -176,16 +182,22 @@ def test_with_interface_ouput():
     with q._add_part() as p:
       p.add_text('q3a')
       refs['q3a'] = id(p)
+      assert ass.refstack[-1] == refs['q3a']
 
       with ass.quiz._add_question() as qq:
+        assert ass.refstack[-1] == refs['q3a']
         qq.add_text('q3a_q1')
         with qq._set_answer( NumericalAnswer() ) as a:
           a.quantity = Q_(1.3579,'m/s')
 
+      assert ass.refstack[-1] == refs['q3a']
+
+    assert ass.refstack[-1] == refs['q3']
 
   with ass._add_question() as q:
     q.add_text('q4')
     refs['q4'] = id(q)
+    assert ass.refstack[-1] == refs['q4']
 
   strm = StringIO.StringIO()
   ass.write(strm)
@@ -226,9 +238,9 @@ def test_with_interface_ouput():
   ass.write_quiz(strm)
 
   assert strm.getvalue() == Template('''
-MC\tq3_q1\ta\tincorrect\tb\tcorrect
-MC\tq3_q2\tc\tcorrect\td\tincorrect
-NUM\tq3a_q1 Give your answer in meter / second.\t1.36E+00\t1.36E-02
+MC\tFor problem #3: q3_q1\ta\tincorrect\tb\tcorrect
+MC\tFor problem #3: q3_q2\tc\tcorrect\td\tincorrect
+NUM\tFor problem #3a: q3a_q1 Give your answer in meter / second.\t1.36E+00\t1.36E-02
 '''.strip()).substitute(**refs)
 
 # NUM\tFor problem #4: q4_q1 Give your answer in meter / second ** 2.\t1.36E+00\t5.79E-02
