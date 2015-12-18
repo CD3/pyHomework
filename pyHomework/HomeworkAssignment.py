@@ -175,6 +175,8 @@ class HomeworkAssignment(Quiz):
     self.add_header(r'\fancyfoot[R]{ {{RF}} }')
     self.add_header(r'\renewcommand{\headrulewidth}{0pt}')
 
+    self.add_quiz('default')
+
   @property
   def body_latex(self):
     def insert_paragraph( i, question, **kwargs ):
@@ -240,6 +242,11 @@ class HomeworkAssignment(Quiz):
       return q
     return None
 
+  @property
+  def quiz(self):
+    return self.get_quiz()
+
+
   @contextlib.contextmanager
   def _add_paragraph(self,p,i=None):
     if not isinstance(p,Paragraph):
@@ -292,7 +299,7 @@ class HomeworkAssignment(Quiz):
 
 
   @contextlib.contextmanager
-  def _add_quiz(self,q = None, name='default'):
+  def _add_quiz(self, name='default',q = None):
     if q is None:
       q = BbQuiz()
 
@@ -315,6 +322,10 @@ class HomeworkAssignment(Quiz):
   def add_header(self,h):
     self._header.append( h )
 
+  @contextlib.contextmanager
+  def _get_quiz(self,name='default'):
+    yield self._quizzes[name]
+
   def get_quiz(self,name='default'):
     return self._quizzes[name]
 
@@ -332,7 +343,7 @@ class HomeworkAssignment(Quiz):
     return basename + '.' + type
 
 
-  def write(self, filename="/dev/stdout"):
+  def write(self, stream):
     engine = tempita.Template(self.latex_template)
     context = { 'preamble'    : self.preamble_latex
               , 'header'      : self.header_latex
@@ -342,13 +353,16 @@ class HomeworkAssignment(Quiz):
     context.update( self._config )
     text = engine.substitute( **context )
 
+    stream.write(text)
+
+  def write_file(self, filename="/dev/stdout"):
     if filename.endswith('.pdf'):
       texfile = self.get_fn( filename, 'tex' )
     else:
       texfile = filename
 
     with open(texfile, 'w') as f:
-      f.write( text )
+      self.write( f )
 
     if filename.endswith( '.pdf' ):
       call( ['latexmk', '-silent', '-pdf', texfile ] )
@@ -375,9 +389,6 @@ class HomeworkAssignment(Quiz):
 
 
   def add_quiz_question(self):
-    if len(self._quizzes) < 1:
-      self.add_quiz()
-
     self._quizzes['default'].add_question()
 
     self.quiz_add_text( "For problem #{{refs['%s']}}:" % id(self.last_question_or_part) )
@@ -397,19 +408,22 @@ class HomeworkAssignment(Quiz):
   def write_latex(self,filename):
     if not filename.endswith('.tex'):
       filename = filename + '.tex'
-    self.write(filename)
+    self.write_file(filename)
 
   def build_PDF(self,filename):
     if not filename.endswith('.pdf'):
       filename = filename + '.pdf'
-    self.write(filename)
+    self.write_file(filename)
 
-  def write_quiz(self,filename,name='default'):
+  def write_quiz(self,stream,name='default'):
     # we need to replace references before we write to file
-    stream = StringIO.StringIO()
-    self.get_quiz(name).write(stream)
+    s = StringIO.StringIO()
+    self.get_quiz(name).write(s)
     context = {'refs' : self.latex_refs}
-    text = tempita.sub(stream.getvalue(), **context)
+    text = tempita.sub(s.getvalue(), **context)
+    stream.write(text)
+
+  def write_quiz_file(self,filename,name='default'):
     with open(filename,'w') as f:
-      f.write(text)
+      self.write_quiz(f,name)
 

@@ -1,6 +1,8 @@
 from pyHomework.HomeworkAssignment import *
 from pyHomework.Emitter import *
 import pytest
+import StringIO
+from string import Template
 
 def Close( a, b, tol = 0.001 ):
     if isinstance(a,int):
@@ -77,7 +79,7 @@ def test_interface():
 
 
 
-  ass.write( '/dev/stdout' )
+  # ass.write_file( '/dev/stdout' )
   # ass.write( 'test.pdf' )
 
 def test_quiz():
@@ -127,5 +129,84 @@ def test_quiz():
   ass.quiz_set_answer( NumericalAnswer( Answer ) )
 
   ass.build_PDF('test.pdf')
-  ass.write_quiz('test-quiz.txt')
+  ass.write_quiz_file('test-quiz.txt')
 
+def test_emitters():
+
+  refs = {}
+
+  ass = HomeworkAssignment()
+  ass._preamble = []
+  ass._header = []
+  ass._packages = []
+  
+  with ass._add_question() as q:
+    q.add_text('q1')
+    refs['q1'] = id(q)
+
+  with ass._add_question() as q:
+    q.add_text('q2')
+    refs['q2'] = id(q)
+
+    with q._add_part() as p:
+      p.add_text('q2a')
+      refs['q2a'] = id(p)
+
+  with ass._add_question() as q:
+    q.add_text('q3')
+    refs['q3'] = id(q)
+
+    with ass.quiz._add_question() as qq:
+      qq.add_text('q3_q1')
+      with qq._set_answer( MultipleChoiceAnswer() ) as a:
+        a.add_choices('''
+          a
+          *b
+        ''')
+    with ass.quiz._add_question() as qq:
+      qq.add_text('q3_q2')
+      with qq._set_answer( MultipleChoiceAnswer() ) as a:
+        a.add_choices('''
+          *c
+          d
+        ''')
+
+
+
+  strm = StringIO.StringIO()
+  ass.write(strm)
+
+  assert strm.getvalue() == Template( r'''
+\documentclass[letterpaper,10pt]{article}
+
+
+
+
+
+\title{ UNKNOWN }
+\author{  }
+\date{  }
+
+\begin{document}
+\maketitle
+
+\begin{easylist}
+& \label{$q1}q1
+& \label{$q2}q2
+&& \label{$q2a}q2a
+& \label{$q3}q3
+\end{easylist}
+
+
+
+\end{document}
+'''.lstrip()).substitute(**refs)
+  
+
+  strm = StringIO.StringIO()
+  ass.write_quiz(strm)
+
+  assert strm.getvalue() == Template('''
+MC\tq3_q1\ta\tincorrect\tb\tcorrect
+MC\tq3_q2\tc\tcorrect\td\tincorrect
+'''.strip()).substitute(**refs)
