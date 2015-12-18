@@ -1,5 +1,6 @@
 import inspect, contextlib
 from .Utils import format_text
+from .Answer import *
 from .Emitter import *
 import dpath.util
 
@@ -24,6 +25,7 @@ class Question(object):
     self.join_str = ' '
 
     self.clean_text = True
+    self.auto_answer_instructions = True
 
     if not text is None:
       self.add_text( text )
@@ -125,6 +127,12 @@ class Question(object):
   def _add_answer(self,v,prepend=False):
     # the "magic"
     yield v
+
+    # add special instructions for different answer types.
+    if self.auto_answer_instructions:
+      if isinstance( v, NumericalAnswer ):
+        if v.units != 'dimensionless':
+          self.add_instruction('Give your answer in %s.' % v.units,prepend=True)
 
     self.add_X(self._answers,v,prepend)
 

@@ -400,10 +400,10 @@ class HomeworkAssignment(Quiz):
     self.get_quiz('default').add_instruction(text,prepend)
 
   def quiz_set_answer(self, answer):
+    tmp = self.get_quiz('default').last_question.auto_answer_instructions
+    self.get_quiz('default').last_question.auto_answer_instructions = True
     self.get_quiz('default').set_answer(answer)
-    if isinstance( answer, NumericalAnswer ):
-      if answer.units != 'dimensionless':
-        self.get_quiz('default').add_instruction('Give your answer in %s.' % answer.units,prepend=True)
+    self.get_quiz('default').last_question.auto_answer_instructions = tmp
     
   def write_latex(self,filename):
     if not filename.endswith('.tex'):

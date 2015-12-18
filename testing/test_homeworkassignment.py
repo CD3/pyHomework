@@ -131,7 +131,7 @@ def test_quiz():
   ass.build_PDF('test.pdf')
   ass.write_quiz_file('test-quiz.txt')
 
-def test_emitters():
+def test_with_interface_ouput():
 
   refs = {}
 
@@ -139,6 +139,8 @@ def test_emitters():
   ass._preamble = []
   ass._header = []
   ass._packages = []
+  ass.add_package('easylist', 'ampersand')
+  ass.add_preamble(r'\ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)')
   
   with ass._add_question() as q:
     q.add_text('q1')
@@ -171,7 +173,19 @@ def test_emitters():
           d
         ''')
 
+    with q._add_part() as p:
+      p.add_text('q3a')
+      refs['q3a'] = id(p)
 
+      with ass.quiz._add_question() as qq:
+        qq.add_text('q3a_q1')
+        with qq._set_answer( NumericalAnswer() ) as a:
+          a.quantity = Q_(1.3579,'m/s')
+
+
+  with ass._add_question() as q:
+    q.add_text('q4')
+    refs['q4'] = id(q)
 
   strm = StringIO.StringIO()
   ass.write(strm)
@@ -179,7 +193,9 @@ def test_emitters():
   assert strm.getvalue() == Template( r'''
 \documentclass[letterpaper,10pt]{article}
 
+\usepackage[,ampersand]{ easylist }
 
+\ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)
 
 
 
@@ -195,6 +211,8 @@ def test_emitters():
 & \label{$q2}q2
 && \label{$q2a}q2a
 & \label{$q3}q3
+&& \label{$q3a}q3a
+& \label{$q4}q4
 \end{easylist}
 
 
@@ -204,9 +222,122 @@ def test_emitters():
   
 
   strm = StringIO.StringIO()
+  ass.build_PDF('tmp.pdf')
   ass.write_quiz(strm)
 
   assert strm.getvalue() == Template('''
 MC\tq3_q1\ta\tincorrect\tb\tcorrect
 MC\tq3_q2\tc\tcorrect\td\tincorrect
+NUM\tq3a_q1 Give your answer in meter / second.\t1.36E+00\t1.36E-02
+'''.strip()).substitute(**refs)
+
+# NUM\tFor problem #4: q4_q1 Give your answer in meter / second ** 2.\t1.36E+00\t5.79E-02
+
+
+def test_legacy_interface_ouput():
+
+  refs = {}
+
+  ass = HomeworkAssignment()
+  ass._preamble = []
+  ass._header = []
+  ass._packages = []
+  ass.add_package('easylist', 'ampersand')
+  ass.add_preamble(r'\ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)')
+  
+  ass.add_question()
+  ass.add_text('q1')
+  refs['q1'] = id(ass.last_question_or_part)
+  ass.add_question()
+  ass.add_text('q2')
+  refs['q2'] = id(ass.last_question_or_part)
+  ass.add_part()
+  ass.add_text('q2a')
+  refs['q2a'] = id(ass.last_question_or_part)
+  ass.add_question()
+  ass.add_text('q3')
+  refs['q3'] = id(ass.last_question_or_part)
+
+  ass.add_quiz_question()
+  ass.quiz_add_text('q3_q1')
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+    a
+    *b
+    ''')
+  ass.quiz_set_answer(a)
+
+  ass.add_quiz_question()
+  ass.quiz_add_text('q3_q2')
+  a = MultipleChoiceAnswer()
+  a.add_choices('''
+    *c
+    d
+    ''')
+  ass.quiz_set_answer(a)
+
+  ass.add_part()
+  ass.add_text('q3a')
+  refs['q3a'] = id(ass.last_question_or_part)
+
+  ass.add_quiz_question()
+  ass.quiz_add_text('q3a_q1')
+  ass.quiz_set_answer(NumericalAnswer(Q_(1.3579,'m/s')))
+
+
+  ass.add_question()
+  ass.add_text('q4')
+  refs['q4'] = id(ass.last_question_or_part)
+
+  ass.add_quiz_question()
+  ass.quiz_add_text('q4_q1')
+  ass.quiz_set_answer(NumericalAnswer(UQ_(1.3579,0.0579,'m/s^2')))
+
+
+
+
+
+  strm = StringIO.StringIO()
+  ass.write(strm)
+
+  assert strm.getvalue() == Template( r'''
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage[,ampersand]{ easylist }
+
+\ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)
+
+
+
+\title{ UNKNOWN }
+\author{  }
+\date{  }
+
+\begin{document}
+\maketitle
+
+\begin{easylist}
+& \label{$q1}q1
+& \label{$q2}q2
+&& \label{$q2a}q2a
+& \label{$q3}q3
+&& \label{$q3a}q3a
+& \label{$q4}q4
+\end{easylist}
+
+
+
+\end{document}
+'''.lstrip()).substitute(**refs)
+  
+
+  strm = StringIO.StringIO()
+  ass.build_PDF('tmp.pdf')
+  ass.write_quiz(strm)
+
+  assert strm.getvalue() == Template('''
+MC\tFor problem #3: q3_q1\ta\tincorrect\tb\tcorrect
+MC\tFor problem #3: q3_q2\tc\tcorrect\td\tincorrect
+NUM\tFor problem #3a: q3a_q1 Give your answer in meter / second.\t1.36E+00\t1.36E-02
+NUM\tFor problem #4: q4_q1 Give your answer in meter / second ** 2.\t1.36E+00\t5.79E-02
 '''.strip()).substitute(**refs)
