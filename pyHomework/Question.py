@@ -131,17 +131,21 @@ class Question(object):
   # sub-data: lists/dicts of class instances
 
   @contextlib.contextmanager
-  def _add_answer(self,v,prepend=False):
+  def _add_answer(self,a,prepend=False):
+
+    if inspect.isclass( a ):
+      a = a()
+
     # the "magic"
-    yield v
+    yield a
 
     # add special instructions for different answer types.
     if self.auto_answer_instructions:
-      if isinstance( v, NumericalAnswer ):
-        if v.units != 'dimensionless' and v.units != '':
-          self.add_instruction('Give your answer in %s.' % v.units,prepend=True)
+      if isinstance( a, NumericalAnswer ):
+        if a.units != 'dimensionless' and a.units != '':
+          self.add_instruction('Give your answer in %s.' % a.units,prepend=True)
 
-    self.add_X(self._answers,v,prepend)
+    self.add_X(self._answers,a,prepend)
 
   def add_answer(self,*args,**kwargs):
     with self._add_answer(*args,**kwargs):
