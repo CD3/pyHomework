@@ -462,21 +462,17 @@ class HomeworkAssignment(Quiz):
   ###################
 
   # when a part is added to a question, we need to push the part's
-  # reference onto the refstack
+  # reference onto the refstack and pop it off after we are done
   @property
   def _custom_question_add_part(self):
     # again, can we just wrap the function want to replace?
     refstack = self.refstack
     @contextlib.contextmanager
     def _add_part(self,p=None,prepend=False):
-      if not isinstance(p, Question):
-        p = Question(p)
-
-      refstack.append(id(p))
-      yield p
-      refstack.pop()
-
-      self.add_X(self._parts,p,prepend)
+      with Question._add_part(self,p,prepend) as pp:
+        refstack.append(id(pp))
+        yield pp
+        refstack.pop()
 
     return _add_part
 
@@ -488,15 +484,9 @@ class HomeworkAssignment(Quiz):
     refstack = self.refstack
     @contextlib.contextmanager
     def _add_question(self,q=None):
-      if not isinstance(q, Question):
-        q = Question(q)
-
-      yield q
-
-      if len(refstack) > 0:
-        q.add_text("For problem #{{refs['%s']}}:" % refstack[-1], prepend=True )
-
-      self._order.append( len(self._questions) )
-      self._questions.append( q )
+      with Quiz._add_question(self,q) as qq:
+        yield qq
+        if len(refstack) > 0:
+          qq.add_text("For problem #{{refs['%s']}}:" % refstack[-1], prepend=True )
 
     return _add_question
