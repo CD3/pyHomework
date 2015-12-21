@@ -210,7 +210,6 @@ def test_with_interface_output():
 \ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)
 
 
-
 \title{ UNKNOWN }
 \author{  }
 \date{  }
@@ -318,7 +317,6 @@ def test_legacy_interface_ouput():
 \usepackage[,ampersand]{ easylist }
 
 \ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)
-
 
 
 \title{ UNKNOWN }
