@@ -2,6 +2,7 @@ from .Question import *
 from .Answer import *
 from .Emitter import *
 from .File import *
+from .Utils import *
 import dpath.util, contextlib
 
 class Quiz(object):
@@ -59,7 +60,7 @@ class Quiz(object):
   @contextlib.contextmanager
   def _add_question(self,q=None):
     if not isinstance(q, Question):
-      q = Question(q)
+      q = self.Question(q)
 
     yield q
 
@@ -154,9 +155,34 @@ for p in passthroughs:
   passthrough_fn(p)
 
 
+# we want to support uploading files to a remote URL and referencing them in
+# a question.
+class BbQuizQuestion(Question):
+  def __init__(self,*args,**kwargs):
+    super(BbQuizQuestion,self).__init__(*args,**kwargs)
+    self._files = {}
+
+  @contextlib.contextmanager
+  def _add_file(self,f,name=None):
+    if not isinstance(f, File):
+      f = File(f)
+
+    yield f
+
+    name = name or f.filename
+    self._files[name] = f
+    self.add_instruction( 'To answer this question, open the following link in a NEW TAB: {view_url:s}.', prepend=True )
+  
+  def add_file(self,*args,**kwargs):
+    with self._add_file(*args,**kwargs):
+      pass
+
+
+
 
 class BbQuiz(Quiz):
     DefaultEmitter = BbEmitter
+    Question = BbQuizQuestion
     def __init__(self,*args,**kwargs):
       super(BbQuiz,self).__init__(*args,**kwargs)
       self._config = { 'files' :
@@ -169,8 +195,9 @@ class BbQuiz(Quiz):
                         , 'answers'   : False
                         }
                     }
+      self.Question._files_config = self._config['files']
 
-    def push_image(self, image_filename, remote_config):
+    def push_images(self, image_filename, remote_config):
         data = dict()
 
         if 'copy_root' in remote_config:
@@ -191,3 +218,13 @@ class BbQuiz(Quiz):
         # correct link and return it.
         link = urlparse.urljoin( remote_config['web_root'], os.path.join(remote_config['image_dir'], os.path.basename(image_filename) ) )
         return link
+
+    @contextlib.contextmanager
+    def _add_question(self,*args,**kwargs):
+      with super(BbQuiz,self)._add_question(*args,**kwargs) as qq:
+        yield qq
+        for k in qq._files:
+          filename = qq._files[k].filename
+          view_url = format_text( self.config('files/view_url'), 'format', filename = filename )
+          qq.format_instructions( formatter = 'format', view_url = view_url )
+

@@ -181,8 +181,6 @@ class Package(object):
     '''Return the LaTeX code for the paragraph.'''
     return tempita.sub( self.latex_template, name=self.name, opts = ','.join(self.opts) )
     
-
-
 # HOMEWORK ASSIGNMENT CLASS
 
 class HomeworkAssignment(Quiz):

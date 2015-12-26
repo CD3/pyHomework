@@ -12,7 +12,7 @@ class Question(object):
   - text : the actual question itself
   - instructions : extra information needed to answer the question
   - answers : one or more answers to the question
-  - parts : one or parts to the questions (sub-questions). these are also questions.
+  - parts : one or more parts to the questions (sub-questions). these are also questions.
   """
   DefaultEmitter = PlainEmitter
   
