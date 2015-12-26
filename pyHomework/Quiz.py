@@ -3,7 +3,7 @@ from .Answer import *
 from .Emitter import *
 from .File import *
 from .Utils import *
-import dpath.util, contextlib
+import dpath.util, contextlib, urlparse, os
 
 class Quiz(object):
   Question = Question
@@ -186,38 +186,39 @@ class BbQuiz(Quiz):
     def __init__(self,*args,**kwargs):
       super(BbQuiz,self).__init__(*args,**kwargs)
       self._config = { 'files' :
-                         { 'view_url'  : 'http://example.com/files/{filename:s}'
-                         , 'push_url'  : 'ssh://example.com/files/{filename:s}'
+                         { 'view_url'  : 'http://example.com/files/{tag:s}/{filename:s}'
+                         , 'push_url'  : 'ssh://example.com/files/{tag:s}/{filename:s}'
                          , 'local_url' : '/path/to/the/files/{filename:s}'
+                         , 'tag' : 'default'
+                         , 'docopy' : True
                          }
                     , 'randomize' :
                         { 'questions' : False
                         , 'answers'   : False
                         }
                     }
+
       self.Question._files_config = self._config['files']
 
-    def push_images(self, image_filename, remote_config):
-        data = dict()
+    def push_files(self):
 
-        if 'copy_root' in remote_config:
-          url = urlparse.urlparse( os.path.join( remote_config['copy_root'], remote_config['image_dir'] ) )
-        else:
-          return None
-
-        if url.scheme == 'ssh':
-          data['file']   = image_filename
-          data['netloc'] = url.netloc
-          data['path']   = url.path[1:]
-
-          cmd = 'scp "%(file)s" "%(netloc)s:%(path)s" > /dev/null' % data
-          print "found file/link pair. copying file to server with '%s'." % cmd
-          os.system( cmd )
+      for q in self._questions:
+        for k in q._files:
+          f = q._files[k]
+          fname = f.filename
+          push_url = format_text( self._config['files']['push_url'], 'format', tag=self.config('/files/tag','default'), filename=fname )
+          url = urlparse.urlparse( push_url )
+          if url.scheme == 'ssh':
+            remote_file = url.path[1:] # don't want the leading '/'
+            local_file  = format_text( self.config('/files/local_url'), 'format', filename = f.filename )
+            cmd = 'scp "{lfile:s}" "{netloc:s}:{rfile:s}"'
+            cmd = format_text( cmd, 'format', netloc=url.netloc, rfile=remote_file, lfile=local_file )
+            print "found file/link pair. copying file to server with '%s'." % cmd
+            if self.config('/files/docopy', False):
+              # create the remote directory in case it does not exist
+              os.system( format_text( 'ssh {netloc:s} "mkdir -p {rpath}"', 'format', netloc=url.netloc, rpath=os.path.dirname(remote_file) ) )
+              os.system( cmd )
         
-        # the link that points to the image may not be the same as the url we copied it too, so we want to construct the
-        # correct link and return it.
-        link = urlparse.urljoin( remote_config['web_root'], os.path.join(remote_config['image_dir'], os.path.basename(image_filename) ) )
-        return link
 
     @contextlib.contextmanager
     def _add_question(self,*args,**kwargs):
@@ -225,6 +226,6 @@ class BbQuiz(Quiz):
         yield qq
         for k in qq._files:
           filename = qq._files[k].filename
-          view_url = format_text( self.config('files/view_url'), 'format', filename = filename )
+          view_url = format_text( self.config('files/view_url'), 'format', filename = filename, tag = self.config('/files/tag') )
           qq.format_instructions( formatter = 'format', view_url = view_url )
 

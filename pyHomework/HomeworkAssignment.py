@@ -608,6 +608,7 @@ class HomeworkAssignment(Quiz):
     context = {'refs' : self.latex_refs}
     text = tempita.sub(s.getvalue(), **context)
     stream.write(text)
+    self.get_quiz(name).push_files()
 
   def write_quiz_file(self,filename,name='default'):
     with open(filename,'w') as f:
@@ -641,7 +642,7 @@ class HomeworkAssignment(Quiz):
     refstack = self.refstack
     @contextlib.contextmanager
     def _add_question(self,q=None):
-      with Quiz._add_question(self,q) as qq:
+      with BbQuiz._add_question(self,q) as qq:
         yield qq
         if len(refstack) > 0:
           qq.add_text("For problem #{{refs['%s']}}:" % refstack[-1], prepend=True )

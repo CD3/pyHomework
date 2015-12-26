@@ -241,6 +241,9 @@ def test_bbquiz_files():
       a.quantity = 4
 
 
+  q.config('/files/docopy', value=False)
   bbquiz = q.emit(BbEmitter)
-  assert bbquiz == 'NUM\tHow many penguins are in the picture? To answer this question, open the following link in a NEW TAB: http://example.com/files/penguins.png. Give your answer as a positive integer.\t4.00E+00\t4.00E-02'
+  q.push_files()
+
+  assert bbquiz == 'NUM\tHow many penguins are in the picture? To answer this question, open the following link in a NEW TAB: http://example.com/files/default/penguins.png. Give your answer as a positive integer.\t4.00E+00\t4.00E-02'
 
