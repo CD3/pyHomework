@@ -32,14 +32,9 @@ def test_add_text_and_instruction():
   q = Question()
   q.add_text("Question text.")
   q.add_instruction("Instruction text.")
+  q.add_pre_instruction("Pre, Instruction text.")
 
-  assert q.question_str == "Question text. Instruction text."
-
-  q.prepend_instructions = True
-  assert q.question_str == "Instruction text. Question text."
-
-  q.prepend_instructions = False
-  assert q.question_str == "Question text. Instruction text."
+  assert q.question_str == "Pre, Instruction text. Question text. Instruction text."
 
 def test_set_text():
   q = Question()

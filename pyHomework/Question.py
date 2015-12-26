@@ -20,7 +20,7 @@ class Question(object):
   def __init__(self, text = None):
     # controlled access members
     self._texts = []
-    self._instructions = []
+    self._post_instructions = []
     self._pre_instructions = []
     self._answers = []
     self._parts = []
@@ -29,7 +29,6 @@ class Question(object):
       self.add_text( text )
 
     # regular members
-    self.prepend_instructions = False
     self.join_str = ' '
 
     # config options
@@ -86,13 +85,13 @@ class Question(object):
 
 
   def add_instruction(self,v,prepend=False):
-    return self.add_X(self._instructions,v.strip(),prepend)
+    return self.add_X(self._post_instructions,v.strip(),prepend)
 
   def set_instruction(self,v=None):
-    return self.set_X(self._instructions,v)
+    return self.set_X(self._post_instructions,v)
 
   def format_instruction(self, *args, **kwargs):
-    return self.format_X(self._instructions,*args,**kwargs)
+    return self.format_X(self._post_instructions,*args,**kwargs)
   format_instructions = format_instruction
 
 
@@ -120,18 +119,27 @@ class Question(object):
     return self.join_X(self._texts)
 
   @property
-  def instructions_str(self):
-    return self.join_X(self._instructions)
+  def pre_instructions_str(self):
+    return self.join_X(self._pre_instructions)
+
+  @property
+  def post_instructions_str(self):
+    return self.join_X(self._post_instructions)
+
+  instructions_str = post_instructions_str
   
   @property
   def question_str(self):
-    tmp = [self.text_str]
-    if self.prepend_instructions:
-      tmp.insert(0,self.instructions_str)
-    else:
-      tmp.append(self.instructions_str)
+    tokens = []
+    if len(self._pre_instructions) > 0:
+      tokens.append( self.pre_instructions_str )
+    if len(self._texts) > 0:
+      tokens.append( self.text_str )
+    if len(self._post_instructions) > 0:
+      tokens.append( self.post_instructions_str )
 
-    return self.join_X( tmp )
+
+    return self.join_X( tokens )
 
   @property
   def last_part(self):
