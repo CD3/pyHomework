@@ -158,6 +158,7 @@ for p in passthroughs:
 # we want to support uploading files to a remote URL and referencing them in
 # a question.
 class BbQuizQuestion(Question):
+  link_instruction_template = 'Before answering this question, view this link ({view_url:s}) in a NEW TAB.'
   def __init__(self,*args,**kwargs):
     super(BbQuizQuestion,self).__init__(*args,**kwargs)
     self._files = {}
@@ -171,7 +172,7 @@ class BbQuizQuestion(Question):
 
     name = name or f.filename
     self._files[name] = f
-    self.add_instruction( 'To answer this question, open the following link in a NEW TAB: {view_url:s}.', prepend=True )
+    self.add_instruction( self.link_instruction_template, prepend=True )
   
   def add_file(self,*args,**kwargs):
     with self._add_file(*args,**kwargs):

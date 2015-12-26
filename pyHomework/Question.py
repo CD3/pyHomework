@@ -11,6 +11,7 @@ class Question(object):
   
   - text : the actual question itself
   - instructions : extra information needed to answer the question
+  - pre_instructions : extra information needed to answer the question, but presented before the question text.
   - answers : one or more answers to the question
   - parts : one or more parts to the questions (sub-questions). these are also questions.
   """
@@ -20,6 +21,7 @@ class Question(object):
     # controlled access members
     self._texts = []
     self._instructions = []
+    self._pre_instructions = []
     self._answers = []
     self._parts = []
 
@@ -94,9 +96,21 @@ class Question(object):
   format_instructions = format_instruction
 
 
+  def add_pre_instruction(self,v,prepend=False):
+    return self.add_X(self._pre_instructions,v.strip(),prepend)
+
+  def set_pre_instruction(self,v=None):
+    return self.set_X(self._pre_instructions,v)
+
+  def format_pre_instruction(self, *args, **kwargs):
+    return self.format_X(self.__pre_instructions,*args,**kwargs)
+  format_pre_instructions = format_pre_instruction
+
+
   def format_question(self, *args, **kwargs):
     self.format_text(*args,**kwargs)
     self.format_instruction(*args,**kwargs)
+    self.format_pre_instruction(*args,**kwargs)
 
 
   # properties: allow attribute style access to processed data
