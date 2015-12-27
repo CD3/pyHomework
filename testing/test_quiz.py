@@ -245,5 +245,5 @@ def test_bbquiz_files():
   bbquiz = q.emit(BbEmitter)
   q.push_files()
 
-  assert bbquiz == 'NUM\tHow many penguins are in the picture? Before answering this question, view this link (http://example.com/files/default/penguins.png) in a NEW TAB. Give your answer as a positive integer.\t4.00E+00\t4.00E-02'
+  assert bbquiz == 'NUM\tBefore answering this question, view this link (http://example.com/files/default/penguins.png) in a NEW TAB. How many penguins are in the picture? Give your answer as a positive integer.\t4.00E+00\t4.00E-02'
 

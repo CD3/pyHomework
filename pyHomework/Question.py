@@ -84,14 +84,17 @@ class Question(object):
   format_texts = format_text
 
 
-  def add_instruction(self,v,prepend=False):
+  def add_post_instruction(self,v,prepend=False):
     return self.add_X(self._post_instructions,v.strip(),prepend)
+  add_instruction = add_post_instruction
 
-  def set_instruction(self,v=None):
+  def set_post_instruction(self,v=None):
     return self.set_X(self._post_instructions,v)
+  set_instruction = set_post_instruction
 
-  def format_instruction(self, *args, **kwargs):
+  def format_post_instruction(self, *args, **kwargs):
     return self.format_X(self._post_instructions,*args,**kwargs)
+  format_instruction = format_post_instruction
   format_instructions = format_instruction
 
 
@@ -102,7 +105,7 @@ class Question(object):
     return self.set_X(self._pre_instructions,v)
 
   def format_pre_instruction(self, *args, **kwargs):
-    return self.format_X(self.__pre_instructions,*args,**kwargs)
+    return self.format_X(self._pre_instructions,*args,**kwargs)
   format_pre_instructions = format_pre_instruction
 
 

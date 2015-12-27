@@ -172,7 +172,7 @@ class BbQuizQuestion(Question):
 
     name = name or f.filename
     self._files[name] = f
-    self.add_instruction( self.link_instruction_template, prepend=True )
+    self.add_pre_instruction( self.link_instruction_template, prepend=True )
   
   def add_file(self,*args,**kwargs):
     with self._add_file(*args,**kwargs):
@@ -228,5 +228,5 @@ class BbQuiz(Quiz):
         for k in qq._files:
           filename = qq._files[k].filename
           view_url = format_text( self.config('files/view_url'), 'format', filename = filename, tag = self.config('/files/tag') )
-          qq.format_instructions( formatter = 'format', view_url = view_url )
+          qq.format_pre_instructions( formatter = 'format', view_url = view_url )
 
