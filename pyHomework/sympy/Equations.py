@@ -56,6 +56,7 @@ class SymbolCollection:
 
     # constants
     self.g_    = sy.symbols('g')
+    self.G_    = sy.symbols('G')
     self.k_    = sy.symbols('k')
     self.c_    = sy.symbols('c')
     self.pi_   = sy.symbols('\pi')
@@ -134,6 +135,7 @@ class EquationsCollection:
                     s.k_    : c.CoulombsConstant,
                     s.mu0_  : c.VacuumPermeability,
                     s.ep0_  : c.VacuumPermittivity,
+                    s.G_    : c.GravitationalConstant,
                   }
 
   def eval(self, expr, vvar, context, soli = 0 ):

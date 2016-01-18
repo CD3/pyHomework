@@ -194,8 +194,20 @@ class HomeworkAssignment(Quiz):
 {{default date = ''}}
 \documentclass[letterpaper,10pt]{article}
 
+
 {{preamble}}
 
+
+\usepackage{fancyhdr}
+\setlength{\headheight}{0.5in}
+\pagestyle{fancyplain}
+\fancyhead[L]{ {{LH}} }
+\fancyhead[C]{ {{CH}} }
+\fancyhead[R]{ {{RH}} }
+\fancyfoot[L]{ {{LF}} }
+\fancyfoot[C]{ {{CF}} }
+\fancyfoot[R]{ {{RF}} }
+\renewcommand{\headrulewidth}{0pt}
 
 \title{ {{title}} }
 \author{ {{author}} }
@@ -264,16 +276,6 @@ class HomeworkAssignment(Quiz):
     self.add_preamble(r'\DeclareSIUnit \ounce{oz}')
     self.add_preamble(r'\DeclareSIUnit \pound{lb}')
     self.add_preamble(r'\DeclareSIUnit \hour{hr}')
-
-    self.add_preamble(r'\setlength{\headheight}{0.5in}')
-    self.add_preamble(r'\pagestyle{fancyplain}')
-    self.add_preamble(r'\fancyhead[L]{ {{LH}} }')
-    self.add_preamble(r'\fancyhead[C]{ {{CH}} }')
-    self.add_preamble(r'\fancyhead[R]{ {{RH}} }')
-    self.add_preamble(r'\fancyfoot[L]{ {{LF}} }')
-    self.add_preamble(r'\fancyfoot[C]{ {{CF}} }')
-    self.add_preamble(r'\fancyfoot[R]{ {{RF}} }')
-    self.add_preamble(r'\renewcommand{\headrulewidth}{0pt}')
 
     self.add_quiz('default')
 
@@ -531,13 +533,12 @@ class HomeworkAssignment(Quiz):
 
 
   def write(self, stream):
-    engine = tempita.Template(self.latex_template)
     context = { 'preamble'    : self.preamble_latex
               , 'body'        : self.body_latex
               , 'figures'     : self.figures_latex
               }
     context.update( self._config )
-    text = engine.substitute( **context )
+    text = tempita.sub( self.latex_template, **context )
 
     stream.write(text)
 
