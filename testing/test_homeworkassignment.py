@@ -205,10 +205,22 @@ def test_with_interface_output():
   assert strm.getvalue() == Template( r'''
 \documentclass[letterpaper,10pt]{article}
 
+
 \usepackage[,ampersand]{ easylist }
 
 \ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)
 
+
+\usepackage{fancyhdr}
+\setlength{\headheight}{0.5in}
+\pagestyle{fancyplain}
+\fancyhead[L]{  }
+\fancyhead[C]{  }
+\fancyhead[R]{  }
+\fancyfoot[L]{  }
+\fancyfoot[C]{ \thepage }
+\fancyfoot[R]{ powered by \LaTeX }
+\renewcommand{\headrulewidth}{0pt}
 
 \title{ UNKNOWN }
 \author{  }
@@ -314,10 +326,22 @@ def test_legacy_interface_ouput():
   assert strm.getvalue() == Template( r'''
 \documentclass[letterpaper,10pt]{article}
 
+
 \usepackage[,ampersand]{ easylist }
 
 \ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)
 
+
+\usepackage{fancyhdr}
+\setlength{\headheight}{0.5in}
+\pagestyle{fancyplain}
+\fancyhead[L]{  }
+\fancyhead[C]{  }
+\fancyhead[R]{  }
+\fancyfoot[L]{  }
+\fancyfoot[C]{ \thepage }
+\fancyfoot[R]{ powered by \LaTeX }
+\renewcommand{\headrulewidth}{0pt}
 
 \title{ UNKNOWN }
 \author{  }
