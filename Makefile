@@ -1,2 +1,2 @@
 install:
-	python setup.py install --prefix=${HOME}/install
+	python setup.py install
