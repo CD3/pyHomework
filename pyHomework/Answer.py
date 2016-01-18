@@ -170,7 +170,11 @@ class MultipleChoiceAnswer(Answer):
         self.add_choice( line )
 
   def set_correct( self, i ):
-    self._correct.add( i )
+    if isinstance( i, (str,unicode) ):
+      i = self.find(i)
+
+    if i >= 0 and i < len(self._choices):
+      self._correct.add( i )
 
   def clear_choices( self ):
     self._order = []
@@ -190,6 +194,17 @@ class MultipleChoiceAnswer(Answer):
     self.clear_correct()
     for choice in spec['choices']:
       self.add_choice( choice )
+
+  def find(self, pattern, exact=True):
+    if exact:
+      return self._choices.index(pattern)
+    else:
+      '''Add support for fuzzy match'''
+      for i in range(len(self._choices)):
+        if pattern in self._choices[i]:
+          return i
+        return -1
+
 
 class OrderedAnswer(Answer):
   def __init__(self):
