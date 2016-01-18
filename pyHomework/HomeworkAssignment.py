@@ -49,7 +49,7 @@ class Figure(object):
     self._caption  = []
     self._options = []
 
-    self.set_filename
+    self.set_filename(filename)
   
   @property
   def filename(self):
@@ -552,9 +552,20 @@ class HomeworkAssignment(Quiz):
       self.write( f )
 
     if filename.endswith( '.pdf' ):
-      call( ['latexmk', '-silent', '-pdf', texfile ] )
-      self.latex_refs.update( parse_aux( self.get_fn( texfile, 'aux' ) ) )
-      call( ['latexmk', '-c', texfile ] )
+      with open('latexmk-cmd.log','w') as f:
+        status = call( ['latexmk', '-latexoption=-interaction=nonstopmode', '-pdf', texfile ], stdout=f, stderr=f )
+        self.latex_refs.update( parse_aux( self.get_fn( texfile, 'aux' ) ) )
+        call( ['latexmk', '-c', texfile ], stdout=f, stderr=f )
+      if status:
+        with open('latexmk-cmd.log','r') as f:
+          lines = f.readlines()
+        print "====================================="
+        print "THERE WAS AND ERROR."
+        print "dumping latexmk output to screen:"
+        print "====================================="
+        print ''.join(lines)
+        print "====================================="
+        print "====================================="
         
 
 
