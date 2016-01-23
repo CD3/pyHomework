@@ -11,6 +11,12 @@ def unitof(q):
   else:
     return Q_("dimensionless")
 
+def magof(q):
+  if isinstance(q,Q_):
+    return q.magnitude
+  else:
+    return q
+
 def dot(v1,v2):
   u1 = unitof( v1 )
   u2 = unitof( v2 )
@@ -31,6 +37,12 @@ def direction( vec ):
   if ret < Q_(0,'radian'):
     ret += Q_(2*3.14159,'radian')
   return ret
+
+def make_vec( components ):
+  u = unitof( components[0] )
+  c = [ magof(x.to(u)) for x in components ]
+  return Q_(c,u)
+
 
 null = np.array( [0,0,0] )
 xhat = np.array( [1,0,0] )
