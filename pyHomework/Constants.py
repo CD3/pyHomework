@@ -13,6 +13,7 @@ class ConstantsCollection:
     self.Pi                    = make(math.pi,              'dimensionless')
     self.AvagadrosNumber       = make(6.0221409e+23,        '1/mol')
 
+    self.GravitationalAcceleration = make(9.80,             'm s^-2')
     self.SpeedOfLight          = make(299792458,            'm/s')
     self.GravitationalConstant = make(6.6738e-11,           'm^3 kg^-1 s^-2')
     self.ElementaryCharge      = make(1.602e-19,            'coulomb')

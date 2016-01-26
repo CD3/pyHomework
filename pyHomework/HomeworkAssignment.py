@@ -220,8 +220,12 @@ class HomeworkAssignment(Quiz):
 
 {{figures}}
 
+\clearpage
+{{key}}
+
 \end{document}
 '''
+
   '''The Tempita template string used to generate the assignment document. The assignment document can be customized by setting this string.
   '''
 
@@ -349,6 +353,31 @@ class HomeworkAssignment(Quiz):
     '''Returns the default quiz.'''
     return self.get_quiz()
 
+  @property
+  def key_latex(self):
+    tokens = []
+    num = 0
+    for q in self._questions:
+      answer = []
+      answer.append( r'\ref{'+str(id(q))+r'}')
+      if len(q._answers) > 0:
+        num += 1
+        for a in q._answers:
+          answer.append( a.latex )
+      tokens.append( ' '.join(answer) )
+
+      for p in q._parts:
+        answer = []
+        answer.append( r'\ref{'+str(id(p))+r'}')
+        if len(p._answers) > 0:
+          num += 1
+          for a in p._answers:
+            answer.append( a.latex )
+        tokens.append( ' '.join(answer) )
+
+    if num == 0:
+      return ""
+    return '\n\n'.join(tokens)
 
   @contextlib.contextmanager
   def _add_paragraph(self,p,i=None):
@@ -536,6 +565,7 @@ class HomeworkAssignment(Quiz):
     context = { 'preamble'    : self.preamble_latex
               , 'body'        : self.body_latex
               , 'figures'     : self.figures_latex
+              , 'key'         : self.key_latex
               }
     context.update( self._config )
     text = tempita.sub( self.latex_template, **context )
@@ -552,20 +582,27 @@ class HomeworkAssignment(Quiz):
       self.write( f )
 
     if filename.endswith( '.pdf' ):
-      with open('latexmk-cmd.log','w') as f:
-        status = call( ['latexmk', '-latexoption=-interaction=nonstopmode', '-pdf', texfile ], stdout=f, stderr=f )
-        self.latex_refs.update( parse_aux( self.get_fn( texfile, 'aux' ) ) )
-        call( ['latexmk', '-c', texfile ], stdout=f, stderr=f )
-      if status:
-        with open('latexmk-cmd.log','r') as f:
-          lines = f.readlines()
-        print "====================================="
-        print "THERE WAS AND ERROR."
-        print "dumping latexmk output to screen:"
-        print "====================================="
-        print ''.join(lines)
-        print "====================================="
-        print "====================================="
+      self.latexmk( texfile )
+
+
+  def latexmk( self, texfile ):
+    with open(texfile+'latexmk-cmd.log','w') as f:
+      status = call( ['latexmk', '-latexoption=-interaction=nonstopmode', '-pdf', texfile ], stdout=f, stderr=f )
+      self.latex_refs.update( parse_aux( self.get_fn( texfile, 'aux' ) ) )
+      call( ['latexmk', '-c', texfile ], stdout=f, stderr=f )
+    if status:
+      with open(texfile+'latexmk-cmd.log','r') as f:
+        lines = f.readlines()
+      print "====================================="
+      print "THERE WAS AND ERROR."
+      print "dumping latexmk output to screen:"
+      print "====================================="
+      print ''.join(lines)
+      print "====================================="
+      print "====================================="
+    
+
+
         
 
 
@@ -660,3 +697,4 @@ class HomeworkAssignment(Quiz):
           qq.add_text("For problem #{{refs['%s']}}:" % refstack[-1], prepend=True )
 
     return _add_question
+

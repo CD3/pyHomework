@@ -115,7 +115,7 @@ class Quiz(object):
     stream.write( self.emit() )
 
   def load(self,spec):
-    self._config = spec.get('configuration',{})
+    self._config.update(spec.get('configuration',{}))
     for q in spec['questions']:
       self.add_question()
       try:

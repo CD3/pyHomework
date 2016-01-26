@@ -18,14 +18,22 @@ class Answer(object):
 
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
 
-class EssayAnswer(Answer):
+class RawAnswer(Answer):
+  def __init__(self, text=None):
+    self.text = text
+
+  @property
+  def latex(self):
+    return self.text
+
+class EssayAnswer(RawAnswer):
   def __init__(self, text=None):
     self.text = text
 
   def load(self,spec):
     self.answer = spec['text']
 
-class ShortAnswer(Answer):
+class ShortAnswer(RawAnswer):
   def __init__(self, text=None):
     self.text = text
 
@@ -204,7 +212,6 @@ class MultipleChoiceAnswer(Answer):
         if pattern in self._choices[i]:
           return i
         return -1
-
 
 class OrderedAnswer(Answer):
   def __init__(self):
