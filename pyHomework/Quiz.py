@@ -202,16 +202,21 @@ class BbQuiz(Quiz):
       self.Question._files_config = self._config['files']
 
     def push_files(self):
-
       for q in self._questions:
         for k in q._files:
           f = q._files[k]
           fname = f.filename
-          push_url = format_text( self._config['files']['push_url'], 'format', tag=self.config('/files/tag','default'), filename=fname )
+          bname = os.path.basename(f.filename)
+          context = { 'filename' : f.filename
+                    , 'abspath' : os.path.abspath( f.filename )
+                    , 'basename' : os.path.basename( f.filename )
+                    , 'tag' : self.config('/files/tag', 'default')
+                    }
+          push_url = format_text( self.config('files/push_url'), 'format', **context )
           url = urlparse.urlparse( push_url )
           if url.scheme == 'ssh':
             remote_file = url.path[1:] # don't want the leading '/'
-            local_file  = format_text( self.config('/files/local_url'), 'format', filename = f.filename )
+            local_file  = format_text( self.config('/files/local_url'), 'format', **context )
             cmd = 'scp "{lfile:s}" "{netloc:s}:{rfile:s}"'
             cmd = format_text( cmd, 'format', netloc=url.netloc, rfile=remote_file, lfile=local_file )
             print "found file/link pair. copying file to server with '%s'." % cmd
@@ -227,6 +232,11 @@ class BbQuiz(Quiz):
         yield qq
         for k in qq._files:
           filename = qq._files[k].filename
-          view_url = format_text( self.config('files/view_url'), 'format', filename = filename, tag = self.config('/files/tag') )
+          context = { 'filename' : filename
+                    , 'abspath' : os.path.abspath( filename )
+                    , 'basename' : os.path.basename( filename )
+                    , 'tag' : self.config('/files/tag', 'default')
+                    }
+          view_url = format_text( self.config('files/view_url'), 'format', **context )
           qq.format_pre_instructions( formatter = 'format', view_url = view_url )
 

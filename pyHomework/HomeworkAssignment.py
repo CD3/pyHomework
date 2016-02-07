@@ -259,7 +259,7 @@ class HomeworkAssignment(Quiz):
     self.add_package('grffile')
     self.add_package('siunitx')
     self.add_package('fancyhdr')
-    self.add_package('easylist', 'ampersand')
+    self.add_package('easylist', 'at')
     self.add_package('hyperref')
     self.add_package('geometry', 'left=1in,right=1in,top=1in,bottom=1in')
 
@@ -347,6 +347,16 @@ class HomeworkAssignment(Quiz):
         return p
       return q
     return None
+
+  @property
+  def last_figure(self):
+    '''Returns the last figure.'''
+    if len( self._figures) > 0:
+      print self._figures.keys()[-1]
+      key = self._figures.keys()[-1]
+      return self._figures[key]
+    else:
+      return None
 
   @property
   def quiz(self):
@@ -639,7 +649,25 @@ class HomeworkAssignment(Quiz):
     self.get_quiz('default').last_question.auto_answer_instructions = True
     self.get_quiz('default').set_answer(answer)
     self.get_quiz('default').last_question.auto_answer_instructions = tmp
-    
+
+  def figure_set_data( self, type, val ):
+    f = self.last_figure
+    if f is None:
+      raise Exception("No figures have been added to the assignment yet.")
+      return
+
+    if type == 'options':
+      f.add_option(val)
+      return
+    if type == 'label':
+      f.add_label(val)
+      return
+    if type == 'caption':
+      f.add_caption(val)
+      return
+
+    raise NameError("'"+type+"' is not a recognized data type for figures")
+
   def write_latex(self,filename):
     if not filename.endswith('.tex'):
       filename = filename + '.tex'
