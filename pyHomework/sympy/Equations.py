@@ -55,11 +55,11 @@ class SymbolCollection:
     self.Rb   = sy.symbols('R_b')
 
     # constants
-    self.g_    = sy.symbols('g')
-    self.G_    = sy.symbols('G')
-    self.k_    = sy.symbols('k')
-    self.c_    = sy.symbols('c')
-    self.pi_   = sy.symbols('\pi')
+    self.g_    = sy.symbols('g_')
+    self.G_    = sy.symbols('G_')
+    self.k_    = sy.symbols('k_')
+    self.c_    = sy.symbols('c_')
+    self.pi_   = sy.symbols('\pi_')
     self.ep0_  = sy.symbols('\epsilon_0')
     self.mu0_  = sy.symbols('\mu_0')
 

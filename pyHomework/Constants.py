@@ -20,6 +20,8 @@ class ConstantsCollection:
     self.CoulombsConstant      = make(8.9875517873681764e9, 'N m^2 / C^2')
     self.VacuumPermittivity    = make(8.85418782,           'F/m')
     self.VacuumPermeability    = make(4*math.pi*1e-7,       'N/A^2')
+    self.PlancksConstant       = make(6.62607004e-34, 'm^2 kg / s')
+    self.BoltzmannConstant     = make(1.38064852e-23, 'm^2 kg / s^2 / K')
 
     self.Masses = {}
     self.Masses['sun']      = make(1.989e30,       'kg')
@@ -46,5 +48,4 @@ class ConstantsCollection:
 
     self.RadiusOfSun           = self.Radii['sun']
     self.RadiusOfEarth         = self.Radii['earth']
-
 
