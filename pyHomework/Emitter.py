@@ -77,13 +77,13 @@ class BbEmitter(Emitter):
     if t == 'EssayAnswer':
       return 'ESS'
     if t == 'ShortAnswer':
-      return 'SA'
+      return 'SR'
 
   def EssayAnswer(self,obj):
     return ""
 
   def ShortAnswer(self,obj):
-    return str(obj.text)
+    return str(' '.join(obj.text.split()))
 
   def NumericalAnswer(self,obj):
     tokens = []
@@ -160,7 +160,7 @@ class LatexEmitter(Emitter):
         lbl = LatexEmitter.make_label(choice)
 
       if self.listtype.lower() == 'easylist':
-        tokens.append( '& '+lbl+choice )
+        tokens.append( '@ '+lbl+choice )
       else:
         tokens.append( r'\item '+lbl+choice )
 
@@ -178,11 +178,11 @@ class LatexEmitter(Emitter):
       lbl = LatexEmitter.make_label(obj)
 
     if self.listtype.lower() == 'easylist':
-      tokens.append( '& '+lbl+obj.question_str )
+      tokens.append( '@ '+lbl+obj.question_str )
       for answer in obj._answers:
-        tokens.append( answer.emit(self).replace( '& ', '&& ' ) )
+        tokens.append( answer.emit(self).replace( '@ ', '@@ ' ) )
       for part in obj._parts:
-        tokens.append( part.emit(self).replace( '& ', '&& ' ) )
+        tokens.append( part.emit(self).replace( '@ ', '@@ ' ) )
     else:
       tokens.append( r'\item '+lbl+obj.question_str )
       for answer in obj._answers:
