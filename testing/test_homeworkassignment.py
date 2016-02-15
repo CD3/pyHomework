@@ -137,7 +137,7 @@ def test_with_interface_output():
   ass._preamble = []
   ass._header = []
   ass._packages = []
-  ass.add_package('easylist', 'ampersand')
+  ass.add_package('easylist', 'at')
   ass.add_preamble(r'\ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)')
   
   with ass._add_question() as q:
@@ -206,7 +206,7 @@ def test_with_interface_output():
 \documentclass[letterpaper,10pt]{article}
 
 
-\usepackage[,ampersand]{ easylist }
+\usepackage[,at]{ easylist }
 
 \ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)
 
@@ -230,14 +230,17 @@ def test_with_interface_output():
 \maketitle
 
 \begin{easylist}
-& \label{$q1}q1
-& \label{$q2}q2
-&& \label{$q2a}q2a
-& \label{$q3}q3
-&& \label{$q3a}q3a
-& \label{$q4}q4
+@ \label{$q1}q1
+@ \label{$q2}q2
+@@ \label{$q2a}q2a
+@ \label{$q3}q3
+@@ \label{$q3a}q3a
+@ \label{$q4}q4
 \end{easylist}
 
+
+
+\clearpage
 
 
 \end{document}
@@ -265,7 +268,7 @@ def test_legacy_interface_ouput():
   ass._preamble = []
   ass._header = []
   ass._packages = []
-  ass.add_package('easylist', 'ampersand')
+  ass.add_package('easylist', 'at')
   ass.add_preamble(r'\ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)')
   
   ass.add_question()
@@ -327,7 +330,7 @@ def test_legacy_interface_ouput():
 \documentclass[letterpaper,10pt]{article}
 
 
-\usepackage[,ampersand]{ easylist }
+\usepackage[,at]{ easylist }
 
 \ListProperties(Numbers1=a,Numbers2=l,Progressive*=0.5cm,Hang=true,Space=0.2cm,Space*=0.2cm)
 
@@ -351,14 +354,17 @@ def test_legacy_interface_ouput():
 \maketitle
 
 \begin{easylist}
-& \label{$q1}q1
-& \label{$q2}q2
-&& \label{$q2a}q2a
-& \label{$q3}q3
-&& \label{$q3a}q3a
-& \label{$q4}q4
+@ \label{$q1}q1
+@ \label{$q2}q2
+@@ \label{$q2a}q2a
+@ \label{$q3}q3
+@@ \label{$q3a}q3a
+@ \label{$q4}q4
 \end{easylist}
 
+
+
+\clearpage
 
 
 \end{document}

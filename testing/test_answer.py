@@ -250,7 +250,7 @@ def test_latex_emitter():
   ''')
 
   text = a.emit(LatexEmitter)
-  assert text == '& a1\n& a2\n& a3'
+  assert text == '@ a1\n@ a2\n@ a3'
 
   a = MultipleChoiceAnswer()
   a.add_choices('''
@@ -260,7 +260,7 @@ def test_latex_emitter():
   ''')
 
   text = a.emit(LatexEmitter)
-  assert text == '& a1\n& a2\n& a3'
+  assert text == '@ a1\n@ a2\n@ a3'
 
   q = 1.23456789
   a = NumericalAnswer(q)
@@ -279,7 +279,7 @@ def test_latex_labels_emitter():
   lbls = [ id(c) for (cc,c) in a.choices ]
 
   text = a.emit(LatexEmitter(labels=True))
-  assert text == '& \\label{%s}a1\n& \\label{%s}a2\n& \\label{%s}a3' % tuple(lbls)
+  assert text == '@ \\label{%s}a1\n@ \\label{%s}a2\n@ \\label{%s}a3' % tuple(lbls)
 
   a.add_choices('''
   *a1
@@ -290,7 +290,7 @@ def test_latex_labels_emitter():
   lbls += [ id(c) for c in a._choices[3:] ]
 
   text = a.emit(LatexEmitter(labels=True))
-  assert text == '& \\label{%s}a1\n& \\label{%s}a2\n& \\label{%s}a3\n& \\label{%s}a1\n& \\label{%s}a2\n& \\label{%s}a3' % tuple(lbls)
+  assert text == '@ \\label{%s}a1\n@ \\label{%s}a2\n@ \\label{%s}a3\n@ \\label{%s}a1\n@ \\label{%s}a2\n@ \\label{%s}a3' % tuple(lbls)
 
 def test_latex_compactenum_emitter():
   a = MultipleChoiceAnswer()

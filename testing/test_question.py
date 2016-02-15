@@ -154,12 +154,12 @@ def test_latex_emitter():
   q.set_answer( a )
 
   text = q.emit(LatexEmitter)
-  assert text == '& Q1\n&& a1\n&& a2\n&& a3'
+  assert text == '@ Q1\n@@ a1\n@@ a2\n@@ a3'
 
   q.add_answer( a )
 
   text = q.emit(LatexEmitter)
-  assert text == '& Q1\n&& a1\n&& a2\n&& a3\n&& a1\n&& a2\n&& a3'
+  assert text == '@ Q1\n@@ a1\n@@ a2\n@@ a3\n@@ a1\n@@ a2\n@@ a3'
 
 
 
@@ -189,10 +189,10 @@ def test_latex_emitter():
   q.add_part( qa )
 
   text = q.emit(LatexEmitter)
-  assert text == '& Q1\n&& a1\n&& a2\n&& a3\n&& Q1a\n&&& aa1\n&&& aa2\n&&& aa3'
+  assert text == '@ Q1\n@@ a1\n@@ a2\n@@ a3\n@@ Q1a\n@@@ aa1\n@@@ aa2\n@@@ aa3'
 
   text = q.last_part.emit(LatexEmitter)
-  assert text == '& Q1a\n&& aa1\n&& aa2\n&& aa3'
+  assert text == '@ Q1a\n@@ aa1\n@@ aa2\n@@ aa3'
 
 def test_latex_labels_emitter():
   q = Question()
@@ -210,7 +210,7 @@ def test_latex_labels_emitter():
   lbls += [id(c) for c in q._answers[0]._choices]
 
   text = q.emit(LatexEmitter(labels=True))
-  assert text == '& \\label{%s}Q1\n&& \\label{%s}a1\n&& \\label{%s}a2\n&& \\label{%s}a3' % tuple(lbls)
+  assert text == '@ \\label{%s}Q1\n@@ \\label{%s}a1\n@@ \\label{%s}a2\n@@ \\label{%s}a3' % tuple(lbls)
 
   a = MultipleChoiceAnswer()
   a.add_choices('''
@@ -221,7 +221,7 @@ def test_latex_labels_emitter():
   q.set_answer( a )
 
   text = q.emit(LatexEmitter(labels=True))
-  assert text != '& \\label{%s}Q1\n&& \\label{%s}a1\n&& \\label{%s}a2\n&& \\label{%s}a3' % tuple(lbls)
+  assert text != '@ \\label{%s}Q1\n@@ \\label{%s}a1\n@@ \\label{%s}a2\n@@ \\label{%s}a3' % tuple(lbls)
 
 def test_latex_compactenum_emitter():
   q = Question()
@@ -294,13 +294,13 @@ def test_with_interface():
 
 
   text = q.emit(LatexEmitter)
-  assert text == '& Q1\n&& Q1a\n&&& Q1aa\n&&&& a\n&&&& b\n&&&& c'
+  assert text == '@ Q1\n@@ Q1a\n@@@ Q1aa\n@@@@ a\n@@@@ b\n@@@@ c'
 
   text = q.last_part.emit(LatexEmitter)
-  assert text == '& Q1a\n&& Q1aa\n&&& a\n&&& b\n&&& c'
+  assert text == '@ Q1a\n@@ Q1aa\n@@@ a\n@@@ b\n@@@ c'
 
   text = q.last_part.last_part.emit(LatexEmitter)
-  assert text == '& Q1aa\n&& a\n&& b\n&& c'
+  assert text == '@ Q1aa\n@@ a\n@@ b\n@@ c'
 
 
   with q._set_part() as p:
@@ -311,13 +311,13 @@ def test_with_interface():
 
 
   text = q.emit(LatexEmitter)
-  assert text == '& Q1\n&& q1a\n&&& q1aa'
+  assert text == '@ Q1\n@@ q1a\n@@@ q1aa'
 
   text = q.last_part.emit(LatexEmitter)
-  assert text == '& q1a\n&& q1aa'
+  assert text == '@ q1a\n@@ q1aa'
 
   text = q.last_part.last_part.emit(LatexEmitter)
-  assert text == '& q1aa'
+  assert text == '@ q1aa'
 
 
 
@@ -352,13 +352,13 @@ def test_with_interface_replace():
 
 
   text = q.emit(LatexEmitter)
-  assert text == '& Q1\n&& Q1a\n&&& Q1aa\n&&&& a\n&&&& b\n&&&& c'
+  assert text == '@ Q1\n@@ Q1a\n@@@ Q1aa\n@@@@ a\n@@@@ b\n@@@@ c'
 
   text = q.last_part.emit(LatexEmitter)
-  assert text == '& Q1a\n&& Q1aa\n&&& a\n&&& b\n&&& c'
+  assert text == '@ Q1a\n@@ Q1aa\n@@@ a\n@@@ b\n@@@ c'
 
   text = q.last_part.last_part.emit(LatexEmitter)
-  assert text == '& Q1aa\n&& a\n&& b\n&& c'
+  assert text == '@ Q1aa\n@@ a\n@@ b\n@@ c'
 
   Question.add_part = Question_add_part
   Question.set_part = Question_set_part
@@ -375,10 +375,10 @@ def test_with_interface_restore():
   q.last_part.last_part.add_text("Q1aa")
 
   text = q.emit(LatexEmitter)
-  assert text == '& Q1\n&& Q1a\n&&& Q1aa'
+  assert text == '@ Q1\n@@ Q1a\n@@@ Q1aa'
 
   text = q.last_part.emit(LatexEmitter)
-  assert text == '& Q1a\n&& Q1aa'
+  assert text == '@ Q1a\n@@ Q1aa'
 
   text = q.last_part.last_part.emit(LatexEmitter)
-  assert text == '& Q1aa'
+  assert text == '@ Q1aa'

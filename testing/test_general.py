@@ -47,7 +47,7 @@ def test_equations():
   eqs = Equations.EquationsCollection()
 
   assert 'K == m*v**2/2' == str(eqs.KineticEnergy)
-  assert 'U == g*h*m'    == str(eqs.GravitationalPotentialEnergy)
+  assert 'U == g_*h*m'    == str(eqs.GravitationalPotentialEnergy)
 
 
 def test_sympy_solve():
