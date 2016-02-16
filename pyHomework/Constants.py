@@ -18,7 +18,7 @@ class ConstantsCollection:
     self.GravitationalConstant = make(6.6738e-11,           'm^3 kg^-1 s^-2')
     self.ElementaryCharge      = make(1.602e-19,            'coulomb')
     self.CoulombsConstant      = make(8.9875517873681764e9, 'N m^2 / C^2')
-    self.VacuumPermittivity    = make(8.85418782,           'F/m')
+    self.VacuumPermittivity    = make(8.85418782e-12,       'F/m')
     self.VacuumPermeability    = make(4*math.pi*1e-7,       'N/A^2')
     self.PlancksConstant       = make(6.62607004e-34, 'm^2 kg / s')
     self.BoltzmannConstant     = make(1.38064852e-23, 'm^2 kg / s^2 / K')
@@ -38,6 +38,34 @@ class ConstantsCollection:
     self.RefractiveIndexes['water'] = make(1.333, 'dimensionless' )
     self.RefractiveIndexes['glass'] = make(1.5,   'dimensionless' )
     self.RefractiveIndexes['air']   = make(1.003, 'dimensionless' )
+
+    self.DielectricConstants = {} # these values are taken from the OpenStax College Physics textbook
+    self.DielectricConstants['vacuum']             = make( 1.00000 , 'dimensionless')
+    self.DielectricConstants['air']                = make( 1.00059 , 'dimensionless')
+    self.DielectricConstants['bakelite']           = make( 4.9     , 'dimensionless')
+    self.DielectricConstants['fused quartz']       = make( 3.78    , 'dimensionless')
+    self.DielectricConstants['neoprene rubber']    = make( 6.7     , 'dimensionless')
+    self.DielectricConstants['nylon']              = make( 3.4     , 'dimensionless')
+    self.DielectricConstants['paper']              = make( 3.7     , 'dimensionless')
+    self.DielectricConstants['polystyrene']        = make( 2.56    , 'dimensionless')
+    self.DielectricConstants['pyrex glass']        = make( 5.6     , 'dimensionless')
+    self.DielectricConstants['silicon oil']        = make( 2.5     , 'dimensionless')
+    self.DielectricConstants['strontium titanate'] = make( 233     , 'dimensionless')
+    self.DielectricConstants['teflon']             = make( 2.1     , 'dimensionless')
+    self.DielectricConstants['water']              = make( 80      , 'dimensionless')
+
+    self.DielectricStrengths = {} # these values are taken from the OpenStax College Physics textbook
+    self.DielectricStrengths['air']                = make( 3e6  , 'V/m')
+    self.DielectricStrengths['bakelite']           = make(24e6  , 'V/m')
+    self.DielectricStrengths['fused quartz']       = make( 8e6  , 'V/m')
+    self.DielectricStrengths['neoprene rubber']    = make(12e6  , 'V/m')
+    self.DielectricStrengths['nylon']              = make(14e6  , 'V/m')
+    self.DielectricStrengths['paper']              = make(16e6  , 'V/m')
+    self.DielectricStrengths['polystyrene']        = make(24e6  , 'V/m')
+    self.DielectricStrengths['pyrex glass']        = make(14e6  , 'V/m')
+    self.DielectricStrengths['silicon oil']        = make(15e6  , 'V/m')
+    self.DielectricStrengths['strontium titanate'] = make( 8e6  , 'V/m')
+    self.DielectricStrengths['teflon']             = make(60e6  , 'V/m')
 
     # some shorthands for common constants
     self.MassOfSun             = self.Masses['sun']
