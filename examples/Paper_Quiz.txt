@@ -1,3 +1,0 @@
-TF	3 - TF question (True)	true
-MA	2 - MA question (two and three)	one	incorrect	two	correct	three	correct
-MC	1 - MC question (one)	one	correct	two	incorrect	three	incorrect
