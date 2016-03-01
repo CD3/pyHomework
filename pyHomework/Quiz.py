@@ -107,6 +107,7 @@ class Quiz(object):
       return emitter(self)
 
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
+
   def write(self, stream="/dev/stdout"):
     if isinstance(stream,(str,unicode)):
       with open(stream, 'w') as f:
