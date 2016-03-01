@@ -650,6 +650,10 @@ class HomeworkAssignment(Quiz):
     self.get_quiz('default').set_answer(answer)
     self.get_quiz('default').last_question.auto_answer_instructions = tmp
 
+  def quiz_add_image(self, fn):
+    self.get_quiz('default').last_question.add_file( fn )
+
+
   def figure_set_data( self, type, val ):
     f = self.last_figure
     if f is None:
