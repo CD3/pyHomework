@@ -2,13 +2,16 @@
 
 import datetime
 import string
+import re
 
 class FormatterDict(dict):
   def __missing__(self,key):
     return '{'+key+'}'
 
-def format_text(text, formatter, *args, **kwargs):
+def format_text(text, formatter, latex_mode=True, *args, **kwargs):
   if formatter == 'format':
+    # replace curly brackets in latex command with double curly brackets
+    text = re.sub( r'\\([a-z]+){([^}]+)}', r'\\\1{{\2}}', text)
     return string.Formatter().vformat( text, args, FormatterDict( kwargs ) )
   elif formatter == 'template':
     return string.Template( text ).safe_substitute( **kwargs )
