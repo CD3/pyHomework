@@ -67,6 +67,22 @@ class ConstantsCollection:
     self.DielectricStrengths['strontium titanate'] = make( 8e6  , 'V/m')
     self.DielectricStrengths['teflon']             = make(60e6  , 'V/m')
 
+    self.Resistivities = {}
+    self.Resistivities['silver']   = make( 1.59E-8, 'ohm m')
+    self.Resistivities['copper']   = make( 1.72E-8, 'ohm m')
+    self.Resistivities['gold']     = make( 2.44E-8, 'ohm m')
+    self.Resistivities['aluminum'] = make( 2.65E-8, 'ohm m')
+    self.Resistivities['tungsten'] = make( 5.60E-8, 'ohm m')
+    self.Resistivities['nichrome'] = make(  100E-8, 'ohm m')
+
+    self.ResistivityCoefficients = {}
+    self.ResistivityCoefficients['silver']   = make( 3.8E-3, '1/delta_degC')
+    self.ResistivityCoefficients['copper']   = make( 3.9E-3, '1/delta_degC')
+    self.ResistivityCoefficients['gold']     = make( 3.4E-3, '1/delta_degC')
+    self.ResistivityCoefficients['aluminum'] = make( 3.9E-3, '1/delta_degC')
+    self.ResistivityCoefficients['tungsten'] = make( 4.5E-3, '1/delta_degC')
+    self.ResistivityCoefficients['nichrome'] = make( 0.4E-3, '1/delta_degC')
+
     # some shorthands for common constants
     self.MassOfSun             = self.Masses['sun']
     self.MassOfEarth           = self.Masses['earth']
