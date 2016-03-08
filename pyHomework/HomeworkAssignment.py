@@ -352,7 +352,6 @@ class HomeworkAssignment(Quiz):
   def last_figure(self):
     '''Returns the last figure.'''
     if len( self._figures) > 0:
-      print self._figures.keys()[-1]
       key = self._figures.keys()[-1]
       return self._figures[key]
     else:
