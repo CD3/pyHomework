@@ -109,7 +109,11 @@ class NumericalAnswer(Answer):
     if isinstance( unc, pint.quantity._Quantity):
       unc = unc.to(self.units).magnitude
 
-    return '{{:.{:d}E}}'.format( self.sigfigs-1 ).format( unc )
+    val = self._get_mag(self._quant)
+    if abs(unc) < 0.01*abs(val):
+      unc = 0.01*val
+
+    return '{{:.{:d}E}}'.format( self.sigfigs-1 ).format( abs(unc) )
 
   @uncertainty.setter
   def uncertainty(self,v):
