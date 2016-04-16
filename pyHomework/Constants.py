@@ -34,10 +34,12 @@ class ConstantsCollection:
     self.Radii['sun']   = make(432474, 'mile' )
     self.Radii['earth'] = make(3959,   'mile' )
 
-    self.RefractiveIndexes = {}
-    self.RefractiveIndexes['water'] = make(1.333, 'dimensionless' )
-    self.RefractiveIndexes['glass'] = make(1.5,   'dimensionless' )
-    self.RefractiveIndexes['air']   = make(1.003, 'dimensionless' )
+    self.RefractiveIndexes = { 'water'       : { 'nominal' : make(1.333,   'dimensionless' ) }
+                             , 'crown glass' : { 'nominal' : make(1.52,    'dimensionless' ) }
+                             , 'flint glass' : { 'nominal' : make(1.66,    'dimensionless' ) }
+                             , 'air'         : { 'nominal' : make(1.00293, 'dimensionless' ) }
+                             , 'glycerine'   : { 'nominal' : make(1.473,   'dimensionless' ) }
+                             }
 
     self.DielectricConstants = {} # these values are taken from the OpenStax College Physics textbook
     self.DielectricConstants['vacuum']             = make( 1.00000 , 'dimensionless')
