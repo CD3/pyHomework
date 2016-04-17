@@ -27,4 +27,4 @@ def test_text_formatting():
 
   # note, we have to be careful with latex commands
   text = r'''\vec{A} = {A}. \vec{B } = {B:.2f}. {missing}'''
-  assert r"\vec1 meter = 1 meter. \vec{B} = 2.00 meter / second. {missing}" == format_text( text, formatter='format', **context )
+  assert r"\vec1 meter = 1 meter. \vec{B } = 2.00 meter / second. {missing}" == format_text( text, formatter='format', **context )

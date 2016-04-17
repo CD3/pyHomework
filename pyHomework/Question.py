@@ -68,7 +68,13 @@ class Question(object):
 
   def format_X(self,X,*args,**kwargs):
     if not 'formatter' in kwargs:
-      kwargs['formatter'] = 'template'
+      kwargs['formatter'] = 'format'
+
+    # if no arguments (other than the formatter) were given, use
+    # our __dict__
+    if len(args) == 0 and len(kwargs.keys()) == 1:
+      kwargs.update( self.__dict__ )
+
     for i in range(len(X)):
       X[i] = format_text( X[i], *args, **kwargs )
 
