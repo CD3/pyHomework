@@ -1,5 +1,5 @@
 import math
-from pyErrorProp import sigfig_round
+from pyErrorProp.util import sigfig_round
 
 class ConstantsCollection:
 
@@ -34,11 +34,20 @@ class ConstantsCollection:
     self.Radii['sun']   = make(432474, 'mile' )
     self.Radii['earth'] = make(3959,   'mile' )
 
-    self.RefractiveIndexes = { 'water'       : { 'nominal' : make(1.333,   'dimensionless' ) }
-                             , 'crown glass' : { 'nominal' : make(1.52,    'dimensionless' ) }
-                             , 'flint glass' : { 'nominal' : make(1.66,    'dimensionless' ) }
-                             , 'air'         : { 'nominal' : make(1.00293, 'dimensionless' ) }
-                             , 'glycerine'   : { 'nominal' : make(1.473,   'dimensionless' ) }
+    # these values are taken from the OpenStax College Physics textbook
+    self.RefractiveIndexes = { 'water'       : { 'nominal' : make(1.333, '' ) }
+                             , 'crown glass' : { 'nominal' : make(1.52 , '' )
+                                               , 'red'     : make(1.512, '')
+                                               , 'orange'  : make(1.514, '')
+                                               , 'yellow'  : make(1.518, '')
+                                               , 'green'   : make(1.519, '')
+                                               , 'blue'    : make(1.524, '')
+                                               , 'violet'  : make(1.530, '')
+                                               }
+                             , 'flint glass' : { 'nominal' : make(1.66,    '' ) }
+                             , 'air'         : { 'nominal' : make(1.00293, '' ) }
+                             , 'glycerine'   : { 'nominal' : make(1.473,   '' ) }
+                             , 'ice'         : { 'nominal' : make(1.309,   '' ) }
                              }
 
     self.DielectricConstants = {} # these values are taken from the OpenStax College Physics textbook

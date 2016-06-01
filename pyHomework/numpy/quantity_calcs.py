@@ -3,7 +3,12 @@ Unit support for numpy array calculations.
 '''
 
 import numpy as np
-from pyErrorProp import Q_
+from pyErrorProp import UncertaintyConvention
+
+uconv = UncertaintyConvention()
+units = uconv._UNITREGISTRY
+UQ_ = uconv.UncertainQuantity
+Q_  = UQ_.Quantity
 
 def unitof(q):
   if isinstance(q,Q_):

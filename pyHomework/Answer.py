@@ -1,8 +1,16 @@
 import re,sys,inspect
 import pint
 import random
+from .Utils import format_text
 from .Emitter import *
-from pyErrorProp import sigfig_round, units, Q_, UQ_
+from pyErrorProp.util import sigfig_round
+from pyErrorProp import UncertaintyConvention
+from pyErrorProp import UncertainQuantity
+
+uconv = UncertaintyConvention()
+units = uconv._UNITREGISTRY
+UQ_ = uconv.UncertainQuantity
+Q_  = UQ_.Quantity
 
 class Answer(object):
   DefaultEmitter = PlainEmitter
@@ -21,6 +29,25 @@ class Answer(object):
 class RawAnswer(Answer):
   def __init__(self, text=None):
     self.text = text
+
+  def format_text(self, *args, **kwargs):
+    if not 'formatter' in kwargs:
+      kwargs['formatter'] = 'format'
+
+    if 'text' in kwargs:
+      self.text = kwargs['text']
+
+    # if no arguments (other than the formatter) were given, use
+    # our __dict__
+    if len(args) == 0 and len(kwargs.keys()) == 1:
+      kwargs.update( self.__dict__ )
+
+    if 'text' in kwargs:
+      del kwargs['text']
+
+
+
+    self.text = format_text( self.text, *args, **kwargs )
 
   @property
   def latex(self):
@@ -43,9 +70,48 @@ class NumericalAnswer(Answer):
     self._unc     = uncertainty
     self.sigfigs  = sigfigs
 
+  def _get_mag(self,q):
+    val = q
+    if isinstance( q, pint.quantity._Quantity):
+      val = q.magnitude
+
+    return val
+
+  def _get_nom(self,q):
+    val = q
+
+    if isinstance( val, UncertainQuantity._UncertainQuantity ):
+      val = q.nominal
+
+    if isinstance( val, pint.measurement._Measurement ):
+      val = q.value
+
+    return val
+
+  def _get_unc(self,q):
+    val = None
+
+    if isinstance( q, UncertainQuantity._UncertainQuantity ):
+      val = q.uncertainty
+
+    if isinstance( q, pint.measurement._Measurement ):
+      val = q.error
+
+    return val
+
+
+
+
   @property
   def quantity(self):
     return '{{:.{:d}E}}'.format( self.sigfigs-1 ).format( self._quant )
+
+  @quantity.setter
+  def quantity(self,v):
+    if isinstance(v,(str,unicode)):
+      self._quant = unit(v)
+    else:
+      self._quant = v
 
   @property
   def latex(self):
@@ -69,51 +135,45 @@ class NumericalAnswer(Answer):
 
       return s
 
-  @quantity.setter
-  def quantity(self,v):
-    if isinstance(v,(str,unicode)):
-      self._quant = unit(v)
-    else:
-      self._quant = v
-
-  def _get_mag(self,q):
-    val = q
-    if isinstance( q, pint.measurement._Measurement ):
-      val = q.value.magnitude
-    elif isinstance( q, pint.quantity._Quantity):
-      val = q.magnitude
-
-    return val
 
   @property
   def value(self):
-    val = self._get_mag(self._quant)
+    val = self._quant
+
+    val = self._get_nom( val )
+
+    val = self._get_mag(val)
+
     return '{{:.{:d}E}}'.format( self.sigfigs-1 ).format( val )
 
   @property
   def uncertainty(self):
-    unc = self._unc
 
+    fmt = '{{:.{:d}E}}'.format( self.sigfigs-1 )
+
+    # if the quantity has uncertainty, use it
+    unc = self._get_unc(self._quant)
     if unc is None:
-      return 0
 
-    if isinstance( self._unc, (str,unicode) ):
-      if '%' in self._unc:
-        unc = self._quant * float( self._unc.replace('%','') ) / 100
-      else:
-        unc = units(unc)
+      # if the uncertainty is None, return zero
+      if unc is None and self._unc is None:
+        unc = 0*self._quant
 
-    if isinstance( self._quant, pint.measurement._Measurement ):
-      unc = self._quant.error
+      # if the uncertainty is a string, make a quantity
+      if isinstance( self._unc, (str,unicode) ):
+        if '%' in self._unc:
+          unc = self._quant * float( self._unc.replace('%','') ) / 100
+        else:
+          unc = units(unc)
 
-    if isinstance( unc, pint.quantity._Quantity):
-      unc = unc.to(self.units).magnitude
+    unc = self._get_mag(unc.to(self.units))
 
-    val = self._get_mag(self._quant)
+    # make sure we don't return anything less than 1% of the nominal value
+    val = self._get_mag(self._get_nom(self._quant))
     if abs(unc) < 0.01*abs(val):
       unc = 0.01*val
 
-    return '{{:.{:d}E}}'.format( self.sigfigs-1 ).format( abs(unc) )
+    return fmt.format( abs(unc) )
 
   @uncertainty.setter
   def uncertainty(self,v):
@@ -122,6 +182,8 @@ class NumericalAnswer(Answer):
   @property
   def units(self):
     unit = ""
+    if isinstance( self._quant, UncertainQuantity._UncertainQuantity ):
+      unit = self._quant.nominal.units
     if isinstance( self._quant, pint.measurement._Measurement ):
       unit = self._quant.value.units
     elif isinstance( self._quant, pint.quantity._Quantity):
