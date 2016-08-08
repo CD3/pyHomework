@@ -58,6 +58,7 @@ class SymbolCollection:
     self.g_    = sy.symbols('g_')
     self.G_    = sy.symbols('G_')
     self.k_    = sy.symbols('k_')
+    self.e_    = sy.symbols('e_')
     self.c_    = sy.symbols('c_')
     self.pi_   = sy.symbols('\pi_')
     self.ep0_  = sy.symbols('\epsilon_0')
@@ -133,9 +134,12 @@ class EquationsCollection:
     s = self.s
     self.consts = { s.pi_   : c.Pi,
                     s.k_    : c.CoulombsConstant,
+                    s.e_    : c.ElementaryCharge,
                     s.mu0_  : c.VacuumPermeability,
                     s.ep0_  : c.VacuumPermittivity,
+                    s.c_    : c.SpeedOfLight,
                     s.G_    : c.GravitationalConstant,
+                    s.g_    : c.GravitationalAcceleration
                   }
 
   def eval(self, expr, vvar, context, soli = 0 ):
