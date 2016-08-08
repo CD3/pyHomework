@@ -30,6 +30,10 @@ class ConstantsCollection:
     self.Masses['electron'] = make(9.10938356e-31, 'kg')
     self.Masses['proton']   = make(1.6726219e-27,  'kg')
 
+    self.Charges = {}
+    self.Charges['electron'] = -self.ElementaryCharge
+    self.Charges['proton']   =  self.ElementaryCharge
+
     self.Radii = {}
     self.Radii['sun']   = make(432474, 'mile' )
     self.Radii['earth'] = make(3959,   'mile' )

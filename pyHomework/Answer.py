@@ -155,8 +155,10 @@ class NumericalAnswer(Answer):
     unc = self._get_unc(self._quant)
     if unc is None:
 
+      unc = self._unc
+
       # if the uncertainty is None, return zero
-      if unc is None and self._unc is None:
+      if unc is None:
         unc = 0*self._quant
 
       # if the uncertainty is a string, make a quantity
