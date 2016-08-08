@@ -249,7 +249,8 @@ class HomeworkAssignment(Quiz):
     self._paragraphs = OrderedDict()
     self._quizzes = OrderedDict()
     self._figures = OrderedDict()
-    self.latex_refs = OrderedDict()
+    self._latex_refs = OrderedDict()
+    self._labels = OrderedDict()
     
     
     self.add_package('amsmath')
@@ -505,7 +506,7 @@ class HomeworkAssignment(Quiz):
 
   # perhaps there is a way to use the parent classes
   @contextlib.contextmanager
-  def _add_question(self,q=None):
+  def _add_question(self,q=None,label='last'):
     refstack = self.refstack
     if not isinstance(q, Question):
       q = Question(q)
@@ -519,6 +520,7 @@ class HomeworkAssignment(Quiz):
 
     self._order.append( len(self._questions) )
     self._questions.append( q )
+    self._labels[label] = id(q)
 
 
   @contextlib.contextmanager
@@ -569,6 +571,12 @@ class HomeworkAssignment(Quiz):
 
     return basename + '.' + type
 
+  def get_label(self,label):
+    if label in self._labels:
+      return self._labels[label]
+
+    return None
+
 
   def write(self, stream):
     context = { 'preamble'    : self.preamble_latex
@@ -597,7 +605,7 @@ class HomeworkAssignment(Quiz):
   def latexmk( self, texfile ):
     with open(texfile+'latexmk-cmd.log','w') as f:
       status = call( ['latexmk', '-latexoption=-interaction=nonstopmode', '-pdf', texfile ], stdout=f, stderr=f )
-      self.latex_refs.update( parse_aux( self.get_fn( texfile, 'aux' ) ) )
+      self._latex_refs.update( parse_aux( self.get_fn( texfile, 'aux' ) ) )
       call( ['latexmk', '-c', texfile ], stdout=f, stderr=f )
     if status:
       with open(texfile+'latexmk-cmd.log','r') as f:
@@ -685,7 +693,7 @@ class HomeworkAssignment(Quiz):
     # we need to replace references before we write to file
     s = StringIO.StringIO()
     self.get_quiz(name).write(s)
-    context = {'refs' : self.latex_refs}
+    context = {'refs' : self._latex_refs}
     text = tempita.sub(s.getvalue(), **context)
     stream.write(text)
     self.get_quiz(name).push_files()
@@ -705,12 +713,14 @@ class HomeworkAssignment(Quiz):
   def _custom_question_add_part(self):
     # again, can we just wrap the function want to replace?
     refstack = self.refstack
+    labels = self._labels
     @contextlib.contextmanager
-    def _add_part(self,p=None,prepend=False):
+    def _add_part(self,p=None,label='last',prepend=False):
       with Question._add_part(self,p,prepend) as pp:
         refstack.append(id(pp))
         yield pp
         refstack.pop()
+        labels[label] = id(pp)
 
     return _add_part
 
