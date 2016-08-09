@@ -506,10 +506,9 @@ class HomeworkAssignment(Quiz):
 
   # perhaps there is a way to use the parent classes
   @contextlib.contextmanager
-  def _add_question(self,q=None,label='last'):
+  def _add_question(self,label='last'):
     refstack = self.refstack
-    if not isinstance(q, Question):
-      q = Question(q)
+    q = Question()
 
     # replace the questions _add_part method
     q._add_part = types.MethodType( self._custom_question_add_part, q )
@@ -716,7 +715,7 @@ class HomeworkAssignment(Quiz):
     labels = self._labels
     @contextlib.contextmanager
     def _add_part(self,p=None,label='last',prepend=False):
-      with Question._add_part(self,p,prepend) as pp:
+      with Question._add_part(self,prepend) as pp:
         refstack.append(id(pp))
         yield pp
         refstack.pop()

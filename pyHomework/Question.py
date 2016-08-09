@@ -191,14 +191,13 @@ class Question(object):
       pass
 
   @contextlib.contextmanager
-  def _add_part(self,v=None,prepend=False):
-    if not isinstance(v, Question):
-      v = Question(v)
+  def _add_part(self,prepend=False):
+    p = Question()
 
     # the "magic"
-    yield v
+    yield p
 
-    self.add_X(self._parts,v,prepend)
+    self.add_X(self._parts,p,prepend)
 
   def add_part(self,*args,**kwargs):
     with self._add_part(*args,**kwargs):
