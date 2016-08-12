@@ -1,13 +1,17 @@
 #! /usr/bin/env python
 from pyHomework.Quiz import *
 from pyHomework.Emitter import *
-import sys, os, re, random
+
+
+# standard modules
+import sys, os, re, random, StringIO
 from subprocess import call
-import yaml
-import dpath.util
-import urlparse
-import tempita
 import argparse
+
+# non-standard modules
+import dpath.util
+import yaml
+import tempita
 import pyparsing as parse
 
 
@@ -35,61 +39,35 @@ def get_fn( inputfn, type ):
 
 example_spec = '''
 title : Quiz
-configuration:
-  make_key : True
-  randomize:
-    questions: True
-    answers: False
-  files:
-    view_url  : http://example.com/files/{filename:s}
-    push_url  : ssh://example.com/files/{filename:s}
-    local_url : /path/to/the/files/{filename:s}
+configuration/make_key : True
+configuration/randomize/questions: True
+configuration/randomize/answers: False
 
-questions:
-  - 
-    text: "(Multiple Choice) What is the correct answer?"
-    answer:
-      choices:
-      - '*this is the correct answer'
-      - 'this is not the correct answer'
-      - 'this is also not the correct answer'
+# this is a comment. comments are ignored
 
-  - 
-    text: "(Multiple Answers) What answers are correct?"
-    answer:
-      choices:
-      - '*this is a correct answer'
-      - 'this is not a correct answer'
-      - '*this is also a correct answer'
+# multiple choice questions are written with the possible
+# answeres listed below. the correct answer is marked with a ^
+1. (Multiple Choice) What is the correct answer?
+   a. ^this is the correct answer
+   b. this is not the correct answer
+   c. this is also not the correct answer
 
-  - 
-    text: "(Ordered) Put these items in the correct order"
-    answer:
-      ordered :
-      - 'first'
-      - 'second'
-      - 'third'
-  - 
-    text: "(Numerical Answer) What is the correct number?"
-    answer:
-      value : 7
+# more than one answer may be correct.
+2. (Multiple Answers) What answers are correct?
+   a. ^this is a correct answer
+   a. this is not a correct answer
+   a. ^this is also a correct answer
 
-  - 
-    text: "(Numerical Answer) What is the correct number, plus or minus 20%?"
-    answer:
-      value : 7
-      uncertainty: 20%
-  - 
-    text: "(True/False) Is the answer True?"
-    answer: True
-  - 
-    text: "(Image Example) Can you see the picture?"
-    image: './picture.png'
-    answer:
-      choices:
-        - '*yes'
-        - 'no'
+# numerical answer questions have a... numerical answer.
+# by default, a 1% tolerance will be used.
+1. (Numerical Answer) What is the correct number?
+   answer : 7
 
+1. (Numerical Answer) Enter any number between 9 and 11.
+   answer : 10 +/- 1
+
+1. (Numerical Answer) How long is a football field?
+   answer : 100 yd
 '''
 
 
@@ -184,15 +162,11 @@ Answers:
 
 def parse_markdown( fh ):
 
-  triggers = { 'question'   : re.compile( r'^\s*\d+\.\s*' )
-             , 'mc_answer'  : re.compile( r'^\s*[a-z]\.\s*' )
-             , 'num_answer' : re.compile( r'^\s*answer\s*:\s*', re.IGNORECASE )
-             }
-
   parsers = { 'question'   : parse.Suppress(parse.Word(parse.nums)+'.'+parse.White()) + parse.restOfLine
             , 'mc_answer'  : parse.Suppress(parse.Word(parse.alphas)+'.'+parse.White()) + parse.restOfLine
             , 'num_answer' : parse.Suppress(parse.White()+parse.Literal('answer:')+parse.White()) + parse.restOfLine
             , 'config_var' : parse.Word(parse.alphanums+'/_')+parse.Suppress(':'+parse.White())+parse.restOfLine
+            , 'comment'    : parse.lineStart+parse.Word('#')+parse.restOfLine
             }
 
 
@@ -224,6 +198,12 @@ def parse_markdown( fh ):
   lines.append("finished: true") # this will make sure that the last stage is cleared.
   for line in lines:
 
+    try: # skip comments
+      parser['comment'].parseString(line)
+      continue
+    except:
+      pass
+
     # if we have a match, we need to clear the stage
     matched = matches(line)
     if matched and path:
@@ -232,9 +212,11 @@ def parse_markdown( fh ):
 
     try: # check for config vars
       var,val = parsers['config_var'].parseString(line)
-      # will just set config parameter directly and continue
-      dpath.util.new( spec, var.lower(), val )
-      path = None
+      if not var == 'answer':
+        # will just set config parameter directly and continue
+        dpath.util.new( spec, var.lower(), val )
+        continue
+
     except:
       pass
 
@@ -257,7 +239,8 @@ def parse_markdown( fh ):
     except:
       pass
 
-    stage.append(line)
+    if line:
+      stage.append(line)
 
   def dict2list(d):
 
@@ -281,14 +264,7 @@ def parse_markdown( fh ):
     return d
 
 
-  print yaml.dump(spec,default_flow_style=False)
   spec = dict2list(spec)
-  # spec['questions'] = [ v for k,v in spec['questions'].items() ]
-  # for q in spec['questions']:
-    # if 'choices' in q['answer']:
-      # q['answer']['choices'] = [ v for k,v in q['answer']['choices'].items() ]
-    
-  print yaml.dump(spec,default_flow_style=False)
   
   return spec
 
@@ -298,10 +274,10 @@ def parse_markdown( fh ):
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Generate quiz in various format from YAML or Markdown.')
   parser.add_argument('quiz_file', nargs='+', help="Quiz input files to be processed.")
-  parser.add_argument('--example', '-e', action='store_true', help="Write an example quiz input file.")
+  parser.add_argument('--example', '-e', help="Write an example quiz input file.")
   parser.add_argument('--override', '--config-var', '-c',  help="Specify configuration overrides.")
   parser.add_argument('--list-config', '-l', action='store_true', help="Output configuration option (for debugging).")
-  parser.add_argument('--output', '-o', help="Output filename. Default is to replace extenstoin of spec file with extension of output format.")
+  parser.add_argument('--output', '-o', help="Output filename. Default is to replace extenstion of spec file with extension of output format.")
   parser.add_argument('--type', '-t', default='bb', help="Output file format. Default is bb (blackboard).")
 
   args = parser.parse_args()
@@ -344,6 +320,8 @@ if __name__ == "__main__":
     outfile = get_fn( fn, args.type )
     if args.output:
       outfile = args.output
+
+
     quiz.write(outfile)
 
 
