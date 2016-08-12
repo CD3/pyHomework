@@ -1,22 +1,4 @@
 #! /usr/bin/env python
-"""
-  QuizGen: generate Blackboard quizzes from YAML spec files.
-
-  Usage:
-    QuizGen.py [-l] [-c STR]... [-t TYPE] [-o FILE] <quiz-file> ...
-    QuizGen.py -m
-    QuizGen.py -e FILE
-
-  Options:
-    -e FILE, --example FILE                     write an example quiz file and exit.
-    -c STR, --config-var STR, --override STR    specify a configuration override.
-    -l, --list-config                           list configuration options (for debug).
-    -o, --output FILE                           write output to FILE. default is to replace extention of spec file with .txt
-    -t TYPE, --type TYPE                        output type [default: bb]
-
-
-"""
-
 from pyHomework.Quiz import *
 from pyHomework.Emitter import *
 import sys, os, re, random
@@ -26,6 +8,7 @@ import dpath.util
 import urlparse
 import tempita
 import argparse
+import pyparsing as parse
 
 
 def make_overrides( override ):
@@ -206,6 +189,7 @@ def parse_markdown( fh ):
              , 'num_answer' : re.compile( r'^\s*answer\s*:\s*', re.IGNORECASE )
              }
 
+  question = parse.Word(parse.alphas) 
 
   spec = dict()
   path = None
@@ -260,28 +244,35 @@ def parse_markdown( fh ):
 
 
 if __name__ == "__main__":
+  parser = argparse.ArgumentParser(description='Generate quiz in various format from YAML or Markdown.')
+  parser.add_argument('quiz_file', nargs='+', help="Quiz input files to be processed.")
+  parser.add_argument('--example', '-e', action='store_true', help="Write an example quiz input file.")
+  parser.add_argument('--override', '--config-var', '-c',  help="Specify configuration overrides.")
+  parser.add_argument('--list-config', '-l', action='store_true', help="Output configuration option (for debugging).")
+  parser.add_argument('--output', '-o', help="Output filename. Default is to replace extenstoin of spec file with extension of output format.")
+  parser.add_argument('--type', '-t', default='bb', help="Output file format. Default is bb (blackboard).")
 
-  from docopt import docopt
-  arguments = docopt(__doc__, version='0.1')
+  args = parser.parse_args()
 
-  if not arguments['--example'] is None:
-    with open( arguments['--example'], 'w' ) as f:
+
+  if args.example:
+    with open( args.example, 'w' ) as f:
       f.write( example_spec )
     sys.exit(0)
 
-  for arg in arguments['<quiz-file>']:
-    if arguments['--type'].lower() == 'bb':
+  for fn in args.quiz_file:
+    if args.type.lower() == 'bb':
       quiz = BbQuiz()
-    elif arguments['--type'].lower() == 'latex':
+    elif args.type.lower() == 'latex':
       quiz = LatexQuiz()
-    elif arguments['--type'].lower() == 'pdf':
+    elif args.type.lower() == 'pdf':
       quiz = LatexQuiz()
     else:
       quiz = BbQuiz()
 
 
-    with open(arg,'r') as f:
-      ext = os.path.splitext(arg)[1]
+    with open(fn,'r') as f:
+      ext = os.path.splitext(fn)[1]
       if ext == '.md':
         spec = parse_markdown(f)
       if ext == '.yaml':
@@ -289,18 +280,18 @@ if __name__ == "__main__":
 
       quiz.load( spec )
 
-    overrides = make_overrides( arguments['--override'] )
+    overrides = make_overrides( args.override )
     for k,v in overrides.items():
       v = eval(v)
       print "Overriding '%s': '%s' -> '%s'" % (k,quiz.config(k,None),v)
       quiz.config(k,value=v)
 
-    if arguments['--list-config']:
+    if args.list_config:
       print quiz._config
 
-    outfile = get_fn( arg, arguments['--type'] )
-    if arguments['--output'] is not None:
-      outfile = arguments['--output']
+    outfile = get_fn( fn, args.type )
+    if args.output:
+      outfile = args.output
     quiz.write(outfile)
 
 
