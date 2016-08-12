@@ -25,6 +25,7 @@ import yaml
 import dpath.util
 import urlparse
 import tempita
+import argparse
 
 
 def make_overrides( override ):
@@ -198,7 +199,62 @@ Answers:
 
 
 
+def parse_markdown( fh ):
 
+  triggers = { 'question'   : re.compile( r'^\s*\d+\.\s*' )
+             , 'mc_answer'  : re.compile( r'^\s*[a-z]\.\s*' )
+             , 'num_answer' : re.compile( r'^\s*answer\s*:\s*', re.IGNORECASE )
+             }
+
+
+  spec = dict()
+  path = None
+  stage = list()
+
+  def get(path):
+    vals = dpath.util.values(spec, path)
+    if len(vals) > 0:
+      return vals[0]
+    return {}
+
+  def set(path, v):
+    return dpath.util.new(spec, path, v)
+
+  lines = fh.read().split('\n')
+  for line in lines:
+
+    for k,v in triggers.items():
+
+      if re.search( v, line ):
+
+        if not path is None:
+          set( path, "".join(stage) )
+
+        if k == 'question':
+          path = [ "questions", len(get("questions")), "text" ]
+
+        if k == 'mc_answer':
+          path =[ "questions", len(get("questions"))-1, "answer", "choices" ]
+          path.append( len( get(path) ) )
+
+        if k == 'num_answer':
+          path =[ "questions", len(get("questions"))-1, "answer", "value" ]
+
+        stage = list()
+        line = re.sub(v, '', line)
+
+    stage.append(line)
+
+    if not path is None:
+      set( path, "".join(stage) )
+
+  spec['questions'] = [ v for k,v in spec['questions'].items() ]
+  for q in spec['questions']:
+    if 'choices' in q['answer']:
+      q['answer']['choices'] = [ v for k,v in q['answer']['choices'].items() ]
+    
+  
+  return spec
 
 
 
@@ -225,7 +281,13 @@ if __name__ == "__main__":
 
 
     with open(arg,'r') as f:
-      quiz.load( yaml.load(f) )
+      ext = os.path.splitext(arg)[1]
+      if ext == '.md':
+        spec = parse_markdown(f)
+      if ext == '.yaml':
+        spec = yaml.load(f)
+
+      quiz.load( spec )
 
     overrides = make_overrides( arguments['--override'] )
     for k,v in overrides.items():

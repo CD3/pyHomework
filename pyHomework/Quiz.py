@@ -73,12 +73,14 @@ class Quiz(object):
 
 
   @contextlib.contextmanager
-  def _add_file(self,v,name=None):
-    if not isinstance(v, File):
-      v = File(v)
+  def _add_file(self,f,name=None):
+    if not isinstance(f, File):
+      f = File(f)
+
+    yield f
 
     name = name or v.filename
-    self._files[name] = v
+    self._files[name] = f
   
   def add_file(self,*args,**kwargs):
     with self._add_file(*args,**kwargs):

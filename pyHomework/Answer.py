@@ -197,8 +197,18 @@ class NumericalAnswer(Answer):
     self._quant.ito(v)
 
   def load(self,spec):
-    self.quantity = units( str(spec['value']) )
-    self.uncertainty = spec['uncertainty'] if 'uncertainty' in spec else '1%'
+    val = str(spec['value'])
+    if len( val.strip().split() ) < 2:
+      val = val + " dimensionless"
+
+    if val.find('+/-') >= 0:
+      self.quantity = UQ_(val)
+    else:
+      self.quantity = Q_(val)
+
+    unc = str(spec.get('uncertainty',""))
+    if unc != "":
+      self.uncertainty = Q_(unc)
 
 class MultipleChoiceAnswer(Answer):
   def __init__(self):
