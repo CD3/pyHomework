@@ -189,7 +189,12 @@ def parse_markdown( fh ):
              , 'num_answer' : re.compile( r'^\s*answer\s*:\s*', re.IGNORECASE )
              }
 
-  question = parse.Word(parse.alphas) 
+  parsers = { 'question'   : parse.Suppress(parse.Word(parse.nums)+'.'+parse.White()) + parse.restOfLine
+            , 'mc_answer'  : parse.Suppress(parse.Word(parse.alphas)+'.'+parse.White()) + parse.restOfLine
+            , 'num_answer' : parse.Suppress(parse.White()+parse.Literal('answer:')+parse.White()) + parse.restOfLine
+            , 'config_var' : parse.Word(parse.alphanums+'/_')+parse.Suppress(':'+parse.White())+parse.restOfLine
+            }
+
 
   spec = dict()
   path = None
@@ -204,39 +209,86 @@ def parse_markdown( fh ):
   def set(path, v):
     return dpath.util.new(spec, path, v)
 
+  def matches( line ):
+    matches = 0
+    for k in parsers:
+      try:
+        parsers[k].parseString(line)
+        matches += 1
+      except:
+        pass
+
+    return matches > 0
+
   lines = fh.read().split('\n')
+  lines.append("finished: true") # this will make sure that the last stage is cleared.
   for line in lines:
 
-    for k,v in triggers.items():
+    # if we have a match, we need to clear the stage
+    matched = matches(line)
+    if matched and path:
+      set( path, "".join(stage) )
+      stage = list()
 
-      if re.search( v, line ):
+    try: # check for config vars
+      var,val = parsers['config_var'].parseString(line)
+      # will just set config parameter directly and continue
+      dpath.util.new( spec, var.lower(), val )
+      path = None
+    except:
+      pass
 
-        if not path is None:
-          set( path, "".join(stage) )
+    try: # check for beginning of question
+      line = parsers['question'].parseString(line)[0]
+      path = [ "questions", len(get("questions")), "text" ]
+    except:
+      pass
 
-        if k == 'question':
-          path = [ "questions", len(get("questions")), "text" ]
+    try: # check for beginning of multiple-choice answer
+      line = parsers['mc_answer'].parseString(line)[0]
+      path =[ "questions", len(get("questions"))-1, "answer", "choices" ]
+      path.append( len( get(path) ) )
+    except:
+      pass
 
-        if k == 'mc_answer':
-          path =[ "questions", len(get("questions"))-1, "answer", "choices" ]
-          path.append( len( get(path) ) )
-
-        if k == 'num_answer':
-          path =[ "questions", len(get("questions"))-1, "answer", "value" ]
-
-        stage = list()
-        line = re.sub(v, '', line)
+    try: # check for numerical answer
+      line = parsers['num_answer'].parseString(line)[0]
+      path =[ "questions", len(get("questions"))-1, "answer", "value" ]
+    except:
+      pass
 
     stage.append(line)
 
-    if not path is None:
-      set( path, "".join(stage) )
+  def dict2list(d):
 
-  spec['questions'] = [ v for k,v in spec['questions'].items() ]
-  for q in spec['questions']:
-    if 'choices' in q['answer']:
-      q['answer']['choices'] = [ v for k,v in q['answer']['choices'].items() ]
+    if isinstance(d,list):
+      # if d is already a list, then just convert its children
+      for i in range(len(d)):
+        d[i] = dict2list(d[i])
+      return d
+
+    if isinstance(d,dict):
+      # convert dict to list if all of its keys are integers
+      # but make sure to convert all of its entries first
+      islist = True
+      for k in d:
+        d[k] = dict2list(d[k])
+        if not isinstance(k,int):
+          islist = False
+      if islist:
+        return [ d[k] for k in sorted(d.keys()) ]
+
+    return d
+
+
+  print yaml.dump(spec,default_flow_style=False)
+  spec = dict2list(spec)
+  # spec['questions'] = [ v for k,v in spec['questions'].items() ]
+  # for q in spec['questions']:
+    # if 'choices' in q['answer']:
+      # q['answer']['choices'] = [ v for k,v in q['answer']['choices'].items() ]
     
+  print yaml.dump(spec,default_flow_style=False)
   
   return spec
 
