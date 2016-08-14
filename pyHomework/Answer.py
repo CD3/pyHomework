@@ -216,6 +216,7 @@ class MultipleChoiceAnswer(Answer):
     self._choices = []
     self._order   = []
     self._correct = set()
+    self._correct_regex = r'[\*\^]'
 
     # regular members
     self.randomize = False
@@ -238,7 +239,7 @@ class MultipleChoiceAnswer(Answer):
     self._order = v
 
   def filter( self, text ):
-    filtered_text = re.sub('^\s*\*\s*','',text)
+    filtered_text = re.sub('^\s*%s\s*'%self._correct_regex,'',text)
     return (filtered_text != text, filtered_text)
     
   def add_choice( self, text ):
