@@ -213,7 +213,7 @@ def parse_markdown( fh ):
   for line in lines:
 
     # remove comments
-    line = re.sub('\s*\s#.*$','',line)
+    line = re.sub('\s*[^#]*#.*$','',line)
 
     # if we have a match, we need to clear the stage
     matched = matches(line)
@@ -285,9 +285,8 @@ def parse_markdown( fh ):
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Generate quiz in various format from YAML or Markdown.')
   parser.add_argument('quiz_file', nargs='*', help="Quiz input files to be processed.")
-  parser.add_argument('--example', '-e', help="Write an example quiz input file.")
+  parser.add_argument('--example', '-e', action='store_true', help="Write an example quiz input file.")
   parser.add_argument('--override', '--config-var', '-c',  help="Specify configuration overrides.")
-  parser.add_argument('--list-config', '-l', action='store_true', help="Output configuration option (for debugging).")
   parser.add_argument('--output', '-o', help="Output filename. Default is to replace extenstion of spec file with extension of output format.")
   parser.add_argument('--type', '-t', default='bb', help="Output file format. Default is bb (blackboard).")
   parser.add_argument('--debug', '-d', action='store_true', help="Output debug information.")
@@ -296,7 +295,7 @@ if __name__ == "__main__":
 
 
   if args.example:
-    with open( args.example, 'w' ) as f:
+    with open( args.quiz_file[0], 'w' ) as f:
       f.write( example_spec )
     sys.exit(0)
 
@@ -336,7 +335,7 @@ if __name__ == "__main__":
       print "Overriding '%s': '%s' -> '%s'" % (k,quiz.config(k,None),v)
       quiz.config(k,value=v)
 
-    if args.list_config:
+    if args.debug:
       print quiz._config
 
     outfile = get_fn( fn, args.type )
