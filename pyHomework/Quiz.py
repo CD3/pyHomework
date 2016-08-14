@@ -3,7 +3,18 @@ from .Answer import *
 from .Emitter import *
 from .File import *
 from .Utils import *
-import dpath.util, contextlib, urlparse, os
+
+import os, sys, tempfile, subprocess
+import contextlib, urlparse, StringIO, base64
+
+import dpath.util
+import pyparsing as pp
+
+try:
+  sys.path.append( os.getcwd() )
+  import macros
+except:
+  pass
 
 class Quiz(object):
   Question = Question
@@ -228,6 +239,115 @@ class BbQuiz(Quiz):
               os.system( format_text( 'ssh {netloc:s} "mkdir -p {rpath}"', 'format', netloc=url.netloc, rpath=os.path.dirname(remote_file) ) )
               os.system( cmd )
         
+    def write(self, stream="/dev/stddev"):
+      if isinstance(stream,(str,unicode)):
+        with open(stream, 'w') as f:
+          return self.write(f)
+      
+
+      sstream = StringIO.StringIO()
+      super(BbQuiz,self).write(sstream)
+
+      text = sstream.getvalue()
+
+      # replace $...$ math with with a \math{...} macro
+      pos = 0 # (relative) position
+      for tokens,begi,endi in pp.QuotedString(quoteChar='$').parseWithTabs().scanString( text ):
+        replacement  = '\math{'
+        replacement += tokens[0]
+        replacement += '}'
+
+        text = text[0:begi+pos] + replacement + text[endi+pos:]
+        # adjust relative position
+        #       v new len      v   v old len   v
+        pos +=  len(replacement) - (endi - begi)
+
+
+
+      # Replace macros.
+      macro = pp.Suppress(pp.Literal("\\")) \
+            + pp.Word(pp.alphas) \
+            + pp.Optional( pp.QuotedString( quoteChar='[', endQuoteChar=']') ).setResultsName("options") \
+            + pp.OneOrMore(pp.QuotedString( quoteChar='{', endQuoteChar='}') ).setResultsName("arguments")
+
+
+      pos = 0 # (relative) position
+      for tokens,begi,endi in macro.parseWithTabs().scanString( text ):
+        command   = tokens[0]
+        options   = tokens['options']   if 'options'   in tokens else ""
+        arguments = tokens['arguments'] if 'arguments' in tokens else []
+
+        try: # try the user-defined macros first
+          replacement = getattr(macros,command)(arguments,options)
+        except:
+          try: # now try our macros
+            replacement = getattr(self,"macro_"+command)(arguments,options)
+          except AttributeError:
+            replacement = None
+
+        if replacement:
+          replacement = re.sub( "\n", " ", replacement )
+          text = text[0:begi+pos] + replacement + text[endi+pos:]
+          # adjust relative position
+          #       v new len      v   v old len   v
+          pos +=  len(replacement) - (endi - begi)
+
+
+
+
+
+
+      # try to catch some syntax errors that will cause Bb to choke
+
+      # 1. MC or MA questions don't have a "correct" answer
+      for line in text.split('\n'):
+        if line.startswith('MC') or line.startswith('MA'):
+          if not re.search("\tcorrect", line):
+            print "WARNING: A multiple choice/answer question does not have a correct answer. Blackboard will not parse this."
+            print "\t",line[3:50],'...'
+            print
+
+      stream.write( text )
+
+
+    macro_emph   = lambda self,args,opts :  "<span style='font-style: italic;'>"+args[0]+"</span>"
+    macro_textbf = lambda self,args,opts :  "<span style='font-style: bold;'>"+args[0]+"</span>"
+
+    def macro_includegraphics(self,args,opts):
+
+      fn = args[0]
+      ext = os.path.splitext( fn)[-1].replace('.','')
+      afn = os.path.join( os.getcwd(), fn )
+      afn = os.path.normpath(fn)
+
+      if not os.path.isfile( afn ):
+        raise RuntimeError("ERROR: could not find image file '%s'." % afn)
+
+      with open(afn,'rb') as f:
+       img = base64.b64encode(f.read())
+
+
+      text  = r'''<img src="data:image/{ext};base64,{code}" alt="{fn}" {opts}>'''.format(ext=ext,code=img,fn=fn,opts=opts)
+      return text
+
+    def macro_math(self,args,opts):
+      # use www.codecogs.com to embed an image of the math into the question.
+
+      text = r'''<img src="https://latex.codecogs.com/gif.latex?y&space;=&space;{code}" title="{code}" alt="ERROR: Could not render math."/>'''.format(code=args[0])
+
+      return text
+
+
+    def macro_shell(self,args,opts):
+      '''Run shell command and return output.'''
+      with tempfile.TemporaryFile() as fp:
+        cmd = ';'.join(args)
+        subprocess.call( cmd, shell=True, stdout=fp )
+        fp.seek(0)
+        stdout = fp.read()
+
+      return stdout
+
 
     @contextlib.contextmanager
     def _add_question(self,*args,**kwargs):
