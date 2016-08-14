@@ -63,11 +63,24 @@ configuration/randomize/answers: False
 1. (Numerical Answer) What is the correct number?
    answer : 7
 
-1. (Numerical Answer) Enter any number between 9 and 11.
-   answer : 10 +/- 1
+# the tolerance can be specified
+1. (Numerical Answer) Enter any number between 8 and 12.
+   answer : 10 +/- 2
 
+# you can also put units in the answer. a statement that indicates what units the answer
+# should be given will automatically be generated and appended to the question.
 1. (Numerical Answer) How long is a football field?
    answer : 100 yd
+
+# images can be loaded
+1. Images can be included with the include graphics command: \includegraphics{./filename.png}
+   They are embedded directly into the quiz file, so there is no chance of a broken link.
+   a. ^yes
+   b. no
+
+1. Image options are given in square brackets. \includegraphics[width="300"]{./filename.png}
+   a. ^yes
+   b. no
 '''
 
 
@@ -164,9 +177,8 @@ def parse_markdown( fh ):
 
   parsers = { 'question'   : parse.Suppress(parse.Word(parse.nums)+'.'+parse.White()) + parse.restOfLine
             , 'mc_answer'  : parse.Suppress(parse.Word(parse.alphas)+'.'+parse.White()) + parse.restOfLine
-            , 'num_answer' : parse.Suppress(parse.White()+parse.Literal('answer:')+parse.White()) + parse.restOfLine
+            , 'num_answer' : parse.Suppress(parse.White()+parse.Literal('answer')+parse.Optional(parse.White())+':') + parse.restOfLine
             , 'config_var' : parse.Word(parse.alphanums+'/_')+parse.Suppress(':'+parse.White())+parse.restOfLine
-            , 'comment'    : parse.lineStart+parse.Word('#')+parse.restOfLine
             }
 
 
@@ -198,11 +210,8 @@ def parse_markdown( fh ):
   lines.append("finished: true") # this will make sure that the last stage is cleared.
   for line in lines:
 
-    try: # skip comments
-      parser['comment'].parseString(line)
-      continue
-    except:
-      pass
+    # remove comments
+    line = re.sub('\s*\s#.*$','',line)
 
     # if we have a match, we need to clear the stage
     matched = matches(line)
@@ -273,12 +282,13 @@ def parse_markdown( fh ):
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Generate quiz in various format from YAML or Markdown.')
-  parser.add_argument('quiz_file', nargs='+', help="Quiz input files to be processed.")
+  parser.add_argument('quiz_file', nargs='*', help="Quiz input files to be processed.")
   parser.add_argument('--example', '-e', help="Write an example quiz input file.")
   parser.add_argument('--override', '--config-var', '-c',  help="Specify configuration overrides.")
   parser.add_argument('--list-config', '-l', action='store_true', help="Output configuration option (for debugging).")
   parser.add_argument('--output', '-o', help="Output filename. Default is to replace extenstion of spec file with extension of output format.")
   parser.add_argument('--type', '-t', default='bb', help="Output file format. Default is bb (blackboard).")
+  parser.add_argument('--debug', '-d', action='store_true', help="Output debug information.")
 
   args = parser.parse_args()
 
@@ -306,7 +316,17 @@ if __name__ == "__main__":
       if ext == '.yaml':
         spec = yaml.load(f)
 
+    try:
       quiz.load( spec )
+    except KeyError as e:
+      print "ERROR: There was a problem parsing the quiz file."
+      print "       Please make sure that the file is formatted correctly."
+      print "       Note: add the --debug option to see the tree that was read"
+      print args
+      if args.debug:
+        print yaml.dump(spec)
+      sys.exit(1)
+
 
     overrides = make_overrides( args.override )
     for k,v in overrides.items():
