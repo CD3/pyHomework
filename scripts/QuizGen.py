@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+
+# local modules
 from pyHomework.Quiz import *
 from pyHomework.Emitter import *
 

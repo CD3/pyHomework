@@ -1,12 +1,15 @@
+# local imports
 from .Question import *
 from .Answer import *
 from .Emitter import *
 from .File import *
 from .Utils import *
 
+# standard modules
 import os, sys, tempfile, subprocess
 import contextlib, urlparse, StringIO, base64
 
+# non-standard modules
 import dpath.util
 import pyparsing as pp
 

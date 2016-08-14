@@ -1,4 +1,7 @@
+# local imports
 from .Signal import *
+
+# standard modules
 import inspect, operator, functools
 
 def get_bases( cls ):

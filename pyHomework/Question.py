@@ -1,7 +1,12 @@
-import inspect, contextlib
+# local modules
 from .Utils import format_text
 from .Answer import *
 from .Emitter import *
+
+# standard modules
+import inspect, contextlib
+
+# non-standard modules
 import dpath.util
 
 class Question(object):

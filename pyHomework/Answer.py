@@ -1,8 +1,12 @@
-import re,sys,inspect
-import pint
-import random
+# local modules
 from .Utils import format_text
 from .Emitter import *
+
+# standard imports
+import re,sys,inspect, random
+
+# non-standard imports
+import pint
 from pyErrorProp.util import sigfig_round
 from pyErrorProp import UncertaintyConvention
 from pyErrorProp import UncertainQuantity
