@@ -1,7 +1,7 @@
 # -*- mode: python -*-
 a = Analysis(['scripts/QuizGen.py'],
-             pathex=['./pyHomework'],
-             hiddenimports = collect_submodules('pkg_resources._vendor'),
+             datas=[('resources/*_en.txt', 'pint/')],
+             hiddenimports=[],
              hookspath=None,
              runtime_hooks=None)
 pyz = PYZ(a.pure)

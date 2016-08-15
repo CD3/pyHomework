@@ -72,3 +72,9 @@ To generate a Blackboard formatted quiz file, run `QuizGen` with the name of thi
 
 `QuizGen` is does not parse markdown (in fact, quizzes are stored in a dict that is can be represented directly in YAML), so it does *not* support the
 markdown syntax for anything other than specifying a numbered list. 
+
+## TODO
+
+- Support other question types (ordered list, short answer, etc.)
+- Add full markdown parsing
+- Teach Dr. Deyo how to use (it's so simple)
