@@ -323,7 +323,6 @@ if __name__ == "__main__":
       print "ERROR: There was a problem parsing the quiz file."
       print "       Please make sure that the file is formatted correctly."
       print "       Note: add the --debug option to see the tree that was read"
-      print args
       if args.debug:
         print yaml.dump(spec)
       sys.exit(1)

@@ -271,7 +271,7 @@ class BbQuiz(Quiz):
       macro = pp.Suppress(pp.Literal("\\")) \
             + pp.Word(pp.alphas) \
             + pp.Optional( pp.QuotedString( quoteChar='[', endQuoteChar=']') ).setResultsName("options") \
-            + pp.OneOrMore(pp.QuotedString( quoteChar='{', endQuoteChar='}') ).setResultsName("arguments")
+            + pp.ZeroOrMore( pp.QuotedString( quoteChar='{', endQuoteChar='}') ).setResultsName("arguments")
 
 
       pos = 0 # (relative) position
@@ -313,8 +313,8 @@ class BbQuiz(Quiz):
       stream.write( text )
 
 
-    macro_emph   = lambda self,args,opts :  "<span style='font-style: italic;'>"+args[0]+"</span>"
-    macro_textbf = lambda self,args,opts :  "<span style='font-style: bold;'>"+args[0]+"</span>"
+    macro_emph   = lambda self,args,opts :  "<em>"+args[0]+"</em>"
+    macro_textbf = lambda self,args,opts :  "<strong>"+args[0]+"</skrong>"
 
     def macro_includegraphics(self,args,opts):
 
@@ -335,8 +335,9 @@ class BbQuiz(Quiz):
 
     def macro_math(self,args,opts):
       # use www.codecogs.com to embed an image of the math into the question.
+      code = re.sub('\s+','&space;',args[0])
 
-      text = r'''<img src="https://latex.codecogs.com/gif.latex?y&space;=&space;{code}" title="{code}" alt="ERROR: Could not render math."/>'''.format(code=args[0])
+      text = r'''<img src="https://latex.codecogs.com/gif.latex?{code}" title="{code}" alt="ERROR: Could not render math."/>'''.format(code=code)
 
       return text
 
