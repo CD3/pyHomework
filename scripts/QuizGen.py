@@ -80,7 +80,8 @@ configuration/randomize/answers: False
    a. ^yes
    b. no
 
-1. Image options are given in square brackets. \includegraphics[width="300"]{./filename.png}
+1. Remote images can be specified by their url \includegraphics[fmt=png]{https://www.google.com/logos/doodles/2016/2016-doodle-fruit-games-day-11-5698592858701824-scta.png}.
+   The image will be downloaded and embedded into the quiz file just like a local image.
    a. ^yes
    b. no
 '''
