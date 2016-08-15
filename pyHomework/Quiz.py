@@ -16,8 +16,9 @@ import pyparsing as pp
 try:
   sys.path.append( os.getcwd() )
   import macros
+  have_user_macros = True
 except:
-  pass
+  have_user_macros = False
 
 class Quiz(object):
   Question = Question
@@ -258,7 +259,7 @@ class BbQuiz(Quiz):
       for tokens,begi,endi in pp.QuotedString(quoteChar='$').parseWithTabs().scanString( text ):
 
         try: # try the user-defined macros first
-          replacement = getattr(macros,'math')(tokens)
+          replacement = getattr(macros,'math')(self,tokens)
         except:
           replacement = getattr(self,"macro_math")(tokens)
 
@@ -272,36 +273,24 @@ class BbQuiz(Quiz):
 
 
       # Replace macros.
-      macro = pp.Suppress(pp.Literal("\\")) \
-            + pp.Word(pp.alphas) \
-            + pp.Optional( pp.QuotedString( quoteChar='[', endQuoteChar=']') ).setResultsName("options") \
-            + pp.ZeroOrMore( pp.QuotedString( quoteChar='{', endQuoteChar='}') ).setResultsName("arguments")
-
-
-      pos = 0 # (relative) position
-      for tokens,begi,endi in macro.parseWithTabs().scanString( text ):
-        command   = tokens[0]
-        options   = tokens['options']   if 'options'   in tokens else ""
-        arguments = tokens['arguments'] if 'arguments' in tokens else []
-
-        # replacement = getattr(self,"macro_"+command)(arguments,options)
-        try: # try the user-defined macros first
-          replacement = getattr(macros,command)(arguments,options)
-        except:
-          try: # now try our macros
-            replacement = getattr(self,"macro_"+command)(arguments,options)
-          except AttributeError:
-            replacement = None
-
-        if replacement:
-          replacement = re.sub( "\n", " ", replacement )
-          text = text[0:begi+pos] + replacement + text[endi+pos:]
-          # adjust relative position
-          #       v new len      v   v old len   v
-          pos +=  len(replacement) - (endi - begi)
+      command = pp.Word(pp.alphas)
+      options = pp.QuotedString( quoteChar='[', endQuoteChar=']')
+      options = pp.originalTextFor( pp.nestedExpr( '[', ']' ) )
+      arguments = pp.originalTextFor( pp.nestedExpr( '{', '}' ) )
 
 
 
+      macro = pp.Combine( pp.Literal("\\") + command("command") + pp.Optional(options)("options") + pp.ZeroOrMore(arguments)("arguments") )
+      macro.setParseAction( self.expand_macro )
+
+
+      
+      # transform string until all macros have been expanded
+      while True:
+        newtext = macro.transformString( text )
+        if newtext == text:
+          break
+        text = newtext
 
 
 
@@ -316,6 +305,10 @@ class BbQuiz(Quiz):
             print
 
       stream.write( text )
+
+
+
+
 
     def make_img_html( self, stream, fmt=None, opts="" ):
       '''Read image from stream or file and return html code with the image embedded.'''
@@ -333,11 +326,28 @@ class BbQuiz(Quiz):
       text  = r'''<img src="data:image/{fmt};base64,{code} {opts}>'''.format(fmt=fmt,code=code,opts=opts)
       return text
 
+    def expand_macro(self,toks):
 
+      command = str(toks.command)
+      options = str(toks.options).lstrip('[').rstrip(']')
+      arguments = [str(x).lstrip('{').rstrip('}') for x in toks.arguments]
+
+
+      # replacement = getattr(self,"macro_"+command)(arguments,options)
+      replacement = None
+      if have_user_macros and hasattr(macros,command):
+          replacement = getattr(macros,command)(self,arguments,options)
+      elif hasattr(self,"macro_"+command):
+          replacement = getattr(self,"macro_"+command)(arguments,options)
+
+      if replacement:
+        replacement = re.sub( "\n", " ", replacement )
+
+      return replacement
 
 
     macro_emph   = lambda self,args,opts :  "<em>"+args[0]+"</em>"
-    macro_textbf = lambda self,args,opts :  "<strong>"+args[0]+"</skrong>"
+    macro_textbf = lambda self,args,opts :  "<strong>"+args[0]+"</strong>"
 
     def macro_includegraphics(self,args,opts):
 
