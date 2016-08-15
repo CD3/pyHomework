@@ -7,7 +7,7 @@ from .Utils import *
 
 # standard modules
 import os, sys, tempfile, subprocess
-import contextlib, urlparse, StringIO, base64
+import contextlib, urlparse, urllib, StringIO, base64
 
 # non-standard modules
 import dpath.util
@@ -253,18 +253,22 @@ class BbQuiz(Quiz):
 
       text = sstream.getvalue()
 
-      # replace $...$ math with with a \math{...} macro
+      # replace $...$ math first.
       pos = 0 # (relative) position
       for tokens,begi,endi in pp.QuotedString(quoteChar='$').parseWithTabs().scanString( text ):
-        replacement  = '\math{'
-        replacement += tokens[0]
-        replacement += '}'
 
+        try: # try the user-defined macros first
+          replacement = getattr(macros,'math')(tokens)
+        except:
+          replacement = getattr(self,"macro_math")(tokens)
+
+        replacement = re.sub( "\n", " ", replacement )
         text = text[0:begi+pos] + replacement + text[endi+pos:]
         # adjust relative position
         #       v new len      v   v old len   v
         pos +=  len(replacement) - (endi - begi)
 
+      # TODO: handle nested macros so that we don't have to handle math seprately.
 
 
       # Replace macros.
@@ -280,6 +284,7 @@ class BbQuiz(Quiz):
         options   = tokens['options']   if 'options'   in tokens else ""
         arguments = tokens['arguments'] if 'arguments' in tokens else []
 
+        # replacement = getattr(self,"macro_"+command)(arguments,options)
         try: # try the user-defined macros first
           replacement = getattr(macros,command)(arguments,options)
         except:
@@ -312,6 +317,24 @@ class BbQuiz(Quiz):
 
       stream.write( text )
 
+    def make_img_html( self, stream, fmt=None, opts="" ):
+      '''Read image from stream or file and return html code with the image embedded.'''
+      if isinstance(stream, (str,unicode)):
+        afn = os.path.join( os.getcwd(), stream )
+        afn = os.path.normpath(afn)
+
+        if not os.path.isfile( afn ):
+          raise RuntimeError("ERROR: could not find image file '%s'." % afn )
+        with open(afn,'r') as f:
+          trash,ext = os.path.splitext( afn )
+          return self.make_img_html(f,ext,opts)
+
+      code  = base64.b64encode(stream.read())
+      text  = r'''<img src="data:image/{fmt};base64,{code} {opts}>'''.format(fmt=fmt,code=code,opts=opts)
+      return text
+
+
+
 
     macro_emph   = lambda self,args,opts :  "<em>"+args[0]+"</em>"
     macro_textbf = lambda self,args,opts :  "<strong>"+args[0]+"</skrong>"
@@ -319,25 +342,37 @@ class BbQuiz(Quiz):
     def macro_includegraphics(self,args,opts):
 
       fn = args[0]
-      ext = os.path.splitext( fn)[-1].replace('.','')
-      afn = os.path.join( os.getcwd(), fn )
-      afn = os.path.normpath(fn)
-
-      if not os.path.isfile( afn ):
-        raise RuntimeError("ERROR: could not find image file '%s'." % afn)
-
-      with open(afn,'rb') as f:
-       img = base64.b64encode(f.read())
-
-
-      text  = r'''<img src="data:image/{ext};base64,{code}" alt="{fn}" {opts}>'''.format(ext=ext,code=img,fn=fn,opts=opts)
+      text = self.make_img_html( args[0], opts='alt="{fn}"'.format(fn=fn) )
       return text
 
-    def macro_math(self,args,opts):
-      # use www.codecogs.com to embed an image of the math into the question.
-      code = re.sub('\s+','&space;',args[0])
+    def macro_math(self,args,opts=None):
+      # send the LaTeX snippet to www.codecogs.com
+      # and get an image of the equation
+      # to embed in an img tag.
 
-      text = r'''<img src="https://latex.codecogs.com/gif.latex?{code}" title="{code}" alt="ERROR: Could not render math."/>'''.format(code=code)
+      # replace white space with &space;
+      latex = re.sub('\s+','&space;',args[0])
+
+      # get the image
+      fmt = 'png'
+      url = "https://latex.codecogs.com/{fmt}.latex?{latex}".format(fmt=fmt,latex=latex)
+
+      # we can either use the url as the image src, or download the image, encode it and embed it
+      # as the source. We are going to embed the image so that we don't hav to worry about the link
+      # breaking in the future. but, in case you are interested, this is what we would do if we
+      # just wanted to link
+      # text = r'''<img src="{url}" title="{latex}" alt="ERROR: Could not render math."/>'''.format(url=url,latex=latex)
+      # return text
+
+      resource = urllib.urlopen(url)
+      with tempfile.TemporaryFile() as fp:
+        while True:
+          txt = resource.read()
+          if len(txt) == 0:
+            break
+          fp.write(txt)
+        fp.seek(0)
+        text = self.make_img_html( fp, fmt, opts='alt="ERROR: Could not render math"' )
 
       return text
 
