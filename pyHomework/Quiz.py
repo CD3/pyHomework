@@ -323,7 +323,7 @@ class BbQuiz(Quiz):
       f = urllib.urlopen(url)
       code  = base64.b64encode(f.read())
       f.close()
-      text  = r'''<img src="data:image/{fmt};base64,{code} {opts}>'''.format(fmt=fmt,code=code,opts=opts)
+      text  = r'''<img src="data:image/{fmt};base64,{code}" {opts}>'''.format(fmt=fmt,code=code,opts=opts)
 
       return text
 
@@ -374,7 +374,7 @@ class BbQuiz(Quiz):
 
 
 
-      text = self.make_img_html( args[0], fmt, newopts )
+      text = self.make_img_html( args[0], fmt, " ".join(newopts) )
       return text
 
     def macro_math(self,args,opts):
