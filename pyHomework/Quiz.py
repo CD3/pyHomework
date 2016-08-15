@@ -254,22 +254,16 @@ class BbQuiz(Quiz):
 
       text = sstream.getvalue()
 
-      # replace $...$ math first.
-      pos = 0 # (relative) position
-      for tokens,begi,endi in pp.QuotedString(quoteChar='$').parseWithTabs().scanString( text ):
+      # replace macro shorthands first
+      #    $...$ --> \math{...}
+      #    *...* --> \emph{...}
+      #    **...** --> \textbf{...}
+      for qc,rep in [ (r'$', r'\math{%s}')
+                    , (r'**', r'\textbf{%s}')
+                    , (r'*', r'\emph{%s}')
+                    ]:
+        text = pp.QuotedString(quoteChar=qc).setParseAction(lambda toks: rep%toks[0]).transformString( text )
 
-        try: # try the user-defined macros first
-          replacement = getattr(macros,'math')(self,tokens)
-        except:
-          replacement = getattr(self,"macro_math")(tokens)
-
-        replacement = re.sub( "\n", " ", replacement )
-        text = text[0:begi+pos] + replacement + text[endi+pos:]
-        # adjust relative position
-        #       v new len      v   v old len   v
-        pos +=  len(replacement) - (endi - begi)
-
-      # TODO: handle nested macros so that we don't have to handle math seprately.
 
 
       # Replace macros.
@@ -278,13 +272,9 @@ class BbQuiz(Quiz):
       options = pp.originalTextFor( pp.nestedExpr( '[', ']' ) )
       arguments = pp.originalTextFor( pp.nestedExpr( '{', '}' ) )
 
-
-
       macro = pp.Combine( pp.Literal("\\") + command("command") + pp.Optional(options)("options") + pp.ZeroOrMore(arguments)("arguments") )
       macro.setParseAction( self.expand_macro )
 
-
-      
       # transform string until all macros have been expanded
       while True:
         newtext = macro.transformString( text )
