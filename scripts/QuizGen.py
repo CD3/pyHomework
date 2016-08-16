@@ -207,7 +207,7 @@ def parse_markdown( fh ):
                 , (r'**', r'\textbf{%s}')
                 , (r'*', r'\emph{%s}')
                 ]:
-    text = parse.QuotedString(quoteChar=qc).setParseAction(lambda toks: rep%toks[0]).transformString( text )
+    text = parse.QuotedString(quoteChar=qc,convertWhitespaceEscapes=False).setParseAction(lambda toks: rep%toks[0]).transformString( text )
 
   # do we want to replace markdown images?
 

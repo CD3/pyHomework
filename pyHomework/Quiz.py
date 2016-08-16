@@ -318,8 +318,11 @@ class BbQuiz(Quiz):
     def expand_macro(self,toks):
 
       command   = str(toks.command)
-      options   = [ oo.strip() for o in toks.options for oo in str(o).lstrip('[').rstrip(']').split(',') ]
-      arguments = [str(x).lstrip('{').rstrip('}') for x in toks.arguments]
+      # options and arguments are nested expressions. the token we get
+      # will be wrapped in [] (for options) and {} (for arguments), so we need
+      # to strip them off.
+      options   = [ oo.strip() for o in toks.options for oo in str(o)[1:-1].split(',') ]
+      arguments = [str(x)[1:-1] for x in toks.arguments]
 
 
       # replacement = getattr(self,"macro_"+command)(arguments,options)
@@ -371,7 +374,13 @@ class BbQuiz(Quiz):
       # to embed in an img tag.
 
       # replace white space with &space;
+      print args
       latex = re.sub('\s+','&space;',args[0])
+      print 'arg',args[0]
+      print
+      print 'latex',latex
+      print
+      print
 
       # get the image
       fmt = 'png'
