@@ -1,6 +1,8 @@
-# -*- mode: python -*-
+datas=[ ('pint/default_en.txt', 'pint')
+      , ('pint/constants_en.txt', 'pint')
+      ]
 a = Analysis(['scripts/QuizGen.py'],
-             datas=[('resources/*_en.txt', 'pint/')],
+             datas=datas,
              hiddenimports=[],
              hookspath=None,
              runtime_hooks=None)
