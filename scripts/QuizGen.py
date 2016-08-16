@@ -39,7 +39,7 @@ def get_fn( inputfn, type ):
 
   return basename + '.' + type
 
-example_spec = '''
+example_spec = r'''
 title : Quiz
 configuration/make_key : True
 configuration/randomize/questions: True
@@ -50,15 +50,15 @@ configuration/randomize/answers: False
 # multiple choice questions are written with the possible
 # answeres listed below. the correct answer is marked with a ^
 1. (Multiple Choice) What is the correct answer?
-   a. ^this is the correct answer
-   b. this is not the correct answer
-   c. this is also not the correct answer
+    1. ^this is the correct answer
+    1. this is not the correct answer
+    1. this is also not the correct answer
 
 # more than one answer may be correct.
 2. (Multiple Answers) What answers are correct?
-   a. ^this is a correct answer
-   a. this is not a correct answer
-   a. ^this is also a correct answer
+    a. ^this is a correct answer
+    b. this is not a correct answer
+    c. ^this is also a correct answer
 
 # numerical answer questions have a... numerical answer.
 # by default, a 1% tolerance will be used.
@@ -77,13 +77,17 @@ configuration/randomize/answers: False
 # images can be loaded
 1. Images can be included with the include graphics command: \includegraphics{./filename.png}
    They are embedded directly into the quiz file, so there is no chance of a broken link.
-   a. ^yes
-   b. no
+    1. ^yes
+    1. no
 
 1. Remote images can be specified by their url \includegraphics[fmt=png]{https://www.google.com/logos/doodles/2016/2016-doodle-fruit-games-day-11-5698592858701824-scta.png}.
    The image will be downloaded and embedded into the quiz file just like a local image.
-   a. ^yes
-   b. no
+    1. ^yes
+    1. no
+
+1. **Some** markdown *is* supported (not much), as well as the $\text{\LaTeX}$ math.
+   a. $y = mx + b$
+   a. ^$\nabla \phi = \vec{E}$
 '''
 
 
@@ -178,9 +182,40 @@ Answers:
 
 def parse_markdown( fh ):
 
+  text = fh.read()
+
+  # preprocess
+
+  # convert markdown ordered list (which does not support a,b,c,etc) to our syntax.
+  # this will allow users to use actual markdown, and then if we end up using a real markdown parser
+  # their files will still be valid.
+  text = re.sub( re.compile('^\s{0,3}([0-9]+\.)', re.M), '1.', text )
+  text = re.sub( re.compile('^\s{4,7}([0-9]+\.)', re.M), '    a.', text )
+
+  # remove comments. this will be necessary if we use an actual markdown parser
+  text = re.sub( re.compile('\s*#.*$', re.M),'',text)
+  text = re.sub( re.compile('\s*[^#]#.*$', re.M),'',text)
+
+  # convert some markdown markup to our latex-style macros. we
+  # need to do this here so that we can still write to LaTeX.
+
+  # replace macro shorthands first
+  #    $...$ --> \math{...}
+  #    *...* --> \emph{...}
+  #    **...** --> \textbf{...}
+  for qc,rep in [ (r'$', r'\math{%s}')
+                , (r'**', r'\textbf{%s}')
+                , (r'*', r'\emph{%s}')
+                ]:
+    text = parse.QuotedString(quoteChar=qc).setParseAction(lambda toks: rep%toks[0]).transformString( text )
+
+  # do we want to replace markdown images?
+
+
+  # parse the file and create a quiz spec
   parsers = { 'question'   : parse.Suppress(parse.Word(parse.nums)+'.'+parse.White()) + parse.restOfLine
             , 'mc_answer'  : parse.Suppress(parse.Word(parse.alphas)+'.'+parse.White()) + parse.restOfLine
-            , 'num_answer' : parse.Suppress(parse.White()+parse.Literal('answer')+parse.Optional(parse.White())+':') + parse.restOfLine
+            , 'num_answer' : parse.Suppress(parse.White()+parse.Literal('answer')+parse.Optional(parse.White())+':'+parse.Optional(parse.White())) + parse.restOfLine
             , 'config_var' : parse.Word(parse.alphanums+'/_')+parse.Suppress(':'+parse.White())+parse.restOfLine
             }
 
@@ -209,12 +244,10 @@ def parse_markdown( fh ):
 
     return matches > 0
 
-  lines = fh.read().split('\n')
+  lines = text.split('\n')
   lines.append("finished: true") # this will make sure that the last stage is cleared.
   for line in lines:
 
-    # remove comments
-    line = re.sub('\s*[^#]*#.*$','',line)
 
     # if we have a match, we need to clear the stage
     matched = matches(line)
@@ -277,7 +310,7 @@ def parse_markdown( fh ):
 
 
   spec = dict2list(spec)
-  
+
   return spec
 
 

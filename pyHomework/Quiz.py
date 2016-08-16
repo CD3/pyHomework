@@ -254,18 +254,6 @@ class BbQuiz(Quiz):
 
       text = sstream.getvalue()
 
-      # replace macro shorthands first
-      #    $...$ --> \math{...}
-      #    *...* --> \emph{...}
-      #    **...** --> \textbf{...}
-      for qc,rep in [ (r'$', r'\math{%s}')
-                    , (r'**', r'\textbf{%s}')
-                    , (r'*', r'\emph{%s}')
-                    ]:
-        text = pp.QuotedString(quoteChar=qc).setParseAction(lambda toks: rep%toks[0]).transformString( text )
-
-
-
       # Replace macros.
       command = pp.Word(pp.alphas)
       options = pp.originalTextFor( pp.nestedExpr( '[', ']' ) )
