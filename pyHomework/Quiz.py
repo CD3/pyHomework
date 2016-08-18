@@ -254,6 +254,9 @@ class BbQuiz(Quiz):
 
       text = sstream.getvalue()
 
+      # replace $...$ with \math{...}
+      text = pp.QuotedString(quoteChar='$',convertWhitespaceEscapes=False).setParseAction(lambda toks: r'\math{%s}'%toks[0]).transformString( text )
+
       # Replace macros.
       command = pp.Word(pp.alphas)
       options = pp.originalTextFor( pp.nestedExpr( '[', ']' ) )
@@ -305,7 +308,7 @@ class BbQuiz(Quiz):
       url = url.geturl()
 
       if fmt is None:
-        fmt = os.path.splitext( fn )[-1]
+        fmt = os.path.splitext( fn )[-1][1:] # get extension and remove leading '.'
 
       # we use urllib here so we can support specifying remote images
       f = urllib.urlopen(url)
@@ -374,13 +377,7 @@ class BbQuiz(Quiz):
       # to embed in an img tag.
 
       # replace white space with &space;
-      print args
       latex = re.sub('\s+','&space;',args[0])
-      print 'arg',args[0]
-      print
-      print 'latex',latex
-      print
-      print
 
       # get the image
       fmt = 'png'

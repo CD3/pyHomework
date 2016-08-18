@@ -10,3 +10,4 @@ dist/QuizGen: QuizGen.spec scripts/QuizGen.py
 dist: dist/QuizGen scripts/README.md
 	cp ./dist/QuizGen  ../QuizGen/linux
 	cp scripts/README.md ../QuizGen/
+	scp ./dist/QuizGen cdclark@scatcat.fhsu.edu:./
