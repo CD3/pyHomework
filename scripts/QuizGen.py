@@ -179,7 +179,6 @@ Answers:
 
 
 
-
 def parse_markdown( fh ):
 
   text = fh.read()
@@ -199,12 +198,10 @@ def parse_markdown( fh ):
   # convert some markdown markup to our latex-style macros. we
   # need to do this here so that we can still write to LaTeX.
 
-  # replace macro shorthands first
-  #    $...$ --> \math{...}
+  # replace markdown markup with corresponding macros
   #    *...* --> \emph{...}
   #    **...** --> \textbf{...}
-  for qc,rep in [ (r'$', r'\math{%s}')
-                , (r'**', r'\textbf{%s}')
+  for qc,rep in [ (r'**', r'\textbf{%s}')
                 , (r'*', r'\emph{%s}')
                 ]:
     text = parse.QuotedString(quoteChar=qc,convertWhitespaceEscapes=False).setParseAction(lambda toks: rep%toks[0]).transformString( text )
@@ -324,6 +321,7 @@ if __name__ == "__main__":
   parser.add_argument('--output', '-o', help="Output filename. Default is to replace extenstion of spec file with extension of output format.")
   parser.add_argument('--type', '-t', default='bb', help="Output file format. Default is bb (blackboard).")
   parser.add_argument('--debug', '-d', action='store_true', help="Output debug information.")
+  parser.add_argument('--render', '-r', action='store_true', help="Render input file as a Template first.")
 
   args = parser.parse_args()
 
@@ -345,6 +343,15 @@ if __name__ == "__main__":
 
 
     with open(fn,'r') as f:
+      text = f.read()
+
+    if args.render:
+      text = tempita.Template(text).substitute()
+
+    with tempfile.TemporaryFile() as f:
+      f.write(text)
+      f.seek(0)
+
       ext = os.path.splitext(fn)[1]
       if ext == '.md':
         spec = parse_markdown(f)
