@@ -11,7 +11,8 @@ class ConstantsCollection:
       return sigfig_round( Q( value, unit ), n = sigfigs )
 
     self.Pi                    = make(math.pi,              'dimensionless')
-    self.AvagadrosNumber       = make(6.0221409e+23,        '1/mol')
+    self.AvagadrosNumber       = make(6.0221409e+23,        '')
+    self.AvagadrosConstant     = make(self.AvagadrosNumber, '1/mol')
 
     self.GravitationalAcceleration = make(9.80,             'm s^-2')
     self.SpeedOfLight          = make(299792458,            'm/s')
@@ -21,7 +22,8 @@ class ConstantsCollection:
     self.VacuumPermittivity    = make(8.85418782e-12,       'F/m')
     self.VacuumPermeability    = make(4*math.pi*1e-7,       'N/A^2')
     self.PlancksConstant       = make(6.62607004e-34, 'm^2 kg / s')
-    self.BoltzmannConstant     = make(1.38064852e-23, 'm^2 kg / s^2 / K')
+    self.BoltzmannConstant     = make(1.38064852e-23, 'm^2 kg / s^2 / degK')
+    self.UniversalGasConstant  = make(8.3144598,      'J/mol/degK')
 
     self.Masses = {}
     self.Masses['sun']      = make(1.989e30,       'kg')
@@ -29,6 +31,10 @@ class ConstantsCollection:
     self.Masses['moon']     = make(7.34767309e22,  'kg')
     self.Masses['electron'] = make(9.10938356e-31, 'kg')
     self.Masses['proton']   = make(1.6726219e-27,  'kg')
+
+    self.MolarMasses = {}
+    self.MolarMasses['nitrogen'] = make(14.0067,'g/mol')
+    self.MolarMasses['oxygen']   = make(15.9994,'g/mol')
 
     self.Charges = {}
     self.Charges['electron'] = -self.ElementaryCharge
@@ -97,6 +103,9 @@ class ConstantsCollection:
     self.ResistivityCoefficients['aluminum'] = make( 3.9E-3, '1/delta_degC')
     self.ResistivityCoefficients['tungsten'] = make( 4.5E-3, '1/delta_degC')
     self.ResistivityCoefficients['nichrome'] = make( 0.4E-3, '1/delta_degC')
+
+    self.Densities = {}
+    self.Densities['water'] = make(1,       'g/cm^3')
 
     # some shorthands for common constants
     self.MassOfSun             = self.Masses['sun']

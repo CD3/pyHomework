@@ -54,6 +54,7 @@ class SymbolCollection:
     self.Rf   = sy.symbols('R_f')
     self.Rb   = sy.symbols('R_b')
 
+
     # constants
     self.g_    = sy.symbols('g_')
     self.G_    = sy.symbols('G_')
@@ -63,6 +64,8 @@ class SymbolCollection:
     self.pi_   = sy.symbols('\pi_')
     self.ep0_  = sy.symbols('\epsilon_0')
     self.mu0_  = sy.symbols('\mu_0')
+    self.R_    = sy.symbols('R_')
+    self.kB_    = sy.symbols('kB_')
 
 def merge(d1,d2):
   d3 = d1.copy()
@@ -78,14 +81,40 @@ class EquationsCollection:
     c = self.c
     self.consts = dict()
 
-    self.AreaCircle = sy.Eq( s.A, s.pi_ * s.r * s.r )
-    self.AreaSquare = sy.Eq( s.A, s.l * s.w )
+    # GEOMETRY
+    self.ArcLength = sy.Eq( s.s, s.the * s.r )
 
     self.CircumferenceCircle = sy.Eq( s.C, 2*s.pi_ * s.r )
     self.CircumferenceSquare = sy.Eq( s.C, 2*s.l + 2*s.w )
 
+    self.AreaCircle = sy.Eq( s.A, s.pi_ * s.r * s.r )
+    self.AreaSquare = sy.Eq( s.A, s.l * s.w )
+
+    self.SurfaceAreaBox      = sy.Eq(s.A, 2*s.h*s.w + 2*s.l*s.w + 2*s.h*s.l)
+    self.SurfaceAreaCube     = self.SurfaceAreaBox.subs(s.h, s.l).subs(s.w, s.l)
+    self.SurfaceAreaCylinder = sy.Eq(s.A, 2*s.pi_*s.r**2 + 2*s.pi_*s.r*s.h)
+    self.SurfaceAreaSphere   = sy.Eq(s.A, 4*s.pi_*s.R**2)
+
+    self.VolumeBox      = sy.Eq(s.V, s.l*s.w*s.h)
+    self.VolumeCube     = self.VolumeBox.subs(s.h, s.l).subs(s.w, s.l)
+    self.VolumeSphere = sy.Eq( s.V, 4*s.pi_*s.R**3/3 )
+    self.VolumeCylinder = sy.Eq( s.V, s.pi_*s.r**2*s.h )
+
+
+    # MISC MATH
+
+    self.ExpRise                   = sy.Eq( s.x, s.X*(1 - sy.exp(-s.t / s.tau) ) )
+    self.ExpDecay                  = sy.Eq( s.x, s.X*sy.exp(-s.t / s.tau) )
+
+
+
+
+    # PHYSICS I (Mechanics)
+
     self.KineticEnergy                = sy.Eq( s.K, s.m*s.v*s.v/2 )
     self.GravitationalPotentialEnergy = sy.Eq( s.U, s.m * s.g_ * s.h )
+
+    # PHYSICS II (Electricity and Magnatism)
 
     self.CoulombForce              = sy.Eq( s.F, s.k_*s.qi[1]*s.qi[2]/s.r**2 )
     self.vCoulombForce             = sy.Eq( s.F, s.k_*s.qi[1]*s.qi[2]*s.rhat/s.r**2 )
@@ -113,9 +142,6 @@ class EquationsCollection:
     self.TransformerPower          = sy.Eq( s.Vi*s.Ii, s.Vo*s.Io )
     self.TransformerRatio          = sy.Eq( s.Vi/s.Vo, s.Ni/s.No )
 
-    self.ExpRise                   = sy.Eq( s.x, s.X*(1 - sy.exp(-s.t / s.tau) ) )
-    self.ExpDecay                  = sy.Eq( s.x, s.X*sy.exp(-s.t / s.tau) )
-
     self.RLCurrentRise             = self.ExpRise.subs(  [(s.x,s.i), (s.X, s.Ip), (s.tau, s.L / s.R )] )
     self.RLCurrentDecay            = self.ExpDecay.subs( [(s.x,s.i), (s.X, s.Ip), (s.tau, s.L / s.R )] )
 
@@ -126,6 +152,18 @@ class EquationsCollection:
     self.MagnificationEquation = sy.Eq( s.m , -s.di / s.do )
     self.SnellsLaw             = sy.Eq( s.ni*sy.sin(s.thi), s.nr*sy.sin(s.thr) )
     self.LensMakersEquation    = sy.Eq( 1/s.f, ( s.nl / s.nm - 1 ) * ( 1/s.Rf - 1/s.Rb ) )
+
+
+    # THERMO
+
+    self.IdealGasLaw           = sy.Eq( s.P*s.V, s.N*s.kB_*s.T )
+    self.IdealGasLawChem       = sy.Eq( s.P*s.V, s.n*s.R_*s.T )
+    self.IdealGasEnergy        = sy.Eq( s.U, s.f*s.N*s.kB_*s.T/2 )
+
+
+    # MISC PHYSICS
+
+    self.SchwarzchildRadius = sy.Eq( s.r, 2*s.G_*s.m/s.c_**2)
 
 
 
@@ -139,7 +177,9 @@ class EquationsCollection:
                     s.ep0_  : c.VacuumPermittivity,
                     s.c_    : c.SpeedOfLight,
                     s.G_    : c.GravitationalConstant,
-                    s.g_    : c.GravitationalAcceleration
+                    s.g_    : c.GravitationalAcceleration,
+                    s.R_    : c.UniversalGasConstant,
+                    s.kB_   : c.BoltzmannConstant
                   }
 
   def eval(self, expr, vvar, context, soli = 0 ):
