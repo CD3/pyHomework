@@ -26,6 +26,8 @@ class SymbolCollection:
     self.qi = sy.symbols('q:10')
     self.mi = sy.symbols('m:10')
     self.Ri = sy.symbols('R:10')
+    self.xi = sy.symbols('x:10')
+    self.vi = sy.symbols('v:10')
 
     # circuits
     self.emf = sy.symbols('\mathcal{E}')
@@ -113,6 +115,10 @@ class EquationsCollection:
 
     self.KineticEnergy                = sy.Eq( s.K, s.m*s.v*s.v/2 )
     self.GravitationalPotentialEnergy = sy.Eq( s.U, s.m * s.g_ * s.h )
+
+    self.KinematicPosition = sy.Eq( s.x, s.xi[0] + s.vi[0]*s.t + (s.a*s.t**2)/2 )
+    self.KinematicVelocity = sy.Eq( s.v, s.vi[0] + s.a*s.t )
+
 
     # PHYSICS II (Electricity and Magnatism)
 

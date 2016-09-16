@@ -107,13 +107,10 @@ class ConstantsCollection:
     self.Densities = {}
     self.Densities['water'] = make(1,       'g/cm^3')
 
-    # some shorthands for common constants
-    self.MassOfSun             = self.Masses['sun']
-    self.MassOfEarth           = self.Masses['earth']
-    self.MassOfMoon            = self.Masses['moon']
-    self.MassOfElectron        = self.Masses['electron']
-    self.MassOfProton          = self.Masses['proton']
+    # Shorthand Names
+    for k,v in self.Masses.items():
+      setattr(self, "Mass%s"%k.capitalize(), v)
 
-    self.RadiusOfSun           = self.Radii['sun']
-    self.RadiusOfEarth         = self.Radii['earth']
+    for k,v in self.Radii.items():
+      setattr(self, "Radius%s"%k.capitalize(), v)
 
