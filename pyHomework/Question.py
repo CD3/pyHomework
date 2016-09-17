@@ -238,6 +238,41 @@ class Question(object):
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
 
 
+  def _call(self, err, f, **kwargs):
+    # get list of args required by f
+    rargs = inspect.getargspec(f).args
+    # build args to pass to f from our __dict__ and kwargs.
+    # use the value in __dict__ unless an entry exists in kwargs
+
+    args = dict()
+    missing = list()
+    for a in rargs:
+      if a in kwargs:
+        args[a] = kwargs[a]
+      elif a in self.__dict__:
+        args[a] = self.__dict__[a]
+      else:
+        missing.append(a)
+
+    if len(missing) > 0:
+      msg  = "ERROR: could not find all arguments for function.\n"
+      msg += "expected: "+str(rargs)+"\n"
+      msg += "missing: "+str(missing)+"\n"
+      raise RuntimeError(msg)
+
+    if err:
+      result = uconv.WithAutoError(3)(f)(**args)
+    else:
+      result = f(**args)
+
+    return result
+
+  def call(self,f,**kwargs):
+    return self._call(False,f,**kwargs)
+
+  def ecall(self,f,**kwargs):
+    return self._call(True,f,**kwargs)
+
 class PlainTextQuestion(Question):
   pass
 

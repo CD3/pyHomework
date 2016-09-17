@@ -1,6 +1,7 @@
 
 import pytest
 import yaml
+import utils
 
 from pyHomework.Question import *
 from pyHomework.Answer import *
@@ -382,3 +383,37 @@ def test_with_interface_restore():
 
   text = q.last_part.last_part.emit(LatexEmitter)
   assert text == '@ Q1aa'
+
+def test_function_calling():
+
+  def func(a,b,c):
+    return a+b+c
+
+  q = Question()
+
+  with pytest.raises(RuntimeError) as e:
+    q.call(func)
+
+  q.a = 1
+  with pytest.raises(RuntimeError) as e:
+    q.call(func, b=2)
+
+  q.a = 1
+  q.b = 2
+  q.c = 3
+
+  assert q.call(func) == 6
+
+  assert q.ecall(func).value.magnitude == 6
+  assert utils.Close( q.ecall(func).error.magnitude , (3*0.01**2)**0.5 )
+
+  assert q.ecall(func,a=4).value.magnitude == 9
+  assert utils.Close( q.ecall(func).error.magnitude , (3*0.01**2)**0.5 )
+
+
+
+  assert q.call( lambda a,b,c : 2*a + 2*b + 2*c ) == 12
+
+  assert q.ecall( lambda a,b,c : 2*a + 2*b + 2*c ).value.magnitude == 12
+  assert utils.Close( q.ecall( lambda a,b,c : 2*a + 2*b + 2*c ).error.magnitude , (3*(2*0.01)**2)**0.5 )
+  
