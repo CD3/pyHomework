@@ -107,6 +107,12 @@ class ConstantsCollection:
     self.Densities = {}
     self.Densities['water'] = make(1,       'g/cm^3')
 
+    self.LatentHeats = {}
+    self.LatentHeats['ice2water'] = make(333, 'J/g')
+
+    self.SpecificHeats = {}
+    self.SpecificHeats['water'] = make(1, 'cal/g/K')
+
     # Shorthand Names
     for k,v in self.Masses.items():
       setattr(self, "Mass%s"%k.capitalize(), v)
