@@ -96,11 +96,13 @@ class EquationsCollection:
     self.SurfaceAreaCube     = self.SurfaceAreaBox.subs(s.h, s.l).subs(s.w, s.l)
     self.SurfaceAreaCylinder = sy.Eq(s.A, 2*s.pi_*s.r**2 + 2*s.pi_*s.r*s.h)
     self.SurfaceAreaSphere   = sy.Eq(s.A, 4*s.pi_*s.R**2)
+    self.SurfaceAreaCone     = sy.Eq(s.A, s.pi_*s.r**2 + s.pi_*s.r*s.s)
 
     self.VolumeBox      = sy.Eq(s.V, s.l*s.w*s.h)
     self.VolumeCube     = self.VolumeBox.subs(s.h, s.l).subs(s.w, s.l)
     self.VolumeSphere = sy.Eq( s.V, 4*s.pi_*s.R**3/3 )
     self.VolumeCylinder = sy.Eq( s.V, s.pi_*s.r**2*s.h )
+    self.VolumeCone     = sy.Eq( s.V, s.pi_*s.r**2*s.h/3 )
 
 
     # MISC MATH
