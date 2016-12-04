@@ -222,13 +222,17 @@ class MultipleChoiceAnswer(Answer):
     self._correct = set()
     self._correct_regex = r'[\*\^]'
 
-    # regular members
     self.randomize = False
+    if not hasattr(self,"add_none_answer"): # this allows the user to set a default for all instances
+      self.add_none_answer = False
+
 
   @property
   def choices(self):
     for i in self.order:
       yield (i in self._correct,self._choices[i])
+    if self.add_none_answer:
+      yield (False,"None of the above.")
 
   @property
   def order(self):

@@ -506,15 +506,20 @@ class HomeworkAssignment(Quiz):
 
   # perhaps there is a way to use the parent classes
   @contextlib.contextmanager
-  def _add_question(self,label='last'):
+  def _add_question(self,text=None,fmt=True,label='last'):
     refstack = self.refstack
-    q = Question()
+    q = Question(text)
 
     # replace the questions _add_part method
     q._add_part = types.MethodType( self._custom_question_add_part, q )
 
     refstack.append(id(q))
+
     yield q
+
+    if fmt:
+      q.format_question()
+
     refstack.pop()
 
     self._order.append( len(self._questions) )
@@ -642,7 +647,7 @@ class HomeworkAssignment(Quiz):
   def add_quiz_question(self):
     self._quizzes['default'].add_question()
 
-    self.quiz_add_text( "For problem #{{refs['%s']}}:" % id(self.last_question_or_part) )
+    self.quiz_add_text( "For problem #<<refs['%s']>>:" % id(self.last_question_or_part) )
 
   def quiz_add_text(self, text, prepend=False ):
     self.get_quiz('default').add_text(text,prepend)
@@ -690,10 +695,14 @@ class HomeworkAssignment(Quiz):
 
   def write_quiz(self,stream,name='default'):
     # we need to replace references before we write to file
+
     s = StringIO.StringIO()
     self.get_quiz(name).write(s)
+
+    t = tempita.Template( s.getvalue(), delimiters=('<<','>>') )
     context = {'refs' : self._latex_refs}
-    text = tempita.sub(s.getvalue(), **context)
+    text = t.substitute(**context)
+
     stream.write(text)
     self.get_quiz(name).push_files()
 
@@ -714,8 +723,8 @@ class HomeworkAssignment(Quiz):
     refstack = self.refstack
     labels = self._labels
     @contextlib.contextmanager
-    def _add_part(self,p=None,label='last',prepend=False):
-      with Question._add_part(self,prepend) as pp:
+    def _add_part(self,text=None,fmt=True,prepend=False,label='last'):
+      with Question._add_part(self,text=text,fmt=True,prepend=prepend) as pp:
         refstack.append(id(pp))
         yield pp
         refstack.pop()
@@ -730,11 +739,11 @@ class HomeworkAssignment(Quiz):
   def _custom_quiz_add_question(self):
     refstack = self.refstack
     @contextlib.contextmanager
-    def _add_question(self,q=None):
-      with BbQuiz._add_question(self,q) as qq:
+    def _add_question(self,*args,**kwargs):
+      with BbQuiz._add_question(self,*args,**kwargs) as qq:
         yield qq
         if len(refstack) > 0:
-          qq.add_text("For problem #{{refs['%s']}}:" % refstack[-1], prepend=True )
+          qq.add_text("For problem #<<refs['%s']>>:" % refstack[-1], prepend=True )
 
     return _add_question
 

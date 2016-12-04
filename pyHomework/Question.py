@@ -30,15 +30,17 @@ class Question(object):
     self._answers = []
     self._parts = []
 
-    if not text is None:
-      self.add_text( text )
-
     # regular members
     self.join_str = ' '
 
     # config options
     self.clean_text = True
     self.auto_answer_instructions = True
+
+    # add text if it was given
+    if not text is None:
+      self.add_text( text )
+
 
   # common operations for different members
 
@@ -196,11 +198,12 @@ class Question(object):
       pass
 
   @contextlib.contextmanager
-  def _add_part(self,prepend=False):
-    p = Question()
-
+  def _add_part(self,text=None,fmt=True,prepend=False):
+    p = Question(text)
     # the "magic"
     yield p
+    if fmt:
+      p.format_question()
 
     self.add_X(self._parts,p,prepend)
 

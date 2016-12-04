@@ -73,11 +73,11 @@ class Quiz(object):
 
 
   @contextlib.contextmanager
-  def _add_question(self,q=None):
-    if not isinstance(q, Question):
-      q = self.Question(q)
-
+  def _add_question(self,text=None,fmt=True):
+    q = self.Question(text)
     yield q
+    if fmt:
+      q.format_question()
 
     self._order.append( len(self._questions) )
     self._questions.append( q )
