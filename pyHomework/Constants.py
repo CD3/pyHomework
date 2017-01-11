@@ -12,7 +12,7 @@ class ConstantsCollection:
 
     self.Pi                    = make(math.pi,              'dimensionless')
     self.AvagadrosNumber       = make(6.0221409e+23,        '')
-    self.AvagadrosConstant     = make(self.AvagadrosNumber, '1/mol')
+    self.AvagadrosConstant     = make(self.AvagadrosNumber.magnitude, '1/mol')
 
     self.GravitationalAcceleration = make(9.80,             'm s^-2')
     self.SpeedOfLight          = make(299792458,            'm/s')
