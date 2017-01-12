@@ -205,6 +205,7 @@ class EquationsCollection:
     return
 
   def subs(self, toexpr, fromexpr, var, soli = 0 ):
+    '''Replace var in toexpr by solving fromexpr and substituting.'''
     sol = sy.solve( fromexpr, var )[soli]
     ret = toexpr.subs( var, sol )
     return ret

@@ -1,5 +1,5 @@
 # local modules
-from .Utils import format_text
+from .Utils import format_text, Bunch
 from .Answer import *
 from .Emitter import *
 
@@ -21,7 +21,7 @@ class Question(object):
   - parts : one or more parts to the questions (sub-questions). these are also questions.
   """
   DefaultEmitter = PlainEmitter
-  
+
   def __init__(self, text = None):
     # controlled access members
     self._texts = []
@@ -41,6 +41,24 @@ class Question(object):
     if not text is None:
       self.add_text( text )
 
+    # a scratch pad that can be used to store vars and stuff...
+    self.scratch = Bunch()
+
+  # other useful names for the scratchpad
+  @property
+  def vars(self):
+    return self.scratch
+  @property
+  def v(self):
+    return self.scratch
+
+  def __getattr__(self,name):
+    # check to see if the key is in the namespace
+    if name in self.scratch:
+      return self.scratch[name]
+    print name, type(name)
+    print type(super(Question,self))
+    return super(Question,self).__getattr__(name)
 
   # common operations for different members
 
@@ -78,9 +96,10 @@ class Question(object):
       kwargs['formatter'] = 'format'
 
     # if no arguments (other than the formatter) were given, use
-    # our __dict__
+    # our __dict__ and scratch
     if len(args) == 0 and len(kwargs.keys()) == 1:
       kwargs.update( self.__dict__ )
+      kwargs.update( self.scratch )
 
     for i in range(len(X)):
       X[i] = format_text( X[i], *args, **kwargs )
@@ -200,6 +219,7 @@ class Question(object):
   @contextlib.contextmanager
   def _add_part(self,text=None,fmt=True,prepend=False):
     p = Question(text)
+    p.scratch.update(self.scratch)
     # the "magic"
     yield p
     if fmt:
@@ -252,6 +272,8 @@ class Question(object):
     for a in rargs:
       if a in kwargs:
         args[a] = kwargs[a]
+      elif a in self.scratch:
+        args[a] = self.scratch[a]
       elif a in self.__dict__:
         args[a] = self.__dict__[a]
       else:
