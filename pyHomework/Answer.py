@@ -225,14 +225,20 @@ class MultipleChoiceAnswer(Answer):
     self.randomize = False
     if not hasattr(self,"add_none_answer"): # this allows the user to set a default for all instances
       self.add_none_answer = False
+    if not hasattr(self,"default_answer"):
+      self.default_answer = None
 
 
   @property
   def choices(self):
+    answers = self._correct
+    if len(answers) == 0 and not self.default_answer is None:
+      answers.add(self.default_answer)
+
     for i in self.order:
-      yield (i in self._correct,self._choices[i])
+      yield (i in answers,self._choices[i])
     if self.add_none_answer:
-      yield (False,"None of the above.")
+      yield (-1 in answers,"None of the above.")
 
   @property
   def order(self):
