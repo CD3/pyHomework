@@ -103,8 +103,6 @@ def extract( s, beg_str, end_str ):
 
     return substrings
 
-  
-
 
 def parse_aux(filename):
   aux_lines = []
@@ -128,3 +126,5 @@ class Bunch(dict):
     def __init__(self,**kw):
         dict.__init__(self,kw)
         self.__dict__ = self
+    def fmt(self,text):
+      return text.format( **self.__dict__ )
