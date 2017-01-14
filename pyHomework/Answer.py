@@ -113,9 +113,14 @@ class NumericalAnswer(Answer):
   @quantity.setter
   def quantity(self,v):
     if isinstance(v,(str,unicode)):
-      self._quant = unit(v)
-    else:
-      self._quant = v
+      # if value is a string, parse it into a quantity
+      v = units(v)
+
+    if isinstance( v, (int,float) ):
+      # if value is an int or float, make it a dimensionless quantity
+      v = Q_(v,'')
+
+    self._quant = v
 
   @property
   def latex(self):
