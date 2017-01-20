@@ -371,7 +371,7 @@ class BbQuiz(Quiz):
       text = self.make_img_html( args[0], fmt, " ".join(newopts) )
       return text
 
-    def macro_math(self,args,opts):
+    def macro_codecogs(self,args,opts):
       # send the LaTeX snippet to www.codecogs.com
       # and get an image of the equation
       # to embed in an img tag.
@@ -385,6 +385,41 @@ class BbQuiz(Quiz):
       text = self.make_img_html( url, fmt, opts='alt="ERROR: Could not render math"' )
 
       return text
+
+    def macro_tex2im(self,args,opts):
+      # create an image of LaTeX code using tex2im
+
+
+      if len(args) < 1: # don't do anything if no argument was given
+        return None
+
+      # create an image file of the equation using our tex2im
+      if not hasattr(self,'mathimg_num'):
+        self.mathimg_num = 0
+      self.mathimg_num += 1
+
+      extra_opts=""
+      if len(opts) > 1:
+        extra_opts = opts[1]
+
+
+      ifn = "eq-%d.png"%(self.mathimg_num)
+      ofn = "eq-%d.log"%(self.mathimg_num)
+      cmd = "tex2im -o %s %s '%s' "%(ifn,extra_opts,args[0])
+      print "creating image of equation with:'"+cmd+"'"
+      with open(ofn,'w') as f:
+        status = subprocess.call(cmd,shell=True,stdout=f,stderr=f)
+        if status != 0:
+          print "\tWARNING: there was a problem running tex2im."
+          print "\tWARNING: command output was left in %s"%(ofn)
+          print "\tWARNING: replacing with $...$, which may not work..."
+          return "$"+args[0]+"$"
+
+      text = self.make_img_html( ifn, 'png', opts='alt="ERROR: Could not render math"' )
+
+      return text
+
+    macro_math = macro_tex2im
 
 
     def macro_shell(self,args,opts):
