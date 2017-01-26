@@ -188,13 +188,17 @@ class Question(object):
   # sub-data: lists/dicts of class instances
 
   @contextlib.contextmanager
-  def _add_answer(self,a,prepend=False):
+  def _add_answer(self,a,fmt=False,prepend=False):
 
     if inspect.isclass( a ):
       a = a()
+    a.scratch.update(self.scratch)
 
     # the "magic"
     yield a
+    if fmt:
+      a.format_answer()
+
 
     # add special instructions for different answer types.
     if self.auto_answer_instructions:

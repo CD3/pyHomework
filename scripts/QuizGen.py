@@ -322,6 +322,7 @@ if __name__ == "__main__":
   parser.add_argument('--type', '-t', default='bb', help="Output file format. Default is bb (blackboard).")
   parser.add_argument('--debug', '-d', action='store_true', help="Output debug information.")
   parser.add_argument('--render', '-r', action='store_true', help="Render input file as a Template first.")
+  parser.add_argument('--tex2im_opts', help="Extra options that will be passed to tex2im when creating images from LaTeX.")
 
   args = parser.parse_args()
 

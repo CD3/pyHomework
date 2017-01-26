@@ -219,6 +219,9 @@ class BbQuiz(Quiz):
 
       self.Question._files_config = self._config['files']
 
+      if not hasattr(self,"tex2im_opts"):
+        self.tex2im_opts = ""
+
     def push_files(self):
       for q in self._questions:
         for k in q._files:
@@ -398,7 +401,7 @@ class BbQuiz(Quiz):
         self.mathimg_num = 0
       self.mathimg_num += 1
 
-      extra_opts=""
+      extra_opts=self.tex2im_opts
       if len(opts) > 1:
         extra_opts = opts[1]
 

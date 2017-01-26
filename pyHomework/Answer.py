@@ -1,5 +1,5 @@
 # local modules
-from .Utils import format_text
+from .Utils import format_text, Bunch
 from .Emitter import *
 
 # standard imports
@@ -18,6 +18,20 @@ Q_  = UQ_.Quantity
 
 class Answer(object):
   DefaultEmitter = PlainEmitter
+
+  def __init__(self):
+    # a scratch pad that can be used to store vars and stuff...
+    self.scratch = Bunch()
+
+  # other useful names for the scratchpad
+  @property
+  def vars(self):
+    return self.scratch
+  @property
+  def v(self):
+    return self.scratch
+
+
   def emit(self,emitter=None):
     if emitter == None:
       emitter = self.DefaultEmitter
@@ -30,35 +44,38 @@ class Answer(object):
 
     raise RuntimeError("Unknown emitter type '%s' given." % emitter)
 
-class RawAnswer(Answer):
-  def __init__(self, text=None):
-    self.text = text
-
-  def format_text(self, *args, **kwargs):
+  def format_X(self,X,*args,**kwargs):
     if not 'formatter' in kwargs:
       kwargs['formatter'] = 'format'
 
-    if 'text' in kwargs:
-      self.text = kwargs['text']
-
     # if no arguments (other than the formatter) were given, use
-    # our __dict__
+    # our __dict__ and scratch
     if len(args) == 0 and len(kwargs.keys()) == 1:
       kwargs.update( self.__dict__ )
+      kwargs.update( self.scratch )
 
-    if 'text' in kwargs:
-      del kwargs['text']
+    for i in range(len(X)):
+      X[i] = format_text( X[i], *args, **kwargs )
+
+  def format_answer(self, *args, **kwargs):
+    pass
 
 
-
-    self.text = format_text( self.text, *args, **kwargs )
+class RawAnswer(Answer):
+  def __init__(self, text=None):
+    super(RawAnswer,self).__init__()
+    self.text = text
 
   @property
   def latex(self):
     return self.text
 
+  def format_answer(self, *args, **kwargs):
+    self.format_text([self.text], *args,**kwargs)
+
 class EssayAnswer(RawAnswer):
   def __init__(self, text=None):
+    super(EssayAnswer,self).__init__()
     self.text = text
 
   def load(self,spec):
@@ -66,10 +83,12 @@ class EssayAnswer(RawAnswer):
 
 class ShortAnswer(RawAnswer):
   def __init__(self, text=None):
+    super(ShortAnswer,self).__init__()
     self.text = text
 
 class NumericalAnswer(Answer):
   def __init__(self, quantity = None, units = "", uncertainty = '1%', sigfigs = 3):
+    super(NumericalAnswer,self).__init__()
     self._quant   = quantity
     self._unc     = uncertainty
     self.sigfigs  = sigfigs
@@ -102,9 +121,6 @@ class NumericalAnswer(Answer):
       val = q.error
 
     return val
-
-
-
 
   @property
   def quantity(self):
@@ -221,6 +237,7 @@ class NumericalAnswer(Answer):
 
 class MultipleChoiceAnswer(Answer):
   def __init__(self):
+    super(MultipleChoiceAnswer,self).__init__()
     # controlled access members
     self._choices = []
     self._order   = []
@@ -256,6 +273,9 @@ class MultipleChoiceAnswer(Answer):
   @order.setter
   def order(self,v):
     self._order = v
+
+  def format_answer(self, *args, **kwargs):
+    self.format_X(self._choices,*args,**kwargs)
 
   def filter( self, text ):
     filtered_text = re.sub('^\s*%s\s*'%self._correct_regex,'',text)
@@ -313,6 +333,7 @@ class MultipleChoiceAnswer(Answer):
 
 class OrderedAnswer(Answer):
   def __init__(self):
+    super(OrderedAnswer,self).__init__()
     self.items = []
 
   def add_item( self, item ):
@@ -334,6 +355,7 @@ class OrderedAnswer(Answer):
 
 class TrueFalseAnswer(Answer):
   def __init__(self):
+    super(TrueFalseAnswer,self).__init__()
     self.answer = None
 
   def load(self,spec):
