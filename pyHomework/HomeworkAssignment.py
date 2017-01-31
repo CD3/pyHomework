@@ -724,7 +724,7 @@ class HomeworkAssignment(Quiz):
     labels = self._labels
     @contextlib.contextmanager
     def _add_part(self,text=None,fmt=True,prepend=False,label='last'):
-      with Question._add_part(self,text=text,fmt=True,prepend=prepend) as pp:
+      with Question._add_part(self,text=text,fmt=fmt,prepend=prepend) as pp:
         refstack.append(id(pp))
         yield pp
         refstack.pop()
