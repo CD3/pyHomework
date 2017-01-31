@@ -89,9 +89,11 @@ class ShortAnswer(RawAnswer):
 class NumericalAnswer(Answer):
   def __init__(self, quantity = None, units = "", uncertainty = '1%', sigfigs = 3):
     super(NumericalAnswer,self).__init__()
-    self._quant   = quantity
-    self._unc     = uncertainty
+    self.quantity = quantity
+    self.uncertainty = uncertainty
     self.sigfigs  = sigfigs
+
+    self.min_relative_unc = 0.01
 
   def _get_mag(self,q):
     val = q
@@ -124,7 +126,8 @@ class NumericalAnswer(Answer):
 
   @property
   def quantity(self):
-    return '{{:.{:d}E}}'.format( self.sigfigs-1 ).format( self._quant )
+    # let pint format the quantity as a string, but remove "diemensionless" from dimensionless quantities.
+    return re.sub(' dimensionless$','','{{:.{:d}E}}'.format( self.sigfigs-1 ).format( self._quant ))
 
   @quantity.setter
   def quantity(self,v):
@@ -173,11 +176,12 @@ class NumericalAnswer(Answer):
 
   @property
   def uncertainty(self):
-
     fmt = '{{:.{:d}E}}'.format( self.sigfigs-1 )
 
     # if the quantity has uncertainty, use it
     unc = self._get_unc(self._quant)
+    print "start",unc
+
     if unc is None:
 
       unc = self._unc
@@ -186,20 +190,28 @@ class NumericalAnswer(Answer):
       if unc is None:
         unc = 0*self._quant
 
+
       # if the uncertainty is a string, make a quantity
-      if isinstance( self._unc, (str,unicode) ):
-        if '%' in self._unc:
-          unc = self._quant * float( self._unc.replace('%','') ) / 100
+      if isinstance( unc, (str,unicode) ):
+        if '%' in unc:
+          unc = self._quant * float( unc.replace('%','') ) / 100
         else:
           unc = units(unc)
 
+      # if the uncertainty is an int or float, make a dimensionless quantity
+      if isinstance( unc, (int,float) ):
+        unc = Q_(unc,'')
+
+    # convert unc to units and return magnitude
     unc = self._get_mag(unc.to(self.units))
 
+    if not self.min_relative_unc is None:
     # make sure we don't return anything less than 1% of the nominal value
-    val = self._get_mag(self._get_nom(self._quant))
-    if abs(unc) < 0.01*abs(val):
-      unc = 0.01*val
+      val = self._get_mag(self._get_nom(self._quant))
+      if abs(self._get_mag(unc)) < self.min_relative_unc*abs(val):
+        unc = 0.01*val
 
+    print "end",unc
     return fmt.format( abs(unc) )
 
   @uncertainty.setter
@@ -215,7 +227,9 @@ class NumericalAnswer(Answer):
       unit = self._quant.value.units
     elif isinstance( self._quant, pint.quantity._Quantity):
       unit = self._quant.units
-    return str(unit)
+    # again, don't return 'dimensionless'
+
+    return re.sub('dimensionless','',str(unit))
 
   @units.setter
   def units(self,v):
@@ -233,7 +247,7 @@ class NumericalAnswer(Answer):
 
     unc = str(spec.get('uncertainty',""))
     if unc != "":
-      self.uncertainty = Q_(unc)
+      self.uncertainty = unc
 
 class MultipleChoiceAnswer(Answer):
   def __init__(self):

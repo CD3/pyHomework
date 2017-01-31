@@ -44,6 +44,7 @@ class Question(object):
     # a scratch pad that can be used to store vars and stuff...
     self.scratch = Bunch()
 
+
   # other useful names for the scratchpad
   @property
   def vars(self):
@@ -56,9 +57,8 @@ class Question(object):
     # check to see if the key is in the namespace
     if name in self.scratch:
       return self.scratch[name]
-    print name, type(name)
-    print type(super(Question,self))
-    return super(Question,self).__getattr__(name)
+
+    raise AttributeError, "'Question' object has no attribute '"+name+"'"
 
   # common operations for different members
 
@@ -148,7 +148,6 @@ class Question(object):
 
 
   # properties: allow attribute style access to processed data
-
   @property
   def text_str(self):
     return self.join_X(self._texts)
@@ -222,7 +221,11 @@ class Question(object):
 
   @contextlib.contextmanager
   def _add_part(self,text=None,fmt=True,prepend=False):
-    p = Question(text)
+    if isinstance(text,Question): # support passing an already constructed question object
+      p = text
+    else:
+      p = Question(text)
+
     p.scratch.update(self.scratch)
     # the "magic"
     yield p

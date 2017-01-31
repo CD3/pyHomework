@@ -3,21 +3,49 @@
 import datetime
 import string
 import re
+import tempita
 
-class TextFormatter(string.Formatter):
-  def get_value(self,key,args,kwargs):
-    try:
-      return super(TextFormatter,self).get_value(key,args,kwargs)
-    except:
-      return '{'+key+'}'
-
-def format_text(text, formatter, latex_mode=True, *args, **kwargs):
-  if formatter == 'format':
-    return TextFormatter().vformat( text, args, kwargs )
-  elif formatter == 'template':
-    return string.Template( text ).safe_substitute( **kwargs )
+# Replace the _eval function in the tempita.Template class
+# so that we can ignore expression errors
+_orig_eval = tempita.Template._eval
+def _eval(self, code, ns, pos):
+  __traceback_hide__ = True
+  # if code has a python string format spec, then use string.format to render it
+  if ':' in code:
+    value = ('{'+code+'}').format(**ns)
   else:
-    return text
+    try:
+      value = eval(code, self.default_namespace, ns)
+    except SyntaxError, e:
+        raise SyntaxError('invalid syntax in expression: %s' % code)
+    except:
+      value = self.delimiters[0]+code+self.delimiters[1]
+
+  return value
+tempita.Template._eval = _eval
+
+def format_text(text, legacy=True, delimiters=None, formatter=None, *args, **kwargs):
+  context = {}
+  for i in range(len(args)):
+    context[i] = args[i]
+  context.update(kwargs)
+
+  if formatter == 'template':
+    delimiters=('${','}')
+
+  if formatter == 'format':
+    delimiters=('{','}')
+
+  if legacy and delimiters is None:
+    delimiters=('{','}')
+
+  if not legacy and delimiters is None:
+    delimiters=('<','>')
+
+
+
+  return tempita.Template(content=text, delimiters=delimiters).substitute( **context )
+
 
 
 def toBool( v ):
