@@ -227,23 +227,3 @@ def test_with_interface():
   text = q.emit(BbEmitter)
 
   assert text == 'MA\tthree\te\tcorrect\tf\tcorrect\nMC\tone\ta\tincorrect\tb\tcorrect\nMC\ttwo\tc\tcorrect\td\tincorrect'
-
-def test_bbquiz_files():
-
-  q = BbQuiz()
-
-  with q._add_question() as qq:
-    qq.add_text("How many penguins are in the picture?")
-    qq.add_instruction("Give your answer as a positive integer.")
-    qq.add_file("penguins.png")
-
-    with qq._set_answer(NumericalAnswer) as a:
-      a.quantity = 4
-
-
-  q.config('/files/docopy', value=False)
-  bbquiz = q.emit(BbEmitter)
-  q.push_files()
-
-  assert bbquiz == 'NUM\tBefore answering this question, view this link (http://example.com/files/default/penguins.png) in a NEW TAB. How many penguins are in the picture? Give your answer as a positive integer.\t4.00E+00\t4.00E-02'
-

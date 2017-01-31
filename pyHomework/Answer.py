@@ -180,7 +180,6 @@ class NumericalAnswer(Answer):
 
     # if the quantity has uncertainty, use it
     unc = self._get_unc(self._quant)
-    print "start",unc
 
     if unc is None:
 
@@ -211,7 +210,6 @@ class NumericalAnswer(Answer):
       if abs(self._get_mag(unc)) < self.min_relative_unc*abs(val):
         unc = 0.01*val
 
-    print "end",unc
     return fmt.format( abs(unc) )
 
   @uncertainty.setter

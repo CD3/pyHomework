@@ -3,6 +3,7 @@
 import datetime
 import string
 import re
+import pprint
 import tempita
 
 # Replace the _eval function in the tempita.Template class
@@ -25,6 +26,7 @@ def _eval(self, code, ns, pos):
 tempita.Template._eval = _eval
 
 def format_text(text, legacy=True, delimiters=None, formatter=None, *args, **kwargs):
+
   context = {}
   for i in range(len(args)):
     context[i] = args[i]
@@ -36,10 +38,10 @@ def format_text(text, legacy=True, delimiters=None, formatter=None, *args, **kwa
   if formatter == 'format':
     delimiters=('{','}')
 
-  if legacy and delimiters is None:
+  if delimiters is None and legacy:
     delimiters=('{','}')
 
-  if not legacy and delimiters is None:
+  if delimiters is None and not legacy:
     delimiters=('<','>')
 
 

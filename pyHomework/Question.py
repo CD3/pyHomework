@@ -92,9 +92,6 @@ class Question(object):
     return self.add_X(X,val)
 
   def format_X(self,X,*args,**kwargs):
-    if not 'formatter' in kwargs:
-      kwargs['formatter'] = 'format'
-
     # if no arguments (other than the formatter) were given, use
     # our __dict__ and scratch
     if len(args) == 0 and len(kwargs.keys()) == 1:
