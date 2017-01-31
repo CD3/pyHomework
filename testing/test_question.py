@@ -16,9 +16,9 @@ def test_add_text():
   q.add_text( "sentence." )
   q.add_text( "First sentence.", prepend=True )
   q.add_text( "{x}" )
-  q.add_text( "${x}" )
-  q.format_text( x = "Fifth sentence." )
-  q.format_text( x = "Fourth sentence.", formatter='format' )
+  q.add_text( "{y}" )
+  q.format_text( y = "Fifth sentence." )
+  q.format_text( x = "Fourth sentence." )
 
   assert q.text_str == "First sentence. Second sentence. Third sentence. Fourth sentence. Fifth sentence."
 
@@ -235,6 +235,7 @@ def test_latex_compactenum_emitter():
   a3
   ''')
   q.set_answer( a )
+
 
   text = q.emit(LatexEmitter('compactenum'))
   assert text == '\\item Q1\n\\begin{compactenum}\n\\item a1\n\\item a2\n\\item a3\n\end{compactenum}'

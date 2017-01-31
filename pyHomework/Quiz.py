@@ -74,7 +74,7 @@ class Quiz(object):
 
   @contextlib.contextmanager
   def _add_question(self,text=None,fmt=True):
-    q = self.Question(text)
+    q = Question(text)
     yield q
     if fmt:
       q.format_question()
@@ -85,25 +85,6 @@ class Quiz(object):
   def add_question(self,*args,**kwargs):
     with self._add_question(*args,**kwargs):
       pass
-
-
-  @contextlib.contextmanager
-  def _add_file(self,f,name=None):
-    if not isinstance(f, File):
-      f = File(f)
-
-    yield f
-
-    name = name or v.filename
-    self._files[name] = f
-  
-  def add_file(self,*args,**kwargs):
-    with self._add_file(*args,**kwargs):
-      pass
-
-  def set_file(self,*args,**kwargs):
-    self._files = {}
-    return self._add_file(*args,**kwargs)
 
 
 
@@ -173,79 +154,18 @@ for p in passthroughs:
   passthrough_fn(p)
 
 
-# we want to support uploading files to a remote URL and referencing them in
-# a question.
-class BbQuizQuestion(Question):
-  link_instruction_template = 'Before answering this question, view this link ({view_url:s}) in a NEW TAB.'
-  def __init__(self,*args,**kwargs):
-    super(BbQuizQuestion,self).__init__(*args,**kwargs)
-    self._files = {}
-
-  @contextlib.contextmanager
-  def _add_file(self,f,name=None):
-    if not isinstance(f, File):
-      f = File(f)
-
-    yield f
-
-    name = name or f.filename
-    self._files[name] = f
-    self.add_pre_instruction( self.link_instruction_template, prepend=True )
-  
-  def add_file(self,*args,**kwargs):
-    with self._add_file(*args,**kwargs):
-      pass
-
-
-
-
 class BbQuiz(Quiz):
     DefaultEmitter = BbEmitter
-    Question = BbQuizQuestion
     def __init__(self,*args,**kwargs):
       super(BbQuiz,self).__init__(*args,**kwargs)
-      self._config = { 'files' :
-                         { 'view_url'  : 'http://example.com/files/{tag:s}/{filename:s}'
-                         , 'push_url'  : 'ssh://example.com/files/{tag:s}/{filename:s}'
-                         , 'local_url' : '/path/to/the/files/{filename:s}'
-                         , 'tag' : 'default'
-                         , 'docopy' : True
-                         }
-                    , 'randomize' :
-                        { 'questions' : False
-                        , 'answers'   : False
-                        }
-                    }
-
-      self.Question._files_config = self._config['files']
+      self._config = { 'randomize' :
+                          { 'questions' : False
+                          , 'answers'   : False
+                     } }
 
       if not hasattr(self,"tex2im_opts"):
         self.tex2im_opts = ""
 
-    def push_files(self):
-      for q in self._questions:
-        for k in q._files:
-          f = q._files[k]
-          fname = f.filename
-          bname = os.path.basename(f.filename)
-          context = { 'filename' : f.filename
-                    , 'abspath' : os.path.abspath( f.filename )
-                    , 'basename' : os.path.basename( f.filename )
-                    , 'tag' : self.config('/files/tag', 'default')
-                    }
-          push_url = format_text( self.config('files/push_url'), 'format', **context )
-          url = urlparse.urlparse( push_url )
-          if url.scheme == 'ssh':
-            remote_file = url.path[1:] # don't want the leading '/'
-            local_file  = format_text( self.config('/files/local_url'), 'format', **context )
-            cmd = 'scp "{lfile:s}" "{netloc:s}:{rfile:s}"'
-            cmd = format_text( cmd, 'format', netloc=url.netloc, rfile=remote_file, lfile=local_file )
-            print "found file/link pair. copying file to server with '%s'." % cmd
-            if self.config('/files/docopy', False):
-              # create the remote directory in case it does not exist
-              os.system( format_text( 'ssh {netloc:s} "mkdir -p {rpath}"', 'format', netloc=url.netloc, rpath=os.path.dirname(remote_file) ) )
-              os.system( cmd )
-        
     def write(self, stream="/dev/stddev"):
       if isinstance(stream,(str,unicode)):
         with open(stream, 'w') as f:
@@ -434,19 +354,4 @@ class BbQuiz(Quiz):
         stdout = fp.read()
 
       return stdout
-
-
-    @contextlib.contextmanager
-    def _add_question(self,*args,**kwargs):
-      with super(BbQuiz,self)._add_question(*args,**kwargs) as qq:
-        yield qq
-        for k in qq._files:
-          filename = qq._files[k].filename
-          context = { 'filename' : filename
-                    , 'abspath' : os.path.abspath( filename )
-                    , 'basename' : os.path.basename( filename )
-                    , 'tag' : self.config('/files/tag', 'default')
-                    }
-          view_url = format_text( self.config('files/view_url'), 'format', **context )
-          qq.format_pre_instructions( formatter = 'format', view_url = view_url )
 

@@ -661,10 +661,6 @@ class HomeworkAssignment(Quiz):
     self.get_quiz('default').set_answer(answer)
     self.get_quiz('default').last_question.auto_answer_instructions = tmp
 
-  def quiz_add_image(self, fn):
-    self.get_quiz('default').last_question.add_file( fn )
-
-
   def figure_set_data( self, type, val ):
     f = self.last_figure
     if f is None:
@@ -704,7 +700,6 @@ class HomeworkAssignment(Quiz):
     text = t.substitute(**context)
 
     stream.write(text)
-    self.get_quiz(name).push_files()
 
   def write_quiz_file(self,filename,name='default'):
     with open(filename,'w') as f:

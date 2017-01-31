@@ -54,16 +54,17 @@ def test_numerical_answer_units():
 def test_numerical_answer_uncertainty():
   q = 1.23456789
   a = NumericalAnswer(q)
+  a.min_relative_unc = None
   assert a.uncertainty == '1.23E-02'
   a.uncertainty = '10%'
   assert a.uncertainty == '1.23E-01'
   a.uncertainty = 0.5
   assert a.uncertainty == '5.00E-01'
-  a.quantity = Q_(2,'m/s')
+  a.quantity = 2.0
   assert a.uncertainty == '5.00E-01'
   a.quantity = UQ_(2,0.01,'m/s')
   assert a.uncertainty == '1.00E-02'
-  a.quantity = Q_(2,'m/s')
+  a.quantity = 2.0
   assert a.uncertainty == '5.00E-01'
 
 def test_numerical_answer_bb_emitter():
@@ -202,6 +203,7 @@ def test_numerical_answer_loading():
   assert a.value    == '1.358E+00'
 
   a.sigfigs = 3
+  a.min_relative_unc = None
 
   a.load({ 'value' : 1.23456789
          , 'uncertainty' : '1%'})

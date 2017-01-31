@@ -117,9 +117,9 @@ def test_quiz():
 
 
   ass.add_part()
-  ass.add_text(r"Question \#3, Part b, also references \ref{${r1}}, \ref{${r1a}}, \ref{${r2b}}.")
-  ass.format_text( r1=ref1, formatter='template' )
-  ass.format_text( r1a=ref1a, r2b=ref2b, formatter='template' )
+  ass.add_text(r"Question \#3, Part b, also references \ref{<r1>}, \ref{<r1a>}, \ref{<r2b>}.")
+  ass.format_text( r1=ref1, legacy=False )
+  ass.format_text( r1a=ref1a, r2b=ref2b, legacy=False )
 
   ass.add_quiz_question()
   ass.quiz_add_text("What is the answer?")
