@@ -6,35 +6,25 @@ import re
 import pprint
 import pyparsing as pp
 
-def format_text(text, legacy=True, delimiters=None, formatter=None, *args, **kwargs):
+def format_text(text, delimiters=('{','}'), *args, **kwargs):
 
   context = {}
   for i in range(len(args)):
     context[i] = args[i]
   context.update(kwargs)
 
-  if formatter == 'template':
-    delimiters=('${','}')
-
-  if formatter == 'format':
-    delimiters=('{','}')
-
-  if delimiters is None and legacy:
-    delimiters=('{','}')
-
-  if delimiters is None and not legacy:
-    delimiters=('<','>')
-
-  def replaceToken(s, loc, toks):
-    exp = toks[0]
+  def replaceToken(text, loc, toks):
+    exp = toks[1]
     try:
       return ('{'+exp+'}').format(**context)
     except:
       print "WARNING: failed to replace '"+exp+"' using string.format()."
-      return delimiters[0]+exp+delimiters[1]
+      return None
 
 
-  token = pp.QuotedString(quoteChar=delimiters[0], endQuoteChar=delimiters[1], convertWhitespaceEscapes=False,unquoteResults=True).setParseAction(replaceToken)
+  token = pp.Literal(delimiters[0]) + pp.SkipTo(pp.Literal(delimiters[1]), failOn=pp.Literal(delimiters[0])) + pp.Literal(delimiters[1])
+
+  token.setParseAction(replaceToken)
   text = token.transformString( text )
 
   return text
