@@ -4,31 +4,7 @@ import datetime
 import string
 import re
 import pprint
-import tempita
-
-# Replace the _eval function in the tempita.Template class
-# so that we can ignore expression errors
-_orig_eval = tempita.Template._eval
-def _eval(self, code, ns, pos):
-  __traceback_hide__ = True
-  # if code has a python string format spec, then use string.format to render it
-  if ':' in code:
-    try:
-      value = ('{'+code+'}').format(**ns)
-    except:
-      print "WARNING: failed to replace '"+code+"' using string.format()."
-      value = self.delimiters[0]+code+self.delimiters[1]
-  else:
-    try:
-      value = eval(code, self.default_namespace, ns)
-    except SyntaxError, e:
-        raise SyntaxError('invalid syntax in expression: %s' % code)
-    except:
-      print "WARNING: failed to replace '"+code+"' using eval()."
-      value = self.delimiters[0]+code+self.delimiters[1]
-
-  return value
-tempita.Template._eval = _eval
+import pyparsing as pp
 
 def format_text(text, legacy=True, delimiters=None, formatter=None, *args, **kwargs):
 
@@ -49,9 +25,19 @@ def format_text(text, legacy=True, delimiters=None, formatter=None, *args, **kwa
   if delimiters is None and not legacy:
     delimiters=('<','>')
 
+  def replaceToken(s, loc, toks):
+    exp = toks[0]
+    try:
+      return ('{'+exp+'}').format(**context)
+    except:
+      print "WARNING: failed to replace '"+exp+"' using string.format()."
+      return delimiters[0]+exp+delimiters[1]
 
 
-  return tempita.Template(content=text, delimiters=delimiters).substitute( **context )
+  token = pp.QuotedString(quoteChar=delimiters[0], endQuoteChar=delimiters[1], convertWhitespaceEscapes=False,unquoteResults=True).setParseAction(replaceToken)
+  text = token.transformString( text )
+
+  return text
 
 
 

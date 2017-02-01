@@ -51,3 +51,8 @@ def test_text_formatting():
   # don't need to worry about latex if we're not in legacy mode
   text = r'''\vec{A} = <A>. \vec{B} = <B:.2f>. \vec{C} = <C>.'''
   assert r"\vec{A} = 1 meter. \vec{B} = 2.00 meter / second. \vec{C} = <C>." == format_text( text, **context )
+
+  # pyparsing doesn't trip up on chars that are part of quotes
+  text = r'''A = <<A>>. B < <<B:.2f>>. C > <<C>>'''
+  assert r"A = 1 meter. B < 2.00 meter / second. C > <<C>>" == format_text( text, delimiters = ('<<','>>'),**context )
+
