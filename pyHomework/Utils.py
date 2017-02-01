@@ -13,13 +13,18 @@ def _eval(self, code, ns, pos):
   __traceback_hide__ = True
   # if code has a python string format spec, then use string.format to render it
   if ':' in code:
-    value = ('{'+code+'}').format(**ns)
+    try:
+      value = ('{'+code+'}').format(**ns)
+    except:
+      print "WARNING: failed to replace '"+code+"' using string.format()."
+      value = self.delimiters[0]+code+self.delimiters[1]
   else:
     try:
       value = eval(code, self.default_namespace, ns)
     except SyntaxError, e:
         raise SyntaxError('invalid syntax in expression: %s' % code)
     except:
+      print "WARNING: failed to replace '"+code+"' using eval()."
       value = self.delimiters[0]+code+self.delimiters[1]
 
   return value

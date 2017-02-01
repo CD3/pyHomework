@@ -92,14 +92,16 @@ class Question(object):
     return self.add_X(X,val)
 
   def format_X(self,X,*args,**kwargs):
-    # if no arguments (other than the formatter) were given, use
-    # our __dict__ and scratch
-    if len(args) == 0 and len(kwargs.keys()) == 1:
-      kwargs.update( self.__dict__ )
-      kwargs.update( self.scratch )
+    # create a context to format text with
+    context = {}
+    context.update(self.__dict__)
+    context.update(self.scratch)
+    context.update(kwargs)
+    for i in range(len(args)):
+      context[i] = args[i]
 
     for i in range(len(X)):
-      X[i] = format_text( X[i], *args, **kwargs )
+      X[i] = format_text( X[i], **context )
 
 
   def add_text(self,v,prepend=False):

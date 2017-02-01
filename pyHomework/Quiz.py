@@ -328,7 +328,7 @@ class BbQuiz(Quiz):
 
       ifn = "eq-%d.png"%(self.mathimg_num)
       ofn = "eq-%d.log"%(self.mathimg_num)
-      cmd = "tex2im -o %s %s '%s' "%(ifn,extra_opts,args[0])
+      cmd = "tex2im -o %s %s -- '%s' "%(ifn,extra_opts,args[0])
       print "creating image of equation with:'"+cmd+"'"
       with open(ofn,'w') as f:
         status = subprocess.call(cmd,shell=True,stdout=f,stderr=f)
