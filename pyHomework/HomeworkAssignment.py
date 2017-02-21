@@ -646,8 +646,7 @@ class HomeworkAssignment(Quiz):
 
   def add_quiz_question(self):
     self._quizzes['default'].add_question()
-
-    self.quiz_add_text( "For problem #<<refs['%s']>>:" % id(self.last_question_or_part) )
+    self.quiz_add_text( "For problem #<<refs[%s]>>:" % id(self.last_question_or_part) )
 
   def quiz_add_text(self, text, prepend=False ):
     self.get_quiz('default').add_text(text,prepend)
@@ -695,9 +694,8 @@ class HomeworkAssignment(Quiz):
     s = StringIO.StringIO()
     self.get_quiz(name).write(s)
 
-    t = tempita.Template( s.getvalue(), delimiters=('<<','>>') )
     context = {'refs' : self._latex_refs}
-    text = t.substitute(**context)
+    text = format_text(s.getvalue(),delimiters=('<<','>>'),**context)
 
     stream.write(text)
 
@@ -738,7 +736,7 @@ class HomeworkAssignment(Quiz):
       with BbQuiz._add_question(self,*args,**kwargs) as qq:
         yield qq
         if len(refstack) > 0:
-          qq.add_text("For problem #<<refs['%s']>>:" % refstack[-1], prepend=True )
+          qq.add_text("For problem #<<refs[%s]>>:" % refstack[-1], prepend=True )
 
     return _add_question
 

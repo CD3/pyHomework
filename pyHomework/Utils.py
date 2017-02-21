@@ -6,7 +6,7 @@ import re
 import pprint
 import pyparsing as pp
 
-def format_text(text, delimiters=('{','}'), *args, **kwargs):
+def format_text(text, delimiters=('{','}'), try_eval=False, *args, **kwargs):
 
   context = {}
   for i in range(len(args)):
@@ -16,10 +16,16 @@ def format_text(text, delimiters=('{','}'), *args, **kwargs):
   def replaceToken(text, loc, toks):
     exp = toks[1]
     try:
-      return ('{'+exp+'}').format(**context)
-    except:
-      print "WARNING: failed to replace '"+exp+"' using string.format()."
-      return None
+      s = '{'+exp+'}'
+      return s.format(**context)
+    except Exception as e:
+      print "WARNING: failed to replace '"+exp+"' using string.format(). reason:",type(e),str(e)
+      if try_eval:
+        try:
+          return eval(exp,{'__builtins__':None},context)
+        except Exception as ee:
+          print "WARNING: failed to replace '"+exp+"' using eval()."
+          return None
 
 
   token = pp.Literal(delimiters[0]) + pp.SkipTo(pp.Literal(delimiters[1]), failOn=pp.Literal(delimiters[0])) + pp.Literal(delimiters[1])
@@ -129,7 +135,7 @@ def parse_aux(filename):
       ref = ref.replace( r'\egroup', '' )
       ref = ref.replace( r' ', '' )
       ref = ref.replace( r'.', '' )
-      entries[lbl] = ref
+      entries[int(lbl)] = ref
       
   return entries
 

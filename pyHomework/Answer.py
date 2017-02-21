@@ -256,8 +256,9 @@ class MultipleChoiceAnswer(Answer):
     self._correct = set()
     self._correct_regex = r'[\*\^]'
 
-    self.randomize = False
-    if not hasattr(self,"add_none_answer"): # this allows the user to set a default for all instances
+    if not hasattr(self,"randomize"): # this allows the user to set a default for all instances
+      self.randomize = False
+    if not hasattr(self,"add_none_answer"):
       self.add_none_answer = False
     if not hasattr(self,"default_answer"):
       self.default_answer = None

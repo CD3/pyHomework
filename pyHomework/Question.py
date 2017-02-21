@@ -186,7 +186,7 @@ class Question(object):
   # sub-data: lists/dicts of class instances
 
   @contextlib.contextmanager
-  def _add_answer(self,a,fmt=False,prepend=False):
+  def _add_answer(self,a,fmt=True,prepend=False):
 
     if inspect.isclass( a ):
       a = a()

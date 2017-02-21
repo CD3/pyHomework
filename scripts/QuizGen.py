@@ -6,7 +6,7 @@ from pyHomework.Emitter import *
 
 
 # standard modules
-import sys, os, re, random, StringIO
+import sys, os, re, random, StringIO, pprint
 from subprocess import call
 import argparse
 
@@ -368,7 +368,6 @@ if __name__ == "__main__":
       if args.debug:
         print yaml.dump(spec)
       sys.exit(1)
-
 
     overrides = make_overrides( args.override )
     for k,v in overrides.items():
