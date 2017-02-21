@@ -6,7 +6,7 @@ UQ_ = units.Measurement
 
 from pyHomework.Utils import *
 
-def test_text_formatting():
+def test_legacy_text_formatting():
 
   context = { 'A' : Q_(1,'m'), 'B' : Q_(2,'m/s'), 'filename' : 'input.txt' }
 
@@ -48,5 +48,4 @@ def test_text_formatting():
   # just grab the inner pairs
   text = r'''A = <A>. B < <B:.2f>. C > <C>'''
   assert r"A = 1 meter. B < 2.00 meter / second. C > <C>" == format_text( text, delimiters = ('<','>'), **context )
-
 

@@ -35,8 +35,6 @@ def format_text(text, delimiters=('{','}'), try_eval=False, *args, **kwargs):
 
   return text
 
-
-
 def toBool( v ):
     if isinstance(v,str):
       isTrue  = str(v).lower() in ('true', 'yes','1')
