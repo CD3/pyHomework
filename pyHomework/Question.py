@@ -34,8 +34,10 @@ class Question(object):
     self.join_str = ' '
 
     # config options
-    self.clean_text = True
-    self.auto_answer_instructions = True
+    if not hasattr(self,'clean_text'):
+      self.clean_text = True
+    if not hasattr(self,'atuo_answer_instructions'):
+      self.auto_answer_instructions = True
 
     # add text if it was given
     if not text is None:
