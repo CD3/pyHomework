@@ -133,7 +133,10 @@ def parse_aux(filename):
       ref = ref.replace( r'\egroup', '' )
       ref = ref.replace( r' ', '' )
       ref = ref.replace( r'.', '' )
-      entries[int(lbl)] = ref
+      try:
+        entries[int(lbl)] = ref
+      except:
+        entries[lbl] = ref
       
   return entries
 
