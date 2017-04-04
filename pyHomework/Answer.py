@@ -64,19 +64,27 @@ class Answer(object):
 class RawAnswer(Answer):
   def __init__(self, text=None):
     super(RawAnswer,self).__init__()
-    self.text = text
+    self._text = text
+
+  @property
+  def text(self):
+    return self._text
+
+  @text.setter
+  def text(self,v):
+    self._text = v
 
   @property
   def latex(self):
-    return self.text
+    return self._text
 
   def format_answer(self, *args, **kwargs):
-    self.format_text([self.text], *args,**kwargs)
+    self.format_X([self._text], *args,**kwargs)
 
 class EssayAnswer(RawAnswer):
   def __init__(self, text=None):
     super(EssayAnswer,self).__init__()
-    self.text = text
+    self._text = text
 
   def load(self,spec):
     self.answer = spec['text']
@@ -84,7 +92,7 @@ class EssayAnswer(RawAnswer):
 class ShortAnswer(RawAnswer):
   def __init__(self, text=None):
     super(ShortAnswer,self).__init__()
-    self.text = text
+    self._text = text
 
 class NumericalAnswer(Answer):
   def __init__(self, quantity = None, units = "", uncertainty = '1%', sigfigs = 3):
@@ -151,6 +159,8 @@ class NumericalAnswer(Answer):
       q = Q_(val,uni)
       return '{{:.{:d}eLx}}'.format( self.sigfigs-1 ).format( q )
     else:
+      q = Q_(val,uni)
+      return '{{:.{:d}eLx}}'.format( self.sigfigs-1 ).format( q )
       q = UQ_(val,unc,uni)
       # this siunitx package will choke if there is a period in the uncertainty
       # so we need to remove it
@@ -308,7 +318,10 @@ class MultipleChoiceAnswer(Answer):
       if len(line) > 0:
         self.add_choice( line )
 
-  def set_correct( self, i ):
+  def set_correct( self, i = None ):
+    if i is None:
+      i = len(self._choices)
+
     if isinstance( i, (str,unicode) ):
       i = self.find(i)
 
