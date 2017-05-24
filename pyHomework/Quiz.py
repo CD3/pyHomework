@@ -6,7 +6,7 @@ from .File import *
 from .Utils import *
 
 # standard modules
-import os, sys, tempfile, subprocess
+import os, sys, tempfile, subprocess, hashlib
 import contextlib, urlparse, urllib, StringIO, base64
 
 # non-standard modules
@@ -326,19 +326,26 @@ class BbQuiz(Quiz):
         extra_opts = opts[1]
 
 
-      ifn = "eq-%d.png"%(self.mathimg_num)
-      ofn = "eq-%d.log"%(self.mathimg_num)
-      cmd = "tex2im -o %s %s -- '%s' "%(ifn,extra_opts,args[0])
-      print "creating image of equation with:'"+cmd+"'"
-      with open(ofn,'w') as f:
-        status = subprocess.call(cmd,shell=True,stdout=f,stderr=f)
-        if status != 0:
-          print "\tWARNING: there was a problem running tex2im."
-          print "\tWARNING: command output was left in %s"%(ofn)
-          print "\tWARNING: replacing with $...$, which may not work..."
-          return "$"+args[0]+"$"
+      cmd = "tex2im -o %%s %s -- '%s' "%(extra_opts,args[0])
+      # create a hash of the command used to create the image to use as the image
+      # name. this way we can tell if the image has already been created before.
+      hash = hashlib.sha1(cmd).hexdigest()
+      ofn = "%s.png"%hash
+      lfn = "%s.log"%hash
+      cmd = cmd%ofn
+      print "creating image with:'"+cmd+"'"
+      if os.path.exists(ofn):
+        print "\tskipping because '"+ofn+"' already exists. please delete it if you want to force a rebuild."
+      else:
+        with open(lfn,'w') as f:
+          status = subprocess.call(cmd,shell=True,stdout=f,stderr=f)
+          if status != 0:
+            print "\tWARNING: there was a problem running tex2im."
+            print "\tWARNING: command output was left in %s"%(lfn)
+            print "\tWARNING: replacing with $...$, which may not work..."
+            return "$"+args[0]+"$"
 
-      text = self.make_img_html( ifn, 'png', opts='alt="ERROR: Could not render math"' )
+      text = self.make_img_html( ofn, 'png', opts='alt="ERROR: Could not render math"' )
 
       return text
 
