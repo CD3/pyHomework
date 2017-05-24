@@ -25,6 +25,10 @@ class ConstantsCollection:
     self.BoltzmannConstant     = make(1.38064852e-23, 'm^2 kg / s^2 / degK')
     self.UniversalGasConstant  = make(8.3144598,      'J/mol/degK')
 
+    self.Distances = {}
+    self.Distances['moon'] = make( 238900, 'mile' )
+    self.Distances['sun']  = make( 92.96e6, 'mile' )
+
     self.Masses = {}
     self.Masses['sun']      = make(1.989e30,       'kg')
     self.Masses['earth']    = make(5.972e24,       'kg')
