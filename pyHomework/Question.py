@@ -19,6 +19,7 @@ class Question(object):
   - pre_instructions : extra information needed to answer the question, but presented before the question text.
   - answers : one or more answers to the question
   - parts : one or more parts to the questions (sub-questions). these are also questions.
+  - questions : one or more questions about the question (i.e. a quiz that references a problem set question.)
   """
   DefaultEmitter = PlainEmitter
 
@@ -29,6 +30,7 @@ class Question(object):
     self._pre_instructions = []
     self._answers = []
     self._parts = []
+    self._questions = []
 
     # regular members
     self.join_str = ' '
@@ -220,6 +222,8 @@ class Question(object):
     with self._set_answer(*args,**kwargs):
       pass
 
+
+
   @contextlib.contextmanager
   def _add_part(self,text=None,fmt=True,prepend=False):
     if isinstance(text,Question): # support passing an already constructed question object
@@ -253,6 +257,27 @@ class Question(object):
       p.format_text(*args,**kwargs)
       p.format_instruction(*args,**kwargs)
   format_parts = format_part
+
+
+
+  @contextlib.contextmanager
+  def _add_question(self,text=None,fmt=True,prepend=False):
+    if isinstance(text,Question): # support passing an already constructed question object
+      q = text
+    else:
+      q = Question(text)
+
+    q.scratch.update(self.scratch)
+    # the "magic"
+    yield q
+    if fmt:
+      q.format_question()
+
+    self.add_X(self._questions,q,prepend)
+
+
+
+
 
 
   # the emit function
