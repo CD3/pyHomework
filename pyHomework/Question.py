@@ -24,6 +24,20 @@ class Question(object):
   DefaultEmitter = PlainEmitter
 
   def __init__(self, text = None):
+    # copy constructor
+    if isinstance(text,Question):
+      self._texts = text._texts
+      self._post_instructions = text._post_instructions
+      self._pre_instructions = text._pre_instructions
+      self._answers = text._answers
+      self._parts = text._parts
+      self._questions = text._questions
+      self.join_str = text.join_str
+      self.clean_text = text.clean_text
+      self.auto_answer_instructions = text.auto_answer_instructions
+      self.scratch = text.scratch
+
+      return
     # controlled access members
     self._texts = []
     self._post_instructions = []
@@ -191,7 +205,6 @@ class Question(object):
 
   @contextlib.contextmanager
   def _add_answer(self,a,fmt=True,prepend=False):
-
     if inspect.isclass( a ):
       a = a()
     a.scratch.update(self.scratch)
@@ -207,29 +220,16 @@ class Question(object):
       if isinstance( a, NumericalAnswer ):
         if a.units != 'dimensionless' and a.units != '':
           self.add_instruction('Give your answer in %s.' % a.units,prepend=True)
-
     self.add_X(self._answers,a,prepend)
-
-  def add_answer(self,*args,**kwargs):
-    with self._add_answer(*args,**kwargs):
-      pass
 
   def _set_answer(self,*args,**kwargs):
     del self._answers[:]
     return self._add_answer(*args,**kwargs)
 
-  def set_answer(self,*args,**kwargs):
-    with self._set_answer(*args,**kwargs):
-      pass
-
-
 
   @contextlib.contextmanager
   def _add_part(self,text=None,fmt=True,prepend=False):
-    if isinstance(text,Question): # support passing an already constructed question object
-      p = text
-    else:
-      p = Question(text)
+    p = Question(text)
 
     p.scratch.update(self.scratch)
     # the "magic"
@@ -239,18 +239,9 @@ class Question(object):
 
     self.add_X(self._parts,p,prepend)
 
-  def add_part(self,*args,**kwargs):
-    with self._add_part(*args,**kwargs):
-      pass
-
   def _set_part(self,*args,**kwargs):
     del self._parts[:]
     return self._add_part(*args,**kwargs)
-
-  def set_part(self,*args,**kwargs):
-    with self._set_part(*args,**kwargs):
-      pass
-
 
   def format_part(self, *args, **kwargs):
     for p in self._parts:
@@ -262,10 +253,7 @@ class Question(object):
 
   @contextlib.contextmanager
   def _add_question(self,text=None,fmt=True,prepend=False):
-    if isinstance(text,Question): # support passing an already constructed question object
-      q = text
-    else:
-      q = Question(text)
+    q = Question(text)
 
     q.scratch.update(self.scratch)
     # the "magic"
@@ -275,6 +263,9 @@ class Question(object):
 
     self.add_X(self._questions,q,prepend)
 
+  def _set_question(self,*args,**kwargs):
+    del self._questions[:]
+    return self._add_question(*args,**kwargs)
 
 
 

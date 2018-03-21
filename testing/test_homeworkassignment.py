@@ -11,6 +11,7 @@ def Close( a, b, tol = 0.001 ):
         b = float(b)
     return (a - b)**2 / (a**2 + b**2) < 4*tol*tol
 
+@pytest.mark.skip()
 def test_interface():
   ass = HomeworkAssignment()
 

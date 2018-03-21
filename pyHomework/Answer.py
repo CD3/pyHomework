@@ -277,13 +277,13 @@ class MultipleChoiceAnswer(Answer):
   @property
   def choices(self):
     answers = self._correct
-    if len(answers) == 0 and not self.default_answer is None:
+    if len(answers) == 0 and not self.default_answer is none:
       answers.add(self.default_answer)
 
     for i in self.order:
       yield (i in answers,self._choices[i])
     if self.add_none_answer:
-      yield (-1 in answers,"None of the above.")
+      yield (-1 in answers,"none of the above.")
 
   @property
   def order(self):
@@ -322,7 +322,7 @@ class MultipleChoiceAnswer(Answer):
     if i is None:
       i = len(self._choices)
 
-    if isinstance( i, (str,unicode) ):
+    if isinstance( i, str ):
       i = self.find(i)
 
     if i >= 0 and i < len(self._choices):

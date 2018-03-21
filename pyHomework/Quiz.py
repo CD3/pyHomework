@@ -125,7 +125,8 @@ class Quiz(object):
       if 'instructions' in q:
         self.add_instruction( q['instructions'] )
 
-      self.add_answer( make_answer(q['answer']) )
+      with self._add_answer( make_answer(q['answer']) ) as a:
+        pass
 
   def find(self,pattern):
     '''Find and return a question matching a search string.'''
@@ -136,16 +137,22 @@ class Quiz(object):
     return None
 
 
+  # Legacy
+
+  def set_answer(self,*args,**kwargs):
+    with getattr(self.last_question,'_set_answer')(*args,**kwargs) as a:
+      pass
+
+
 def passthrough_fn( fn_name ):
   def func(self, *args, **kwargs):
     return getattr(self.last_question,fn_name)(*args,**kwargs)
   setattr(Quiz,fn_name, func)
 passthroughs = ['add_text'
                ,'add_instruction'
-               ,'add_answer'
+               ,'_add_answer'
                ,'set_text'
                ,'set_instruction'
-               ,'set_answer'
                ,'clear_text'
                ,'clear_instruction'
                ,'clear_answer'

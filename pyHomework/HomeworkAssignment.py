@@ -635,7 +635,8 @@ class HomeworkAssignment(Quiz):
   def add_part(self):
     q = self.last_question
     if q is not None:
-      q.add_part()
+      with q._add_part() as p:
+        pass
 
   def add_text(self,text,prepend=False):
     self.last_question_or_part.add_text(text,prepend)

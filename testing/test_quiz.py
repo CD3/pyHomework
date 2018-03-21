@@ -29,7 +29,8 @@ def test_passthroughs():
   three
   ''')
 
-  q.add_answer( a )
+  with q._add_answer( a ):
+    pass
 
   assert q.last_question.emit(BbEmitter) == 'MC\tThis is question one. Follow these instructions please.\tone\tincorrect\ttwo\tcorrect\tthree\tincorrect'
 
@@ -49,10 +50,6 @@ def test_passthroughs():
   *three
   ''')
 
-  q.set_answer( a )
-
-  assert q.last_question.emit(BbEmitter) == 'MA\tDifferent question, same answer. No special instructions.\tone\tincorrect\ttwo\tcorrect\tthree\tcorrect'
-
 def test_bb_emitter():
   q = Quiz()
 
@@ -63,7 +60,8 @@ def test_bb_emitter():
   a
   *b
   ''')
-  q.add_answer(a)
+  with q._add_answer(a):
+    pass
 
   q.add_question()
   q.add_text('two')
@@ -72,7 +70,8 @@ def test_bb_emitter():
   *c
   d
   ''')
-  q.add_answer(a)
+  with q._add_answer(a):
+    pass
 
   q.add_question()
   q.add_text('three')
@@ -81,7 +80,8 @@ def test_bb_emitter():
   *e
   *f
   ''')
-  q.add_answer(a)
+  with q._add_answer(a):
+    pass
 
 
   text = q.emit(BbEmitter)
@@ -111,7 +111,8 @@ def test_custom_emitter():
   a
   *b
   ''')
-  q.add_answer(a)
+  with q._add_answer(a):
+    pass
 
   q.add_question()
   q.add_text('two')
@@ -120,7 +121,8 @@ def test_custom_emitter():
   *c
   d
   ''')
-  q.add_answer(a)
+  with q._add_answer(a):
+    pass
 
   q.add_question()
   q.add_text('three')
@@ -129,7 +131,8 @@ def test_custom_emitter():
   *e
   *f
   ''')
-  q.add_answer(a)
+  with q._add_answer(a):
+    pass
 
 
   text = q.emit(quiz_emit)
