@@ -277,7 +277,7 @@ class MultipleChoiceAnswer(Answer):
   @property
   def choices(self):
     answers = self._correct
-    if len(answers) == 0 and not self.default_answer is none:
+    if len(answers) == 0 and not self.default_answer is None:
       answers.add(self.default_answer)
 
     for i in self.order:
