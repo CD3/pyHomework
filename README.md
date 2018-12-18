@@ -1,5 +1,7 @@
 # pyHomework
 
+**NOTE: This module is deprecated. It has been completely rewritten to clean up the interface and add some new features. See https://github.com/CD3/pyAssignment for the rewrite.**
+
 `pyHomework` allows you to write quizzes, problem sets, and quizzes about problem sets in Python. Why would you want to do this?
 
   - Writing code is funner than writing homework assignments.
